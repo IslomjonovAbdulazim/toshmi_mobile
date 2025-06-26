@@ -5,7 +5,7 @@ class AppConfig {
   // ===================== API CONFIGURATION =====================
 
   // Base URL - Change this to your backend URL
-  static const String baseUrl = 'https://your-backend-url.com';
+  static const String baseUrl = 'https://islomjonovabdulazim-toshmi-backend-0914.twc1.net';
   static const String apiVersion = 'v1';
   static const String fullApiUrl = '$baseUrl/api/$apiVersion';
 
@@ -16,7 +16,7 @@ class AppConfig {
 
   // ===================== APP INFORMATION =====================
 
-  static const String appName = 'ToshMI Mobile';
+  static const String appName = 'Toshmi Mobile';
   static const String appVersion = '1.0.0';
   static const String appBuildNumber = '1';
 
