@@ -1,149 +1,169 @@
 import 'package:flutter/material.dart';
-import 'package:toshmi_mobile/core/themes/app_themes.dart';
+import '../../../core/themes/app_themes.dart';
 
-/// Empty state widget with customizable content
+/// Generic empty state widget for various scenarios
 class EmptyStateWidget extends StatelessWidget {
-  final Widget? icon;
+  final Widget icon;
   final String title;
   final String? subtitle;
   final String? actionText;
   final VoidCallback? onActionPressed;
   final EdgeInsets padding;
-  final double spacing;
   final bool showAnimation;
+  final Color? backgroundColor;
 
   const EmptyStateWidget({
-    Key? key,
-    this.icon,
+    super.key,
+    required this.icon,
     required this.title,
     this.subtitle,
     this.actionText,
     this.onActionPressed,
     this.padding = const EdgeInsets.all(32),
-    this.spacing = 16,
-    this.showAnimation = true,
-  }) : super(key: key);
+    this.showAnimation = false,
+    this.backgroundColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Padding(
-      padding: padding,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Icon
-            if (icon != null) ...[
-              if (showAnimation)
-                TweenAnimationBuilder<double>(
-                  duration: const Duration(milliseconds: 800),
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  builder: (context, value, child) {
-                    return Transform.scale(
-                      scale: value,
-                      child: Opacity(
-                        opacity: value,
-                        child: icon!,
-                      ),
-                    );
-                  },
-                )
-              else
-                icon!,
-              SizedBox(height: spacing),
-            ],
+    Widget content = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Icon
+        if (showAnimation)
+          _AnimatedIcon(child: icon)
+        else
+          icon,
 
-            // Title
-            TweenAnimationBuilder<double>(
-              duration: Duration(milliseconds: showAnimation ? 600 : 0),
-              tween: Tween(begin: 0.0, end: 1.0),
-              builder: (context, value, child) {
-                return Transform.translate(
-                  offset: Offset(0, showAnimation ? (1 - value) * 20 : 0),
-                  child: Opacity(
-                    opacity: value,
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: colors.primaryText,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                );
-              },
-            ),
+        const SizedBox(height: 24),
 
-            // Subtitle
-            if (subtitle != null) ...[
-              SizedBox(height: spacing / 2),
-              TweenAnimationBuilder<double>(
-                duration: Duration(milliseconds: showAnimation ? 800 : 0),
-                tween: Tween(begin: 0.0, end: 1.0),
-                builder: (context, value, child) {
-                  return Transform.translate(
-                    offset: Offset(0, showAnimation ? (1 - value) * 20 : 0),
-                    child: Opacity(
-                      opacity: value,
-                      child: Text(
-                        subtitle!,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: colors.secondaryText,
-                          height: 1.4,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-
-            // Action button
-            if (actionText != null && onActionPressed != null) ...[
-              SizedBox(height: spacing * 1.5),
-              TweenAnimationBuilder<double>(
-                duration: Duration(milliseconds: showAnimation ? 1000 : 0),
-                tween: Tween(begin: 0.0, end: 1.0),
-                builder: (context, value, child) {
-                  return Transform.translate(
-                    offset: Offset(0, showAnimation ? (1 - value) * 20 : 0),
-                    child: Opacity(
-                      opacity: value,
-                      child: ElevatedButton(
-                        onPressed: onActionPressed,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.info,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(actionText!),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ],
+        // Title
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: colors.primaryText,
+          ),
+          textAlign: TextAlign.center,
         ),
+
+        if (subtitle != null) ...[
+          const SizedBox(height: 12),
+          Text(
+            subtitle!,
+            style: TextStyle(
+              fontSize: 14,
+              color: colors.secondaryText,
+              height: 1.4,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+
+        if (actionText != null && onActionPressed != null) ...[
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: onActionPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colors.info,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(actionText!),
+          ),
+        ],
+      ],
+    );
+
+    if (backgroundColor != null) {
+      content = Container(
+        color: backgroundColor,
+        child: content,
+      );
+    }
+
+    return Center(
+      child: Padding(
+        padding: padding,
+        child: content,
       ),
     );
   }
 }
 
-/// Predefined empty states for common scenarios
+/// Animated icon wrapper for empty states
+class _AnimatedIcon extends StatefulWidget {
+  final Widget child;
+
+  const _AnimatedIcon({required this.child});
+
+  @override
+  State<_AnimatedIcon> createState() => _AnimatedIconState();
+}
+
+class _AnimatedIconState extends State<_AnimatedIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.elasticOut,
+    ));
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.0, 0.6, curve: Curves.easeIn),
+    ));
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: widget.child,
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Pre-configured empty states for common scenarios
 class EmptyStates {
   /// No homework found
   static Widget noHomework({VoidCallback? onRefresh}) {
@@ -153,10 +173,11 @@ class EmptyStates {
         size: 64,
         color: Colors.grey[400],
       ),
-      title: 'Vazifalar topilmadi',
-      subtitle: 'Hozircha sizga tayinlangan vazifalar yo\'q. Yangi vazifalar uchun muntazam tekshirib turing.',
+      title: 'Vazifalar yo\'q',
+      subtitle: 'Hozircha sizga berilgan vazifalar mavjud emas.',
       actionText: onRefresh != null ? 'Yangilash' : null,
       onActionPressed: onRefresh,
+      showAnimation: true,
     );
   }
 
@@ -168,10 +189,11 @@ class EmptyStates {
         size: 64,
         color: Colors.grey[400],
       ),
-      title: 'Imtihonlar topilmadi',
-      subtitle: 'Hozircha sizga tayinlangan imtihonlar yo\'q.',
+      title: 'Imtihonlar yo\'q',
+      subtitle: 'Hozircha rejalashtirilingan imtihonlar mavjud emas.',
       actionText: onRefresh != null ? 'Yangilash' : null,
       onActionPressed: onRefresh,
+      showAnimation: true,
     );
   }
 
@@ -183,10 +205,11 @@ class EmptyStates {
         size: 64,
         color: Colors.grey[400],
       ),
-      title: 'Baholar topilmadi',
-      subtitle: 'Hozircha sizning baholaringiz yo\'q.',
+      title: 'Baholar yo\'q',
+      subtitle: 'Hozircha sizga qo\'yilgan baholar mavjud emas.',
       actionText: onRefresh != null ? 'Yangilash' : null,
       onActionPressed: onRefresh,
+      showAnimation: true,
     );
   }
 
@@ -199,28 +222,29 @@ class EmptyStates {
         color: Colors.grey[400],
       ),
       title: 'Bildirishnomalar yo\'q',
-      subtitle: 'Sizda yangi bildirishnomalar yo\'q.',
+      subtitle: 'Barcha bildirishnomalar o\'qilgan yoki yangi xabarlar yo\'q.',
       actionText: onRefresh != null ? 'Yangilash' : null,
       onActionPressed: onRefresh,
+      showAnimation: true,
     );
   }
 
-  /// No students found (for teachers)
-  static Widget noStudents({VoidCallback? onRefresh}) {
+  /// No attendance records
+  static Widget noAttendance({VoidCallback? onRefresh}) {
     return EmptyStateWidget(
       icon: Icon(
-        Icons.groups_outlined,
+        Icons.event_busy_outlined,
         size: 64,
         color: Colors.grey[400],
       ),
-      title: 'Talabalar topilmadi',
-      subtitle: 'Hozircha sizning guruhlaringizda talabalar yo\'q.',
+      title: 'Davomat ma\'lumotlari yo\'q',
+      subtitle: 'Tanlangan muddat uchun davomat ma\'lumotlari topilmadi.',
       actionText: onRefresh != null ? 'Yangilash' : null,
       onActionPressed: onRefresh,
     );
   }
 
-  /// No children found (for parents)
+  /// No children for parent
   static Widget noChildren({VoidCallback? onAddChild}) {
     return EmptyStateWidget(
       icon: Icon(
@@ -229,7 +253,7 @@ class EmptyStates {
         color: Colors.grey[400],
       ),
       title: 'Bolalar ro\'yxati bo\'sh',
-      subtitle: 'Hozircha sizning hisobingizga bog\'langan bolalar yo\'q.',
+      subtitle: 'Hozircha sizning farzandlaringiz ro\'yxatga olinmagan.',
       actionText: onAddChild != null ? 'Bola qo\'shish' : null,
       onActionPressed: onAddChild,
     );
@@ -274,7 +298,7 @@ class EmptyStates {
         color: Colors.grey[400],
       ),
       title: 'Dars jadvali yo\'q',
-      subtitle: 'Hozircha dars jadvali tuzilmagan.',
+      subtitle: 'Tanlangan sana uchun dars jadvali mavjud emas.',
       actionText: onRefresh != null ? 'Yangilash' : null,
       onActionPressed: onRefresh,
     );
@@ -292,6 +316,7 @@ class EmptyStates {
       subtitle: 'Internet aloqasini tekshiring va qayta urinib ko\'ring.',
       actionText: onRetry != null ? 'Qayta urinish' : null,
       onActionPressed: onRetry,
+      showAnimation: true,
     );
   }
 
@@ -307,7 +332,7 @@ class EmptyStates {
         color: Colors.grey[400],
       ),
       title: 'Qidiruv natijalari topilmadi',
-      subtitle: '"$query" bo\'yicha hech narsa topilmadi. Boshqa so\'zlar bilan qidiring.',
+      subtitle: '"$query" bo\'yicha hech narsa topilmadi.\nBoshqa so\'zlar bilan qidiring.',
       actionText: onClearSearch != null ? 'Qidiruvni tozalash' : null,
       onActionPressed: onClearSearch,
     );
@@ -322,7 +347,7 @@ class EmptyStates {
         color: Colors.blue[400],
       ),
       title: 'Tez orada...',
-      subtitle: 'Bu xususiyat ustida ishlamoqdamiz. Tez orada mavjud bo\'ladi.',
+      subtitle: 'Bu xususiyat ustida ishlamoqdamiz.\nTez orada mavjud bo\'ladi.',
       showAnimation: true,
     );
   }
@@ -336,122 +361,38 @@ class EmptyStates {
         color: Colors.orange[400],
       ),
       title: 'Texnik ishlar',
-      subtitle: 'Hozirda tizimda texnik ishlar olib borilmoqda. Iltimos, keyinroq qaytib keling.',
+      subtitle: 'Hozirda tizimda texnik ishlar olib borilmoqda.\nIltimos, keyinroq qaytib keling.',
       showAnimation: true,
     );
   }
 
   /// Access denied
-  static Widget accessDenied() {
+  static Widget accessDenied({VoidCallback? onContactSupport}) {
     return EmptyStateWidget(
       icon: Icon(
         Icons.lock_outlined,
         size: 64,
         color: Colors.red[400],
       ),
-      title: 'Ruxsat berilmagan',
-      subtitle: 'Sizda bu sahifaga kirish huquqi yo\'q.',
-      showAnimation: true,
+      title: 'Ruxsat rad etildi',
+      subtitle: 'Bu sahifaga kirish uchun sizda yetarli ruxsat yo\'q.',
+      actionText: onContactSupport != null ? 'Yordam so\'rash' : null,
+      onActionPressed: onContactSupport,
     );
   }
-}
 
-/// Empty state with custom illustration
-class IllustratedEmptyState extends StatelessWidget {
-  final String imagePath;
-  final String title;
-  final String? subtitle;
-  final String? actionText;
-  final VoidCallback? onActionPressed;
-  final double imageHeight;
-
-  const IllustratedEmptyState({
-    Key? key,
-    required this.imagePath,
-    required this.title,
-    this.subtitle,
-    this.actionText,
-    this.onActionPressed,
-    this.imageHeight = 200,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
+  /// Data loading failed
+  static Widget loadingFailed({VoidCallback? onRetry}) {
     return EmptyStateWidget(
-      icon: Image.asset(
-        imagePath,
-        height: imageHeight,
-        fit: BoxFit.contain,
+      icon: Icon(
+        Icons.error_outline,
+        size: 64,
+        color: Colors.red[400],
       ),
-      title: title,
-      subtitle: subtitle,
-      actionText: actionText,
-      onActionPressed: onActionPressed,
-    );
-  }
-}
-
-/// Animated empty state with floating elements
-class AnimatedEmptyState extends StatefulWidget {
-  final Widget icon;
-  final String title;
-  final String? subtitle;
-  final String? actionText;
-  final VoidCallback? onActionPressed;
-
-  const AnimatedEmptyState({
-    Key? key,
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    this.actionText,
-    this.onActionPressed,
-  }) : super(key: key);
-
-  @override
-  State<AnimatedEmptyState> createState() => _AnimatedEmptyStateState();
-}
-
-class _AnimatedEmptyStateState extends State<AnimatedEmptyState>
-    with TickerProviderStateMixin {
-  late AnimationController _floatingController;
-  late Animation<Offset> _floatingAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _floatingController = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _floatingAnimation = Tween<Offset>(
-      begin: const Offset(0, -0.1),
-      end: const Offset(0, 0.1),
-    ).animate(CurvedAnimation(
-      parent: _floatingController,
-      curve: Curves.easeInOut,
-    ));
-  }
-
-  @override
-  void dispose() {
-    _floatingController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return EmptyStateWidget(
-      icon: SlideTransition(
-        position: _floatingAnimation,
-        child: widget.icon,
-      ),
-      title: widget.title,
-      subtitle: widget.subtitle,
-      actionText: widget.actionText,
-      onActionPressed: widget.onActionPressed,
-      showAnimation: true,
+      title: 'Ma\'lumot yuklanmadi',
+      subtitle: 'Ma\'lumotlarni yuklashda xatolik yuz berdi.',
+      actionText: onRetry != null ? 'Qayta yuklash' : null,
+      onActionPressed: onRetry,
     );
   }
 }

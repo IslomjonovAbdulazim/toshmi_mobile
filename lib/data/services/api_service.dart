@@ -1,13 +1,13 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:get/get.dart' as getx;
+import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import 'package:get_storage/get_storage.dart';
+import '../../app/config/app_config.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/api_response_models.dart';
 
-class ApiService extends getx.GetxService {
-  static ApiService get to => getx.Get.find();
+class ApiService extends GetxService {
+  static ApiService get to => Get.find();
 
   late final Dio _dio;
   final _storage = GetStorage();
@@ -16,99 +16,60 @@ class ApiService extends getx.GetxService {
   void onInit() {
     super.onInit();
     _initializeDio();
+    _setupInterceptors();
   }
 
   void _initializeDio() {
     _dio = Dio(BaseOptions(
-      baseUrl: ApiConstants.baseUrl,
-      connectTimeout: ApiConstants.connectTimeout,
-      receiveTimeout: ApiConstants.receiveTimeout,
-      sendTimeout: ApiConstants.sendTimeout,
-      headers: ApiConstants.defaultHeaders,
-      validateStatus: (status) => status != null && status < 500,
+      baseUrl: AppConfig.baseUrl,
+      connectTimeout: AppConfig.connectTimeout,
+      receiveTimeout: AppConfig.apiTimeout,
+      headers: AppConfig.defaultHeaders,
     ));
-
-    _setupInterceptors();
   }
 
   void _setupInterceptors() {
-    // Request interceptor
+    if (AppConfig.enableApiLogging) {
+      _dio.interceptors.add(LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+        error: true,
+      ));
+    }
+
+    // Auth interceptor
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
-        // Add auth token if available
         final token = _storage.read<String>(CacheKeys.userToken);
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
-
-        // Log request
-        _logRequest(options);
         handler.next(options);
       },
-      onResponse: (response, handler) {
-        // Log response
-        _logResponse(response);
-        handler.next(response);
-      },
       onError: (error, handler) {
-        // Log error
-        _logError(error);
-
-        // Handle specific errors
-        final processedError = _processError(error);
-        handler.next(processedError);
-      },
-    ));
-
-    // Token refresh interceptor (if needed)
-    _dio.interceptors.add(QueuedInterceptorsWrapper(
-      onError: (error, handler) async {
         if (error.response?.statusCode == 401) {
-          await _handleUnauthorized();
+          _handleUnauthorized();
         }
         handler.next(error);
       },
     ));
   }
 
-  void _logRequest(RequestOptions options) {
-    print('🚀 REQUEST: ${options.method} ${options.uri}');
-    if (options.data != null) {
-      print('📤 DATA: ${options.data}');
-    }
-    if (options.queryParameters.isNotEmpty) {
-      print('📋 PARAMS: ${options.queryParameters}');
-    }
+  void _handleUnauthorized() {
+    _storage.remove(CacheKeys.userToken);
+    _storage.remove(CacheKeys.userProfile);
+    _storage.remove(CacheKeys.userRole);
+    Get.offAllNamed('/login');
   }
 
-  void _logResponse(Response response) {
-    print('✅ RESPONSE: ${response.statusCode} ${response.requestOptions.uri}');
-    if (response.data != null) {
-      print('📥 DATA: ${response.data}');
-    }
+  // Set auth token
+  void setAuthToken(String token) {
+    _storage.write(CacheKeys.userToken, token);
   }
 
-  void _logError(DioException error) {
-    print('❌ ERROR: ${error.type} ${error.requestOptions.uri}');
-    print('📄 MESSAGE: ${error.message}');
-    if (error.response?.data != null) {
-      print('📥 ERROR DATA: ${error.response!.data}');
-    }
-  }
-
-  DioException _processError(DioException error) {
-    // Add custom error processing here
-    return error;
-  }
-
-  Future<void> _handleUnauthorized() async {
-    // Clear user data and redirect to login
-    await _storage.remove(CacheKeys.userToken);
-    await _storage.remove(CacheKeys.userProfile);
-    await _storage.remove(CacheKeys.userRole);
-
-    // Navigate to login (implement based on your routing)
-    getx.Get.offAllNamed('/login');
+  // Clear auth token
+  void clearAuthToken() {
+    _storage.remove(CacheKeys.userToken);
   }
 
   // Generic GET request
@@ -125,7 +86,7 @@ class ApiService extends getx.GetxService {
         options: options,
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (_isSuccessStatusCode(response.statusCode)) {
         final data = fromJson(response.data);
         return ApiResult.success(data);
       } else {
@@ -157,7 +118,7 @@ class ApiService extends getx.GetxService {
         options: options,
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (_isSuccessStatusCode(response.statusCode)) {
         final responseData = fromJson(response.data);
         return ApiResult.success(responseData);
       } else {
@@ -189,7 +150,7 @@ class ApiService extends getx.GetxService {
         options: options,
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (_isSuccessStatusCode(response.statusCode)) {
         final responseData = fromJson(response.data);
         return ApiResult.success(responseData);
       } else {
@@ -221,7 +182,7 @@ class ApiService extends getx.GetxService {
         options: options,
       );
 
-      if (response.statusCode == 200 || response.statusCode == 204) {
+      if (_isSuccessStatusCode(response.statusCode)) {
         final responseData = fromJson(response.data ?? {'message': 'Deleted successfully'});
         return ApiResult.success(responseData);
       } else {
@@ -237,7 +198,7 @@ class ApiService extends getx.GetxService {
     }
   }
 
-  // File upload request
+  // File upload
   Future<ApiResult<T>> uploadFile<T>(
       String endpoint,
       File file, {
@@ -249,10 +210,7 @@ class ApiService extends getx.GetxService {
     try {
       final fileName = file.path.split('/').last;
       final formData = FormData.fromMap({
-        fieldName: await MultipartFile.fromFile(
-          file.path,
-          filename: fileName,
-        ),
+        fieldName: await MultipartFile.fromFile(file.path, filename: fileName),
         ...?additionalFields,
       });
 
@@ -260,14 +218,10 @@ class ApiService extends getx.GetxService {
         endpoint,
         data: formData,
         onSendProgress: onSendProgress,
-        options: Options(
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        ),
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (_isSuccessStatusCode(response.statusCode)) {
         final data = fromJson(response.data);
         return ApiResult.success(data);
       } else {
@@ -283,21 +237,18 @@ class ApiService extends getx.GetxService {
     }
   }
 
-  // Download file
+  // File download
   Future<ApiResult<String>> downloadFile(
       String endpoint,
       String savePath, {
         ProgressCallback? onReceiveProgress,
-        Map<String, dynamic>? queryParameters,
       }) async {
     try {
       await _dio.download(
         endpoint,
         savePath,
         onReceiveProgress: onReceiveProgress,
-        queryParameters: queryParameters,
       );
-
       return ApiResult.success(savePath);
     } on DioException catch (e) {
       return _handleDioException(e);
@@ -309,154 +260,64 @@ class ApiService extends getx.GetxService {
     }
   }
 
-  // Handle error responses
-  ApiResult<T> _handleErrorResponse<T>(Response response) {
-    String errorMessage = ErrorMessages.serverError;
-
-    try {
-      if (response.data is Map<String, dynamic>) {
-        errorMessage = response.data['detail'] ??
-            response.data['message'] ??
-            errorMessage;
-      } else if (response.data is String) {
-        errorMessage = response.data;
-      }
-    } catch (e) {
-      // Keep default error message
-    }
-
-    return ApiResult.error(ApiError(
-      detail: errorMessage,
-      statusCode: response.statusCode,
-      type: 'http_error',
-    ));
+  // Helper methods
+  bool _isSuccessStatusCode(int? statusCode) {
+    return statusCode != null && statusCode >= 200 && statusCode < 300;
   }
 
-  // Handle Dio exceptions
-  ApiResult<T> _handleDioException<T>(DioException e) {
-    late String errorMessage;
-    late String errorType;
+  ApiResult<T> _handleErrorResponse<T>(Response response) {
+    try {
+      final errorData = response.data;
+      if (errorData is Map<String, dynamic>) {
+        return ApiResult.error(ApiError.fromJson(errorData));
+      }
+      return ApiResult.error(ApiError(
+        detail: 'Server error: ${response.statusCode}',
+        type: 'server_error',
+        statusCode: response.statusCode,
+      ));
+    } catch (e) {
+      return ApiResult.error(ApiError(
+        detail: 'Unknown server error',
+        type: 'server_error',
+        statusCode: response.statusCode,
+      ));
+    }
+  }
 
+  ApiResult<T> _handleDioException<T>(DioException e) {
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        errorMessage = ErrorMessages.connectionTimeout;
-        errorType = 'timeout';
-        break;
+        return ApiResult.error(ApiError.networkError('Ulanish vaqti tugadi'));
 
       case DioExceptionType.badResponse:
-        final statusCode = e.response?.statusCode;
-        errorType = 'http_error';
-
-        switch (statusCode) {
-          case 400:
-            errorMessage = ErrorMessages.validationError;
-            break;
-          case 401:
-            errorMessage = ErrorMessages.unauthorizedAccess;
-            errorType = 'auth_error';
-            break;
-          case 403:
-            errorMessage = ErrorMessages.permissionDenied;
-            break;
-          case 404:
-            errorMessage = ErrorMessages.dataNotFound;
-            break;
-          case 422:
-            errorMessage = ErrorMessages.validationError;
-            break;
-          default:
-            errorMessage = ErrorMessages.serverError;
+        if (e.response != null) {
+          return _handleErrorResponse(e.response!);
         }
-
-        // Try to extract detailed error message
-        try {
-          if (e.response?.data is Map<String, dynamic>) {
-            final data = e.response!.data as Map<String, dynamic>;
-            errorMessage = data['detail'] ?? data['message'] ?? errorMessage;
-          }
-        } catch (_) {
-          // Keep default message
-        }
-        break;
+        return ApiResult.error(ApiError.serverError());
 
       case DioExceptionType.cancel:
-        errorMessage = 'So\'rov bekor qilindi';
-        errorType = 'cancelled';
-        break;
+        return ApiResult.error(ApiError(
+          detail: 'So\'rov bekor qilindi',
+          type: 'cancelled',
+        ));
 
-      case DioExceptionType.connectionError:
       case DioExceptionType.unknown:
-      default:
         if (e.error is SocketException) {
-          errorMessage = ErrorMessages.networkError;
-          errorType = 'network';
-        } else {
-          errorMessage = ErrorMessages.serverError;
-          errorType = 'unknown';
+          return ApiResult.error(ApiError.networkError('Internetga ulanish yo\'q'));
         }
-        break;
-    }
+        return ApiResult.error(ApiError(
+          detail: 'Noma\'lum xatolik: ${e.message}',
+          type: 'unknown',
+        ));
 
-    return ApiResult.error(ApiError(
-      detail: errorMessage,
-      statusCode: e.response?.statusCode,
-      type: errorType,
-    ));
-  }
-
-  // Check internet connectivity
-  Future<bool> checkConnectivity() async {
-    try {
-      final response = await _dio.get(
-        PublicEndpoints.health,
-        options: Options(
-          sendTimeout: const Duration(seconds: 5),
-          receiveTimeout: const Duration(seconds: 5),
-        ),
-      );
-      return response.statusCode == 200;
-    } catch (e) {
-      return false;
+      default:
+        return ApiResult.error(ApiError(
+          detail: e.message ?? 'Noma\'lum xatolik',
+          type: 'unknown',
+        ));
     }
   }
-
-  // Clear all stored data
-  Future<void> clearStorage() async {
-    await _storage.erase();
-  }
-
-  // Update base URL (if needed)
-  void updateBaseUrl(String newBaseUrl) {
-    _dio.options.baseUrl = newBaseUrl;
-  }
-
-  // Add custom header
-  void addHeader(String key, String value) {
-    _dio.options.headers[key] = value;
-  }
-
-  // Remove custom header
-  void removeHeader(String key) {
-    _dio.options.headers.remove(key);
-  }
-
-  // Set auth token
-  void setAuthToken(String token) {
-    _storage.write(CacheKeys.userToken, token);
-    _dio.options.headers['Authorization'] = 'Bearer $token';
-  }
-
-  // Clear auth token
-  void clearAuthToken() {
-    _storage.remove(CacheKeys.userToken);
-    _dio.options.headers.remove('Authorization');
-  }
-
-  // Get current auth token
-  String? get authToken => _storage.read<String>(CacheKeys.userToken);
-
-  // Check if user is authenticated
-  bool get isAuthenticated => authToken != null;
 }

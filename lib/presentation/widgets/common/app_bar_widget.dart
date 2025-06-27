@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart' hide ContextExtensionss;
-import 'package:toshmi_mobile/core/themes/app_themes.dart';
+import 'package:get/get.dart';
 
-/// Custom app bar widget with consistent theming
+import '../../../core/themes/app_themes.dart';
+
+/// Custom app bar with consistent theming and common actions
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final List<Widget>? actions;
@@ -19,11 +20,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final double? elevation;
   final bool automaticallyImplyLeading;
   final Widget? bottom;
-  final double? titleSpacing;
-  final TextStyle? titleStyle;
+  final int? notificationCount;
 
   const CustomAppBar({
-    Key? key,
+    super.key,
     required this.title,
     this.actions,
     this.leading,
@@ -39,20 +39,19 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.elevation,
     this.automaticallyImplyLeading = true,
     this.bottom,
-    this.titleSpacing,
-    this.titleStyle,
-  }) : super(key: key);
+    this.notificationCount,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = context.isDarkMode;
+    final isDark = Get.isDarkMode;
 
-    final defaultActions = <Widget>[];
+    final appBarActions = <Widget>[];
 
-    // Add search icon if enabled
+    // Add search icon
     if (showSearchIcon) {
-      defaultActions.add(
+      appBarActions.add(
         IconButton(
           icon: Icon(
             Icons.search,
@@ -64,9 +63,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       );
     }
 
-    // Add notification icon if enabled
+    // Add notification icon with badge
     if (showNotificationIcon) {
-      defaultActions.add(
+      appBarActions.add(
         IconButton(
           icon: Stack(
             children: [
@@ -74,31 +73,33 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 Icons.notifications_outlined,
                 color: foregroundColor ?? colors.primaryText,
               ),
-              // Notification badge - you can connect this to a notification controller
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: colors.error,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 12,
-                    minHeight: 12,
-                  ),
-                  child: const Text(
-                    '3', // Replace with dynamic count
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
+              if (notificationCount != null && notificationCount! > 0)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: colors.error,
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    textAlign: TextAlign.center,
+                    constraints: const BoxConstraints(
+                      minWidth: 12,
+                      minHeight: 12,
+                    ),
+                    child: Text(
+                      notificationCount! > 99
+                          ? '99+'
+                          : notificationCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           onPressed: onNotificationTap,
@@ -109,13 +110,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     // Add custom actions
     if (actions != null) {
-      defaultActions.addAll(actions!);
+      appBarActions.addAll(actions!);
     }
 
     return AppBar(
       title: Text(
         title,
-        style: titleStyle ?? TextStyle(
+        style: TextStyle(
           color: foregroundColor ?? colors.primaryText,
           fontSize: 20,
           fontWeight: FontWeight.w600,
@@ -124,53 +125,57 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: centerTitle,
       backgroundColor: backgroundColor ?? colors.primaryBackground,
       foregroundColor: foregroundColor ?? colors.primaryText,
-      elevation: elevation ?? (isDark ? 0 : 1),
-      shadowColor: isDark ? null : colors.border,
+      elevation: elevation ?? (isDark ? 0 : 2),
+      shadowColor: isDark ? null : colors.secondaryText.withOpacity(0.1),
       surfaceTintColor: backgroundColor ?? colors.primaryBackground,
-      leading: leading ?? (showBackButton && automaticallyImplyLeading
-          ? IconButton(
-        icon: Icon(
-          Icons.arrow_back_ios,
-          color: foregroundColor ?? colors.primaryText,
-        ),
-        onPressed: onBackPressed ?? () => Get.back(),
-        tooltip: 'Orqaga',
-      )
-          : null),
+      leading:
+          leading ??
+          (showBackButton && automaticallyImplyLeading
+              ? IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios,
+                    color: foregroundColor ?? colors.primaryText,
+                  ),
+                  onPressed: onBackPressed ?? () => Get.back(),
+                  tooltip: 'Orqaga',
+                )
+              : null),
       automaticallyImplyLeading: automaticallyImplyLeading,
-      actions: defaultActions.isNotEmpty ? defaultActions : null,
-      bottom: bottom != null ? PreferredSize(
-        preferredSize: Size.fromHeight(bottom is TabBar ? 48 : 56),
-        child: bottom!,
-      ) : null,
-      titleSpacing: titleSpacing,
+      actions: appBarActions.isNotEmpty ? appBarActions : null,
+      // bottom: bottom != null ? PreferredSize(
+      //   preferredSize: Size.fromHeight(bottom is TabBar ? kTabsHeight : 56),
+      //   child: bottom!,
+      // ) : null,
     );
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(
-      kToolbarHeight + (bottom != null ? (bottom is TabBar ? 48 : 56) : 0)
-  );
+  Size get preferredSize =>
+      Size.fromHeight(kToolbarHeight + (bottom != null ? 56 : 0));
 }
 
-/// App bar specifically for dashboard pages
-class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
+/// App bar with user profile
+class ProfileAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  final String? subtitle;
-  final Widget? profileWidget;
-  final VoidCallback? onProfileTap;
+  final String? userName;
+  final String? userRole;
   final bool showNotifications;
   final VoidCallback? onNotificationTap;
+  final VoidCallback? onProfileTap;
+  final Widget? profileWidget;
+  final int? notificationCount;
 
-  const DashboardAppBar({
-    Key? key,
+  const ProfileAppBar({
+    super.key,
     required this.title,
-    this.subtitle,
-    this.profileWidget,
-    this.onProfileTap,
+    this.userName,
+    this.userRole,
     this.showNotifications = true,
     this.onNotificationTap,
-  }) : super(key: key);
+    this.onProfileTap,
+    this.profileWidget,
+    this.notificationCount,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -184,16 +189,16 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
             title,
             style: TextStyle(
               color: colors.primaryText,
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
-          if (subtitle != null)
+          if (userName != null)
             Text(
-              subtitle!,
+              userName!,
               style: TextStyle(
                 color: colors.secondaryText,
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -201,8 +206,10 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       backgroundColor: colors.primaryBackground,
       foregroundColor: colors.primaryText,
-      elevation: context.isDarkMode ? 0 : 1,
-      shadowColor: context.isDarkMode ? null : colors.border,
+      elevation: Get.isDarkMode ? 0 : 1,
+      shadowColor: Get.isDarkMode
+          ? null
+          : colors.secondaryText.withOpacity(0.1),
       automaticallyImplyLeading: false,
       titleSpacing: 16,
       actions: [
@@ -210,22 +217,20 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
           IconButton(
             icon: Stack(
               children: [
-                Icon(
-                  Icons.notifications_outlined,
-                  color: colors.primaryText,
-                ),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: colors.error,
-                      shape: BoxShape.circle,
+                Icon(Icons.notifications_outlined, color: colors.primaryText),
+                if (notificationCount != null && notificationCount! > 0)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: colors.error,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
             onPressed: onNotificationTap,
@@ -236,15 +241,22 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
           onTap: onProfileTap,
           child: Container(
             margin: const EdgeInsets.only(right: 16),
-            child: profileWidget ?? CircleAvatar(
-              radius: 18,
-              backgroundColor: colors.info,
-              child: Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
+            child:
+                profileWidget ??
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: colors.info,
+                  child: Text(
+                    userName?.isNotEmpty == true
+                        ? userName![0].toUpperCase()
+                        : '?',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
           ),
         ),
       ],
@@ -263,16 +275,18 @@ class SearchAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback? onClosed;
   final TextEditingController? controller;
   final bool autofocus;
+  final List<Widget>? actions;
 
   const SearchAppBar({
-    Key? key,
+    super.key,
     this.hintText = 'Qidirish...',
     this.onChanged,
     this.onSubmitted,
     this.onClosed,
     this.controller,
     this.autofocus = true,
-  }) : super(key: key);
+    this.actions,
+  });
 
   @override
   State<SearchAppBar> createState() => _SearchAppBarState();
@@ -289,6 +303,11 @@ class _SearchAppBarState extends State<SearchAppBar> {
   void initState() {
     super.initState();
     _controller = widget.controller ?? TextEditingController();
+    if (widget.autofocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _focusNode.requestFocus();
+      });
+    }
   }
 
   @override
@@ -307,73 +326,51 @@ class _SearchAppBarState extends State<SearchAppBar> {
     return AppBar(
       backgroundColor: colors.primaryBackground,
       foregroundColor: colors.primaryText,
-      elevation: context.isDarkMode ? 0 : 1,
+      elevation: Get.isDarkMode ? 0 : 1,
       leading: IconButton(
-        icon: Icon(
-          Icons.arrow_back_ios,
-          color: colors.primaryText,
-        ),
-        onPressed: () {
-          widget.onClosed?.call();
-          Get.back();
-        },
-        tooltip: 'Orqaga',
+        icon: Icon(Icons.arrow_back, color: colors.primaryText),
+        onPressed: widget.onClosed ?? () => Get.back(),
       ),
       title: TextField(
         controller: _controller,
         focusNode: _focusNode,
-        autofocus: widget.autofocus,
-        style: TextStyle(
-          color: colors.primaryText,
-          fontSize: 16,
-        ),
-        decoration: InputDecoration(
-          hintText: widget.hintText,
-          hintStyle: TextStyle(
-            color: colors.secondaryText,
-            fontSize: 16,
-          ),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
-        ),
         onChanged: widget.onChanged,
         onSubmitted: widget.onSubmitted,
-        textInputAction: TextInputAction.search,
+        style: TextStyle(color: colors.primaryText),
+        decoration: InputDecoration(
+          hintText: widget.hintText,
+          hintStyle: TextStyle(color: colors.secondaryText),
+          border: InputBorder.none,
+          suffixIcon: _controller.text.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.clear, color: colors.secondaryText),
+                  onPressed: () {
+                    _controller.clear();
+                    widget.onChanged?.call('');
+                  },
+                )
+              : null,
+        ),
       ),
-      actions: [
-        if (_controller.text.isNotEmpty)
-          IconButton(
-            icon: Icon(
-              Icons.clear,
-              color: colors.primaryText,
-            ),
-            onPressed: () {
-              _controller.clear();
-              widget.onChanged?.call('');
-            },
-            tooltip: 'Tozalash',
-          ),
-      ],
+      actions: widget.actions,
     );
   }
 }
 
-/// Tab app bar with custom tabs
-class TabAppBar extends StatelessWidget implements PreferredSizeWidget {
+/// Simple app bar with minimal styling
+class SimpleAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  final List<String> tabs;
-  final TabController? controller;
-  final bool isScrollable;
-  final ValueChanged<int>? onTap;
+  final List<Widget>? actions;
+  final bool showBackButton;
+  final VoidCallback? onBackPressed;
 
-  const TabAppBar({
-    Key? key,
+  const SimpleAppBar({
+    super.key,
     required this.title,
-    required this.tabs,
-    this.controller,
-    this.isScrollable = false,
-    this.onTap,
-  }) : super(key: key);
+    this.actions,
+    this.showBackButton = true,
+    this.onBackPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -384,34 +381,24 @@ class TabAppBar extends StatelessWidget implements PreferredSizeWidget {
         title,
         style: TextStyle(
           color: colors.primaryText,
-          fontSize: 20,
+          fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
       ),
       backgroundColor: colors.primaryBackground,
       foregroundColor: colors.primaryText,
-      elevation: context.isDarkMode ? 0 : 1,
-      bottom: TabBar(
-        controller: controller,
-        isScrollable: isScrollable,
-        onTap: onTap,
-        labelColor: colors.info,
-        unselectedLabelColor: colors.secondaryText,
-        indicatorColor: colors.info,
-        indicatorWeight: 3,
-        labelStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-        ),
-        tabs: tabs.map((tab) => Tab(text: tab)).toList(),
-      ),
+      elevation: 0,
+      centerTitle: true,
+      leading: showBackButton
+          ? IconButton(
+              icon: Icon(Icons.arrow_back_ios, color: colors.primaryText),
+              onPressed: onBackPressed ?? () => Get.back(),
+            )
+          : null,
+      actions: actions,
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 48);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }

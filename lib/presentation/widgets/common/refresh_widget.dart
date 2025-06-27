@@ -1,72 +1,69 @@
 import 'package:flutter/material.dart';
-
 import '../../../core/themes/app_themes.dart';
 
 /// Custom refresh widget with theming support
-class CustomRefreshWidget extends StatefulWidget {
+class CustomRefreshWidget extends StatelessWidget {
   final Widget child;
   final Future<void> Function() onRefresh;
-  final String? loadingText;
-  final String? pullToRefreshText;
-  final String? releaseToRefreshText;
   final Color? backgroundColor;
   final Color? color;
   final double displacement;
   final RefreshIndicatorTriggerMode triggerMode;
+  final double strokeWidth;
 
   const CustomRefreshWidget({
-    Key? key,
+    super.key,
     required this.child,
     required this.onRefresh,
-    this.loadingText,
-    this.pullToRefreshText,
-    this.releaseToRefreshText,
     this.backgroundColor,
     this.color,
     this.displacement = 40.0,
     this.triggerMode = RefreshIndicatorTriggerMode.onEdge,
-  }) : super(key: key);
+    this.strokeWidth = 2.0,
+  });
 
-  @override
-  State<CustomRefreshWidget> createState() => _CustomRefreshWidgetState();
-}
-
-class _CustomRefreshWidgetState extends State<CustomRefreshWidget> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
     return RefreshIndicator(
-      onRefresh: widget.onRefresh,
-      backgroundColor: widget.backgroundColor ?? colors.cardBackground,
-      color: widget.color ?? colors.info,
-      displacement: widget.displacement,
-      triggerMode: widget.triggerMode,
-      child: widget.child,
+      onRefresh: onRefresh,
+      backgroundColor: backgroundColor ?? colors.cardBackground,
+      color: color ?? colors.info,
+      displacement: displacement,
+      triggerMode: triggerMode,
+      strokeWidth: strokeWidth,
+      child: child,
     );
   }
 }
 
-/// Custom refresh indicator with Uzbek text
-class UzbekRefreshIndicator extends StatefulWidget {
+/// Pull to refresh with custom animation
+class AnimatedRefreshWidget extends StatefulWidget {
   final Widget child;
   final Future<void> Function() onRefresh;
+  final String? refreshText;
+  final String? releaseText;
+  final String? loadingText;
   final Color? backgroundColor;
   final Color? color;
 
-  const UzbekRefreshIndicator({
-    Key? key,
+  const AnimatedRefreshWidget({
+    super.key,
     required this.child,
     required this.onRefresh,
+    this.refreshText,
+    this.releaseText,
+    this.loadingText,
     this.backgroundColor,
     this.color,
-  }) : super(key: key);
+  });
 
   @override
-  State<UzbekRefreshIndicator> createState() => _UzbekRefreshIndicatorState();
+  State<AnimatedRefreshWidget> createState() => _AnimatedRefreshWidgetState();
 }
 
-class _UzbekRefreshIndicatorState extends State<UzbekRefreshIndicator>
+class _AnimatedRefreshWidgetState extends State<AnimatedRefreshWidget>
     with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -120,60 +117,34 @@ class _UzbekRefreshIndicatorState extends State<UzbekRefreshIndicator>
   }
 }
 
-/// Pull to refresh with custom animation
-class AnimatedRefreshWidget extends StatefulWidget {
-  final Widget child;
+/// Manual refresh button widget
+class ManualRefreshWidget extends StatefulWidget {
   final Future<void> Function() onRefresh;
-  final Widget? refreshIndicator;
-  final double threshold;
-  final Duration animationDuration;
+  final String? text;
+  final IconData? icon;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
+  final EdgeInsets padding;
+  final bool showLastRefresh;
 
-  const AnimatedRefreshWidget({
-    Key? key,
-    required this.child,
+  const ManualRefreshWidget({
+    super.key,
     required this.onRefresh,
-    this.refreshIndicator,
-    this.threshold = 100.0,
-    this.animationDuration = const Duration(milliseconds: 300),
-  }) : super(key: key);
+    this.text,
+    this.icon,
+    this.backgroundColor,
+    this.foregroundColor,
+    this.padding = const EdgeInsets.all(16),
+    this.showLastRefresh = false,
+  });
 
   @override
-  State<AnimatedRefreshWidget> createState() => _AnimatedRefreshWidgetState();
+  State<ManualRefreshWidget> createState() => _ManualRefreshWidgetState();
 }
 
-class _AnimatedRefreshWidgetState extends State<AnimatedRefreshWidget>
-    with TickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _rotationAnimation;
-  late Animation<double> _scaleAnimation;
-
+class _ManualRefreshWidgetState extends State<ManualRefreshWidget> {
   bool _isRefreshing = false;
-  double _pullDistance = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: widget.animationDuration,
-      vsync: this,
-    );
-
-    _rotationAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
-
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  DateTime? _lastRefresh;
 
   Future<void> _handleRefresh() async {
     if (_isRefreshing) return;
@@ -182,88 +153,12 @@ class _AnimatedRefreshWidgetState extends State<AnimatedRefreshWidget>
       _isRefreshing = true;
     });
 
-    _controller.repeat();
-
     try {
       await widget.onRefresh();
-    } finally {
-      _controller.stop();
-      _controller.reset();
       setState(() {
-        _isRefreshing = false;
-        _pullDistance = 0.0;
+        _lastRefresh = DateTime.now();
       });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-
-    return RefreshIndicator(
-      onRefresh: _handleRefresh,
-      backgroundColor: colors.cardBackground,
-      color: colors.info,
-      child: widget.child,
-    );
-  }
-}
-
-/// Manual refresh button widget
-class RefreshButton extends StatefulWidget {
-  final Future<void> Function() onRefresh;
-  final String? text;
-  final IconData? icon;
-  final ButtonStyle? style;
-  final bool isLoading;
-
-  const RefreshButton({
-    Key? key,
-    required this.onRefresh,
-    this.text,
-    this.icon,
-    this.style,
-    this.isLoading = false,
-  }) : super(key: key);
-
-  @override
-  State<RefreshButton> createState() => _RefreshButtonState();
-}
-
-class _RefreshButtonState extends State<RefreshButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  bool _isRefreshing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _handleRefresh() async {
-    if (_isRefreshing || widget.isLoading) return;
-
-    setState(() {
-      _isRefreshing = true;
-    });
-
-    _controller.repeat();
-
-    try {
-      await widget.onRefresh();
     } finally {
-      _controller.stop();
-      _controller.reset();
       setState(() {
         _isRefreshing = false;
       });
@@ -273,48 +168,87 @@ class _RefreshButtonState extends State<RefreshButton>
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isLoading = _isRefreshing || widget.isLoading;
 
-    return ElevatedButton.icon(
-      onPressed: isLoading ? null : _handleRefresh,
-      style:
-          widget.style ??
-          ElevatedButton.styleFrom(
-            backgroundColor: colors.info,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+    return Padding(
+      padding: widget.padding,
+      child: Column(
+        children: [
+          ElevatedButton.icon(
+            onPressed: _isRefreshing ? null : _handleRefresh,
+            icon: _isRefreshing
+                ? SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  widget.foregroundColor ?? Colors.white,
+                ),
+              ),
+            )
+                : Icon(widget.icon ?? Icons.refresh),
+            label: Text(
+              _isRefreshing
+                  ? 'Yangilanmoqda...'
+                  : (widget.text ?? 'Yangilash'),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: widget.backgroundColor ?? colors.info,
+              foregroundColor: widget.foregroundColor ?? Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
-      icon: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return Transform.rotate(
-            angle: _controller.value * 2 * 3.14159,
-            child: Icon(widget.icon ?? Icons.refresh, size: 20),
-          );
-        },
+
+          if (widget.showLastRefresh && _lastRefresh != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Oxirgi yangilanish: ${_formatTime(_lastRefresh!)}',
+              style: TextStyle(
+                fontSize: 12,
+                color: colors.secondaryText,
+              ),
+            ),
+          ],
+        ],
       ),
-      label: Text(widget.text ?? 'Yangilash'),
     );
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inMinutes < 1) {
+      return 'Hozir';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} daqiqa oldin';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} soat oldin';
+    } else {
+      return '${dateTime.day}.${dateTime.month}.${dateTime.year}';
+    }
   }
 }
 
 /// Floating refresh button
 class FloatingRefreshButton extends StatefulWidget {
   final Future<void> Function() onRefresh;
-  final bool isVisible;
-  final Alignment alignment;
-  final EdgeInsets margin;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
+  final IconData? icon;
+  final String? tooltip;
 
   const FloatingRefreshButton({
-    Key? key,
+    super.key,
     required this.onRefresh,
-    this.isVisible = true,
-    this.alignment = Alignment.bottomRight,
-    this.margin = const EdgeInsets.all(16),
-  }) : super(key: key);
+    this.backgroundColor,
+    this.foregroundColor,
+    this.icon,
+    this.tooltip,
+  });
 
   @override
   State<FloatingRefreshButton> createState() => _FloatingRefreshButtonState();
@@ -322,13 +256,13 @@ class FloatingRefreshButton extends StatefulWidget {
 
 class _FloatingRefreshButtonState extends State<FloatingRefreshButton>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
   bool _isRefreshing = false;
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _animationController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
@@ -336,7 +270,7 @@ class _FloatingRefreshButtonState extends State<FloatingRefreshButton>
 
   @override
   void dispose() {
-    _controller.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -347,13 +281,12 @@ class _FloatingRefreshButtonState extends State<FloatingRefreshButton>
       _isRefreshing = true;
     });
 
-    _controller.repeat();
+    _animationController.repeat();
 
     try {
       await widget.onRefresh();
     } finally {
-      _controller.stop();
-      _controller.reset();
+      _animationController.stop();
       setState(() {
         _isRefreshing = false;
       });
@@ -364,71 +297,62 @@ class _FloatingRefreshButtonState extends State<FloatingRefreshButton>
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return AnimatedOpacity(
-      opacity: widget.isVisible ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 300),
-      child: Align(
-        alignment: widget.alignment,
-        child: Container(
-          margin: widget.margin,
-          child: FloatingActionButton(
-            onPressed: _isRefreshing ? null : _handleRefresh,
-            backgroundColor: colors.info,
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return Transform.rotate(
-                  angle: _controller.value * 2 * 3.14159,
-                  child: const Icon(Icons.refresh, color: Colors.white),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
+    return FloatingActionButton(
+      onPressed: _isRefreshing ? null : _handleRefresh,
+      backgroundColor: widget.backgroundColor ?? colors.info,
+      foregroundColor: widget.foregroundColor ?? Colors.white,
+      tooltip: widget.tooltip ?? 'Yangilash',
+      child: _isRefreshing
+          ? AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return Transform.rotate(
+            angle: _animationController.value * 2 * 3.14159,
+            child: Icon(widget.icon ?? Icons.refresh),
+          );
+        },
+      )
+          : Icon(widget.icon ?? Icons.refresh),
     );
   }
 }
 
-/// Refresh header for custom scroll views
-class CustomRefreshHeader extends StatefulWidget {
-  final double height;
-  final Widget? child;
-  final RefreshHeaderState state;
+/// Swipe to refresh with custom indicator
+class SwipeRefreshWidget extends StatefulWidget {
+  final Widget child;
+  final Future<void> Function() onRefresh;
+  final double triggerThreshold;
+  final Color? indicatorColor;
+  final String? refreshText;
 
-  const CustomRefreshHeader({
-    Key? key,
-    this.height = 60.0,
-    this.child,
-    required this.state,
-  }) : super(key: key);
+  const SwipeRefreshWidget({
+    super.key,
+    required this.child,
+    required this.onRefresh,
+    this.triggerThreshold = 80.0,
+    this.indicatorColor,
+    this.refreshText,
+  });
 
   @override
-  State<CustomRefreshHeader> createState() => _CustomRefreshHeaderState();
+  State<SwipeRefreshWidget> createState() => _SwipeRefreshWidgetState();
 }
 
-class _CustomRefreshHeaderState extends State<CustomRefreshHeader>
-    with SingleTickerProviderStateMixin {
+class _SwipeRefreshWidgetState extends State<SwipeRefreshWidget>
+    with TickerProviderStateMixin {
   late AnimationController _controller;
+  late Animation<double> _animation;
+  bool _isRefreshing = false;
+  double _dragDistance = 0.0;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-  }
-
-  @override
-  void didUpdateWidget(CustomRefreshHeader oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.state == RefreshHeaderState.refreshing) {
-      _controller.repeat();
-    } else {
-      _controller.stop();
-      _controller.reset();
-    }
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
   }
 
   @override
@@ -437,181 +361,118 @@ class _CustomRefreshHeaderState extends State<CustomRefreshHeader>
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
+  void _handlePanUpdate(DragUpdateDetails details) {
+    if (_isRefreshing) return;
 
-    return Container(
-      height: widget.height,
-      alignment: Alignment.center,
-      child: widget.child ?? _buildDefaultHeader(colors),
-    );
-  }
-
-  Widget _buildDefaultHeader(AppThemeColors colors) {
-    String text;
-    Widget icon;
-
-    switch (widget.state) {
-      case RefreshHeaderState.pullToRefresh:
-        text = 'Yangilash uchun torting';
-        icon = Icon(Icons.arrow_downward, color: colors.secondaryText);
-        break;
-      case RefreshHeaderState.releaseToRefresh:
-        text = 'Yangilash uchun qo\'yib yuboring';
-        icon = Transform.rotate(
-          angle: 3.14159,
-          child: Icon(Icons.arrow_downward, color: colors.info),
-        );
-        break;
-      case RefreshHeaderState.refreshing:
-        text = 'Yangilanmoqda...';
-        icon = AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return Transform.rotate(
-              angle: _controller.value * 2 * 3.14159,
-              child: Icon(Icons.refresh, color: colors.info),
-            );
-          },
-        );
-        break;
-      case RefreshHeaderState.completed:
-        text = 'Yangilandi';
-        icon = Icon(Icons.check, color: colors.success);
-        break;
-    }
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        icon,
-        const SizedBox(width: 8),
-        Text(text, style: TextStyle(color: colors.secondaryText, fontSize: 14)),
-      ],
-    );
-  }
-}
-
-/// Refresh header states
-enum RefreshHeaderState {
-  pullToRefresh,
-  releaseToRefresh,
-  refreshing,
-  completed,
-}
-
-/// Smart refresh widget with auto-refresh capability
-class SmartRefreshWidget extends StatefulWidget {
-  final Widget child;
-  final Future<void> Function() onRefresh;
-  final Duration autoRefreshInterval;
-  final bool enableAutoRefresh;
-  final bool enablePullToRefresh;
-
-  const SmartRefreshWidget({
-    Key? key,
-    required this.child,
-    required this.onRefresh,
-    this.autoRefreshInterval = const Duration(minutes: 5),
-    this.enableAutoRefresh = false,
-    this.enablePullToRefresh = true,
-  }) : super(key: key);
-
-  @override
-  State<SmartRefreshWidget> createState() => _SmartRefreshWidgetState();
-}
-
-class _SmartRefreshWidgetState extends State<SmartRefreshWidget> {
-  DateTime? _lastRefresh;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.enableAutoRefresh) {
-      _startAutoRefresh();
-    }
-  }
-
-  void _startAutoRefresh() {
-    Future.doWhile(() async {
-      await Future.delayed(widget.autoRefreshInterval);
-
-      if (mounted && widget.enableAutoRefresh) {
-        final now = DateTime.now();
-        if (_lastRefresh == null ||
-            now.difference(_lastRefresh!) >= widget.autoRefreshInterval) {
-          await _handleRefresh();
-        }
-        return true;
+    setState(() {
+      _dragDistance += details.delta.dy;
+      if (_dragDistance < 0) _dragDistance = 0;
+      if (_dragDistance > widget.triggerThreshold * 1.5) {
+        _dragDistance = widget.triggerThreshold * 1.5;
       }
-      return false;
     });
+
+    final progress = (_dragDistance / widget.triggerThreshold).clamp(0.0, 1.0);
+    _controller.value = progress;
   }
 
-  Future<void> _handleRefresh() async {
-    _lastRefresh = DateTime.now();
-    await widget.onRefresh();
+  void _handlePanEnd(DragEndDetails details) {
+    if (_isRefreshing) return;
+
+    if (_dragDistance >= widget.triggerThreshold) {
+      _triggerRefresh();
+    } else {
+      _resetIndicator();
+    }
+  }
+
+  Future<void> _triggerRefresh() async {
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      await widget.onRefresh();
+    } finally {
+      setState(() {
+        _isRefreshing = false;
+      });
+      _resetIndicator();
+    }
+  }
+
+  void _resetIndicator() {
+    setState(() {
+      _dragDistance = 0.0;
+    });
+    _controller.reset();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.enablePullToRefresh) {
-      return CustomRefreshWidget(
-        onRefresh: _handleRefresh,
-        child: widget.child,
-      );
-    }
-
-    return widget.child;
-  }
-}
-
-/// Utility class for refresh-related operations
-class RefreshUtils {
-  /// Show refresh success snackbar
-  static void showRefreshSuccess(BuildContext context, {String? message}) {
     final colors = context.colors;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle, color: colors.success, size: 20),
-            const SizedBox(width: 8),
-            Text(message ?? 'Ma\'lumotlar yangilandi'),
-          ],
-        ),
-        backgroundColor: colors.cardBackground,
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
-  }
 
-  /// Show refresh error snackbar
-  static void showRefreshError(BuildContext context, {String? message}) {
-    final colors = context.colors;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.error, color: colors.error, size: 20),
-            const SizedBox(width: 8),
-            Text(message ?? 'Yangilashda xatolik yuz berdi'),
-          ],
-        ),
-        backgroundColor: colors.cardBackground,
-        duration: const Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        action: SnackBarAction(
-          label: 'Qayta urinish',
-          textColor: colors.info,
-          onPressed: () {
-            // Handle retry action
-          },
-        ),
+    return GestureDetector(
+      onPanUpdate: _handlePanUpdate,
+      onPanEnd: _handlePanEnd,
+      child: Stack(
+        children: [
+          // Main content
+          widget.child,
+
+          // Refresh indicator
+          if (_dragDistance > 0 || _isRefreshing)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: _dragDistance,
+                color: colors.primaryBackground.withOpacity(0.9),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (_isRefreshing)
+                        CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            widget.indicatorColor ?? colors.info,
+                          ),
+                        )
+                      else
+                        AnimatedBuilder(
+                          animation: _animation,
+                          builder: (context, child) {
+                            return Transform.rotate(
+                              angle: _animation.value * 2 * 3.14159,
+                              child: Icon(
+                                Icons.refresh,
+                                color: widget.indicatorColor ?? colors.info,
+                                size: 24,
+                              ),
+                            );
+                          },
+                        ),
+
+                      const SizedBox(height: 8),
+
+                      Text(
+                        _isRefreshing
+                            ? 'Yangilanmoqda...'
+                            : (_dragDistance >= widget.triggerThreshold
+                            ? 'Yangilash uchun qo\'yib yuboring'
+                            : (widget.refreshText ?? 'Yangilash uchun torting')),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.secondaryText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

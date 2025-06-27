@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/themes/app_themes.dart';
 import '../../controllers/auth_controller.dart';
-import '../../widgets/common/app_bar_widget.dart';
-import '../../widgets/common/loading_widget.dart';
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,183 +13,130 @@ class ProfilePage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: colors.primaryBackground,
-      appBar: CustomAppBar(
-        title: 'Profil',
-        showBackButton: true,
+      appBar: AppBar(
+        title: const Text('Profil'),
+        elevation: 0,
+        backgroundColor: colors.info,
+        foregroundColor: Colors.white,
         actions: [
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: colors.primaryText),
-            color: colors.cardBackground,
-            onSelected: (value) => _handleMenuAction(value, authController),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'edit',
-                child: Row(
-                  children: [
-                    Icon(Icons.edit, color: colors.primaryText, size: 20),
-                    const SizedBox(width: 12),
-                    Text('Tahrirlash', style: TextStyle(color: colors.primaryText)),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'settings',
-                child: Row(
-                  children: [
-                    Icon(Icons.settings, color: colors.primaryText, size: 20),
-                    const SizedBox(width: 12),
-                    Text('Sozlamalar', style: TextStyle(color: colors.primaryText)),
-                  ],
-                ),
-              ),
-            ],
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => _showSettingsBottomSheet(context, authController, colors),
           ),
         ],
       ),
-      body: Obx(() {
-        if (authController.isLoading) {
-          return LoadingWidgets.page(message: 'Profil ma\'lumotlari yuklanmoqda...');
-        }
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+      body: RefreshIndicator(
+        onRefresh: () => authController.loadProfile(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
-              // Profile Header
               _buildProfileHeader(authController, colors),
-
               const SizedBox(height: 24),
-
-              // Profile Information
               _buildProfileInfo(authController, colors),
-
               const SizedBox(height: 24),
-
-              // Settings Section
-              _buildSettingsSection(authController, colors),
-
+              _buildQuickActions(authController, colors),
               const SizedBox(height: 24),
-
-              // Actions Section
-              _buildActionsSection(authController, colors),
-
-              const SizedBox(height: 40),
+              _buildAccountActions(authController, colors, context),
             ],
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 
   Widget _buildProfileHeader(AuthController authController, AppThemeColors colors) {
-    final user = authController.currentUser;
-
-    return Card(
-      elevation: 4,
-      color: colors.cardBackground,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: colors.info,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
         child: Column(
           children: [
-            // Profile Avatar
-            Stack(
-              children: [
-                CircleAvatar(
+            // Profile picture
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Obx(() {
+                final user = authController.currentUser;
+                return user != null
+                    ? CircleAvatar(
                   radius: 50,
-                  backgroundColor: colors.info.withOpacity(0.1),
-                  child: user != null
-                      ? Text(
-                    authController.userAvatarText,
+                  backgroundColor: colors.secondaryBackground,
+                  child: Text(
+                    user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: 36,
                       fontWeight: FontWeight.bold,
                       color: colors.info,
                     ),
-                  )
-                      : Icon(
+                  ),
+                )
+                    : CircleAvatar(
+                  radius: 50,
+                  backgroundColor: colors.secondaryBackground,
+                  child: Icon(
                     Icons.person,
-                    size: 50,
-                    color: colors.info,
+                    size: 40,
+                    color: colors.secondaryText,
                   ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: colors.info,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: colors.cardBackground, width: 2),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
-                      onPressed: () => _changeProfilePicture(),
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    ),
-                  ),
-                ),
-              ],
+                );
+              }),
             ),
 
             const SizedBox(height: 16),
 
-            // User Name
-            Text(
-              user?.name ?? 'Noma\'lum foydalanuvchi',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: colors.primaryText,
-              ),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 4),
-
-            // User Role
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: _getRoleColor(authController.selectedRole, colors).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: _getRoleColor(authController.selectedRole, colors).withOpacity(0.3),
+            // User name
+            Obx(() {
+              final user = authController.currentUser;
+              return Text(
+                user?.name ?? 'Foydalanuvchi',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _getRoleIcon(authController.selectedRole),
-                    size: 16,
-                    color: _getRoleColor(authController.selectedRole, colors),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    authController.getRoleDisplayName(authController.selectedRole),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: _getRoleColor(authController.selectedRole, colors),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+              );
+            }),
 
             const SizedBox(height: 8),
 
-            // Greeting Message
-            Text(
-              authController.greetingMessage,
-              style: TextStyle(
-                fontSize: 14,
-                color: colors.secondaryText,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            // User role
+            Obx(() {
+              final profile = authController.profile;
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  profile?.roleUz ?? authController.getRoleDisplayName(authController.selectedRole),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              );
+            }),
           ],
         ),
       ),
@@ -199,219 +144,66 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildProfileInfo(AuthController authController, AppThemeColors colors) {
-    final user = authController.currentUser;
-
-    return Card(
-      elevation: 2,
-      color: colors.cardBackground,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.info_outline, color: colors.info, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Shaxsiy ma\'lumotlar',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: colors.primaryText,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.info_outline, color: colors.info, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Shaxsiy ma\'lumotlar',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: colors.primaryText,
+                    ),
                   ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            _buildInfoRow(
-              icon: Icons.person_outline,
-              label: 'To\'liq ismi',
-              value: user?.name ?? 'Kiritilmagan',
-              colors: colors,
-            ),
-
-            const SizedBox(height: 12),
-
-            _buildInfoRow(
-              icon: Icons.phone_outlined,
-              label: 'Telefon raqami',
-              value: user != null ? authController.formatPhoneForDisplay(user.phone) : 'Kiritilmagan',
-              colors: colors,
-            ),
-
-            const SizedBox(height: 12),
-
-            _buildInfoRow(
-              icon: Icons.work_outline,
-              label: 'Lavozim',
-              value: authController.getRoleDisplayName(authController.selectedRole),
-              colors: colors,
-            ),
-
-            const SizedBox(height: 16),
-
-            // Edit Profile Button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => _editProfile(authController),
-                icon: Icon(Icons.edit, size: 18, color: colors.info),
-                label: Text(
-                  'Ma\'lumotlarni tahrirlash',
-                  style: TextStyle(color: colors.info),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: colors.info),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
+                ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildSettingsSection(AuthController authController, AppThemeColors colors) {
-    return Card(
-      elevation: 2,
-      color: colors.cardBackground,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.settings_outlined, color: colors.info, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Sozlamalar',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: colors.primaryText,
-                  ),
-                ),
-              ],
-            ),
+              const SizedBox(height: 16),
 
-            const SizedBox(height: 16),
+              Obx(() {
+                final profile = authController.profile;
+                final user = authController.currentUser;
 
-            _buildSettingsTile(
-              icon: Icons.lock_outline,
-              title: 'Parolni o\'zgartirish',
-              subtitle: 'Hisobingiz xavfsizligini ta\'minlang',
-              onTap: () => _changePassword(authController),
-              colors: colors,
-            ),
-
-            _buildSettingsTile(
-              icon: Icons.notifications,
-              title: 'Bildirishnomalar',
-              subtitle: 'Push bildirishnomalarni sozlang',
-              onTap: () => _notificationSettings(),
-              colors: colors,
-            ),
-
-            _buildSettingsTile(
-              icon: Icons.palette_outlined,
-              title: 'Mavzu',
-              subtitle: 'Yorug\' yoki qorong\'u mavzuni tanlang',
-              onTap: () => _themeSettings(colors),
-              colors: colors,
-            ),
-
-            _buildSettingsTile(
-              icon: Icons.language_outlined,
-              title: 'Til',
-              subtitle: 'Dastur tilini o\'zgartiring',
-              onTap: () => _languageSettings(),
-              colors: colors,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionsSection(AuthController authController, AppThemeColors colors) {
-    return Card(
-      elevation: 2,
-      color: colors.cardBackground,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.menu_outlined, color: colors.info, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Amallar',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: colors.primaryText,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            _buildActionTile(
-              icon: Icons.help_outline,
-              title: 'Yordam va qo\'llab-quvvatlash',
-              onTap: () => _showHelp(),
-              colors: colors,
-            ),
-
-            _buildActionTile(
-              icon: Icons.info_outline,
-              title: 'Dastur haqida',
-              onTap: () => _showAbout(),
-              colors: colors,
-            ),
-
-            _buildActionTile(
-              icon: Icons.privacy_tip_outlined,
-              title: 'Maxfiylik siyosati',
-              onTap: () => _showPrivacyPolicy(),
-              colors: colors,
-            ),
-
-            const SizedBox(height: 16),
-
-            // Logout Button
-            Obx(() => SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: authController.isLogoutLoading ? null : () => _logout(authController),
-                icon: authController.isLogoutLoading
-                    ? LoadingWidgets.button(size: 18)
-                    : Icon(Icons.logout, size: 18),
-                label: Text(
-                  authController.isLogoutLoading ? 'Chiqilmoqda...' : 'Chiqish',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.error,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            )),
-          ],
+                return Column(
+                  children: [
+                    _buildInfoRow(
+                      icon: Icons.person,
+                      label: 'To\'liq ismi',
+                      value: profile?.fullName ?? user?.name ?? 'Ma\'lumot yo\'q',
+                      colors: colors,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildInfoRow(
+                      icon: Icons.phone,
+                      label: 'Telefon raqami',
+                      value: authController.formatPhoneForDisplay(
+                          profile?.phone ?? user?.phone ?? ''
+                      ),
+                      colors: colors,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildInfoRow(
+                      icon: Icons.badge,
+                      label: 'ID raqami',
+                      value: profile?.id.toString() ?? user?.id.toString() ?? 'Ma\'lumot yo\'q',
+                      colors: colors,
+                    ),
+                  ],
+                );
+              }),
+            ],
+          ),
         ),
       ),
     );
@@ -425,7 +217,7 @@ class ProfilePage extends StatelessWidget {
   }) {
     return Row(
       children: [
-        Icon(icon, color: colors.secondaryText, size: 20),
+        Icon(icon, size: 18, color: colors.secondaryText),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -454,136 +246,55 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingsTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    required AppThemeColors colors,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: colors.secondaryText),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontWeight: FontWeight.w500,
-          color: colors.primaryText,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          fontSize: 12,
-          color: colors.secondaryText,
-        ),
-      ),
-      trailing: Icon(Icons.chevron_right, color: colors.secondaryText),
-      onTap: onTap,
-      contentPadding: EdgeInsets.zero,
-    );
-  }
-
-  Widget _buildActionTile({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    required AppThemeColors colors,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: colors.secondaryText),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontWeight: FontWeight.w500,
-          color: colors.primaryText,
-        ),
-      ),
-      trailing: Icon(Icons.chevron_right, color: colors.secondaryText),
-      onTap: onTap,
-      contentPadding: EdgeInsets.zero,
-    );
-  }
-
-  Color _getRoleColor(String role, AppThemeColors colors) {
-    switch (role) {
-      case 'student':
-        return colors.info;
-      case 'teacher':
-        return colors.success;
-      case 'parent':
-        return colors.warning;
-      default:
-        return colors.secondaryText;
-    }
-  }
-
-  IconData _getRoleIcon(String role) {
-    switch (role) {
-      case 'student':
-        return Icons.school;
-      case 'teacher':
-        return Icons.person;
-      case 'parent':
-        return Icons.family_restroom;
-      default:
-        return Icons.person;
-    }
-  }
-
-  void _handleMenuAction(String action, AuthController authController) {
-    switch (action) {
-      case 'edit':
-        _editProfile(authController);
-        break;
-      case 'settings':
-        Get.toNamed('/settings');
-        break;
-    }
-  }
-
-  void _changeProfilePicture() {
-    Get.bottomSheet(
-      Container(
-        decoration: BoxDecoration(
-          color: Get.theme.cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          child: Wrap(
+  Widget _buildQuickActions(AuthController authController, AppThemeColors colors) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 16, width: double.infinity),
-              const Center(
-                child: Text(
-                  'Profil rasmini o\'zgartirish',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                ),
+              Row(
+                children: [
+                  Icon(Icons.flash_on, color: colors.info, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Tezkor harakatlar',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: colors.primaryText,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16, width: double.infinity),
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: const Text('Kameradan olish'),
-                onTap: () {
-                  Get.back();
-                  // Implement camera functionality
-                },
+
+              const SizedBox(height: 16),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildActionButton(
+                      icon: Icons.edit,
+                      label: 'Tahrirlash',
+                      onTap: () => authController.goToEditProfile(),
+                      colors: colors,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildActionButton(
+                      icon: Icons.lock_reset,
+                      label: 'Parolni o\'zgartirish',
+                      onTap: () => authController.goToChangePassword(),
+                      colors: colors,
+                    ),
+                  ),
+                ],
               ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Galereyadan tanlash'),
-                onTap: () {
-                  Get.back();
-                  // Implement gallery functionality
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete),
-                title: const Text('Rasmni o\'chirish'),
-                onTap: () {
-                  Get.back();
-                  // Implement delete functionality
-                },
-              ),
-              const SizedBox(height: 16, width: double.infinity),
             ],
           ),
         ),
@@ -591,22 +302,141 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  void _editProfile(AuthController authController) {
-    authController.loadProfileData();
-    Get.toNamed('/edit-profile');
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required AppThemeColors colors,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colors.info.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: colors.info, size: 24),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: colors.primaryText,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  void _changePassword(AuthController authController) {
-    Get.toNamed('/change-password');
+  Widget _buildAccountActions(AuthController authController, AppThemeColors colors, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Column(
+          children: [
+            ListTile(
+              leading: Icon(Icons.notifications, color: colors.info),
+              title: Text(
+                'Bildirishnomalar',
+                style: TextStyle(color: colors.primaryText),
+              ),
+              trailing: Icon(Icons.arrow_forward_ios, size: 16, color: colors.secondaryText),
+              onTap: () {
+                // Navigate to notifications
+              },
+            ),
+            Divider(height: 1, color: colors.secondaryText.withOpacity(0.1)),
+            ListTile(
+              leading: Icon(Icons.help, color: colors.info),
+              title: Text(
+                'Yordam',
+                style: TextStyle(color: colors.primaryText),
+              ),
+              trailing: Icon(Icons.arrow_forward_ios, size: 16, color: colors.secondaryText),
+              onTap: () {
+                // Navigate to help
+              },
+            ),
+            Divider(height: 1, color: colors.secondaryText.withOpacity(0.1)),
+            ListTile(
+              leading: Icon(Icons.logout, color: colors.error),
+              title: Text(
+                'Chiqish',
+                style: TextStyle(color: colors.error),
+              ),
+              onTap: () => _showLogoutDialog(context, authController, colors),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  void _notificationSettings() {
-    Get.toNamed('/notification-settings');
+  void _showSettingsBottomSheet(BuildContext context, AuthController authController, AppThemeColors colors) {
+    Get.bottomSheet(
+      Container(
+        decoration: BoxDecoration(
+          color: colors.cardBackground,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.secondaryText.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Sozlamalar',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: colors.primaryText,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Icon(Icons.palette_outlined, color: colors.primaryText),
+                title: Text('Mavzu', style: TextStyle(color: colors.primaryText)),
+                subtitle: Text('Yorug\' yoki qorong\'u mavzuni tanlang', style: TextStyle(color: colors.secondaryText)),
+                onTap: () => _showThemeSelector(context, colors),
+              ),
+              ListTile(
+                leading: Icon(Icons.language_outlined, color: colors.primaryText),
+                title: Text('Til', style: TextStyle(color: colors.primaryText)),
+                subtitle: Text('O\'zbek tili', style: TextStyle(color: colors.secondaryText)),
+                onTap: () {
+                  Get.back();
+                  authController.showInfo('Hozircha faqat o\'zbek tili mavjud');
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  void _themeSettings(AppThemeColors colors) {
-    // Capture current theme mode before showing bottom sheet
-    final currentThemeMode = Get.isDarkMode;
+  void _showThemeSelector(BuildContext context, AppThemeColors colors) {
+    Get.back(); // Close settings
 
     Get.bottomSheet(
       Container(
@@ -615,24 +445,23 @@ class ProfilePage extends StatelessWidget {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
-          child: Wrap(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 16, width: double.infinity),
-              Center(
-                child: Text(
-                  'Mavzuni tanlang',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: colors.primaryText,
-                  ),
+              const SizedBox(height: 16),
+              Text(
+                'Mavzuni tanlang',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: colors.primaryText,
                 ),
               ),
-              const SizedBox(height: 16, width: double.infinity),
+              const SizedBox(height: 16),
               ListTile(
                 leading: Icon(Icons.light_mode, color: colors.primaryText),
                 title: Text('Yorug\' mavzu', style: TextStyle(color: colors.primaryText)),
-                trailing: !currentThemeMode ? Icon(Icons.check, color: colors.info) : null,
+                trailing: !Get.isDarkMode ? Icon(Icons.check, color: colors.info) : null,
                 onTap: () {
                   Get.back();
                   Get.changeThemeMode(ThemeMode.light);
@@ -641,7 +470,7 @@ class ProfilePage extends StatelessWidget {
               ListTile(
                 leading: Icon(Icons.dark_mode, color: colors.primaryText),
                 title: Text('Qorong\'u mavzu', style: TextStyle(color: colors.primaryText)),
-                trailing: currentThemeMode ? Icon(Icons.check, color: colors.info) : null,
+                trailing: Get.isDarkMode ? Icon(Icons.check, color: colors.info) : null,
                 onTap: () {
                   Get.back();
                   Get.changeThemeMode(ThemeMode.dark);
@@ -655,7 +484,7 @@ class ProfilePage extends StatelessWidget {
                   Get.changeThemeMode(ThemeMode.system);
                 },
               ),
-              const SizedBox(height: 16, width: double.infinity),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -663,109 +492,26 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  void _languageSettings() {
+  void _showLogoutDialog(BuildContext context, AuthController authController, AppThemeColors colors) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Til sozlamalari'),
-        content: const Text('Hozircha faqat o\'zbek tili mavjud.'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Yopish'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showHelp() {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Yordam'),
-        content: const Text(
-          'Savollaringiz bo\'lsa, quyidagi manzillarga murojaat qiling:\n\n'
-              '📞 +998 71 123 45 67\n'
-              '📧 support@toshmi.uz\n'
-              '🌐 www.toshmi.uz\n\n'
-              'Ish vaqti: 09:00 - 18:00',
+        title: Text('Chiqish', style: TextStyle(color: colors.primaryText)),
+        content: Text(
+          'Haqiqatan ham hisobingizdan chiqmoqchimisiz?',
+          style: TextStyle(color: colors.secondaryText),
         ),
+        backgroundColor: colors.cardBackground,
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Yopish'),
+            child: Text('Bekor qilish', style: TextStyle(color: colors.secondaryText)),
           ),
-        ],
-      ),
-    );
-  }
-
-  void _showAbout() {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Dastur haqida'),
-        content: const Text(
-          'Toshmi Mobile v1.0.0\n\n'
-              'Ta\'lim muassasalari uchun boshqaruv tizimi.\n\n'
-              '© 2024 Toshmi. Barcha huquqlar himoyalangan.',
-        ),
-        actions: [
           TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Yopish'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPrivacyPolicy() {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Maxfiylik siyosati'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'Biz sizning shaxsiy ma\'lumotlaringizni himoya qilishga majburmiz.\n\n'
-                'To\'planadigan ma\'lumotlar:\n'
-                '• Ism va familiya\n'
-                '• Telefon raqami\n'
-                '• Ta\'lim ma\'lumotlari\n\n'
-                'Ma\'lumotlardan foydalanish:\n'
-                '• Xizmat ko\'rsatish\n'
-                '• Hisobotlar tayyorlash\n'
-                '• Xavfsizlikni ta\'minlash\n\n'
-                'Biz sizning ma\'lumotlaringizni uchinchi tomonlarga bermayamiz.',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Yopish'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _logout(AuthController authController) {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Tizimdan chiqish'),
-        content: const Text('Rostdan ham tizimdan chiqmoqchimisiz?'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Bekor qilish'),
-          ),
-          ElevatedButton(
             onPressed: () {
               Get.back();
               authController.logout();
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Chiqish'),
+            child: Text('Chiqish', style: TextStyle(color: colors.error)),
           ),
         ],
       ),

@@ -9,87 +9,59 @@ import 'app/routes/app_routes.dart';
 import 'core/themes/app_themes.dart';
 
 void main() async {
-  // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize GetStorage for local data persistence
   await GetStorage.init();
 
-  // Set preferred orientations (portrait only)
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
   ]);
 
-  // Configure system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Colors.white,
-      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
 
-  // Run the app
-  runApp(const MyApp());
+  runApp(const ToshmiApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class ToshmiApp extends StatelessWidget {
+  const ToshmiApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      // App Configuration
       title: 'Toshmi Mobile',
       debugShowCheckedModeBanner: false,
-
-      // Dependency Injection
       initialBinding: InitialBinding(),
-
-      // Theme Configuration
       theme: AppThemes.lightTheme,
       darkTheme: AppThemes.darkTheme,
-      themeMode: _getInitialThemeMode(),
-
-      // Localization
+      themeMode: _getThemeMode(),
       locale: const Locale('uz', 'UZ'),
-      fallbackLocale: const Locale('uz', 'UZ'),
-
-      // Navigation Configuration
       initialRoute: AppRoutes.SPLASH,
       getPages: AppPages.routes,
       unknownRoute: AppPages.unknownRoute,
-
-      // Performance
-      smartManagement: SmartManagement.full,
-
-      // Accessibility
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.2),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(
+          textScaler: MediaQuery.of(context).textScaler.clamp(
+            minScaleFactor: 0.8,
+            maxScaleFactor: 1.2,
           ),
-          child: child!,
-        );
-      },
+        ),
+        child: child!,
+      ),
     );
   }
 
-  /// Determine initial theme mode based on saved preference
-  ThemeMode _getInitialThemeMode() {
+  ThemeMode _getThemeMode() {
     final storage = GetStorage();
     final savedTheme = storage.read<String>('theme_mode');
-
-    switch (savedTheme) {
-      case 'light':
-        return ThemeMode.light;
-      case 'dark':
-        return ThemeMode.dark;
-      case 'system':
-      default:
-        return ThemeMode.system;
-    }
+    return switch (savedTheme) {
+      'light' => ThemeMode.light,
+      'dark' => ThemeMode.dark,
+      _ => ThemeMode.system,
+    };
   }
 }

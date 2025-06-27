@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:toshmi_mobile/core/themes/app_themes.dart';
+import 'package:get/get.dart';
+import '../../../core/themes/app_themes.dart';
 
 /// Custom error widget with theming support
 class CustomErrorWidget extends StatelessWidget {
@@ -17,7 +18,7 @@ class CustomErrorWidget extends StatelessWidget {
   final ErrorType errorType;
 
   const CustomErrorWidget({
-    Key? key,
+    super.key,
     required this.title,
     this.message,
     this.details,
@@ -30,7 +31,7 @@ class CustomErrorWidget extends StatelessWidget {
     this.showDetails = false,
     this.backgroundColor,
     this.errorType = ErrorType.general,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +65,7 @@ class CustomErrorWidget extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Error title
+          // Title
           Text(
             title,
             style: TextStyle(
@@ -75,7 +76,6 @@ class CustomErrorWidget extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
 
-          // Error message
           if (message != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -89,22 +89,21 @@ class CustomErrorWidget extends StatelessWidget {
             ),
           ],
 
-          // Error details (expandable)
-          if (details != null && details!.isNotEmpty) ...[
-            const SizedBox(height: 12),
+          // Expandable details
+          if (details != null && showDetails) ...[
+            const SizedBox(height: 16),
             ExpansionTile(
               title: Text(
-                'Batafsil ma\'lumot',
+                'Texnik ma\'lumotlar',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 12,
                   color: colors.secondaryText,
                 ),
               ),
-              initiallyExpanded: showDetails,
               children: [
                 Container(
+                  width: double.infinity,
                   padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
                     color: colors.secondaryBackground,
                     borderRadius: BorderRadius.circular(8),
@@ -112,9 +111,9 @@ class CustomErrorWidget extends StatelessWidget {
                   child: Text(
                     details!,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 10,
                       fontFamily: 'monospace',
-                      color: colors.tertiaryText,
+                      color: colors.secondaryText,
                     ),
                   ),
                 ),
@@ -124,15 +123,20 @@ class CustomErrorWidget extends StatelessWidget {
 
           // Action buttons
           if (onRetry != null || onDismiss != null) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (onDismiss != null) ...[
-                  TextButton(
+                  OutlinedButton(
                     onPressed: onDismiss,
-                    style: TextButton.styleFrom(
+                    style: OutlinedButton.styleFrom(
                       foregroundColor: colors.secondaryText,
+                      side: BorderSide(color: colors.secondaryText),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                     ),
                     child: Text(dismissText ?? 'Yopish'),
                   ),
@@ -161,35 +165,23 @@ class CustomErrorWidget extends StatelessWidget {
   }
 
   Color _getErrorColor(AppThemeColors colors) {
-    switch (errorType) {
-      case ErrorType.network:
-        return colors.warning;
-      case ErrorType.server:
-        return colors.error;
-      case ErrorType.validation:
-        return colors.warning;
-      case ErrorType.permission:
-        return colors.error;
-      case ErrorType.general:
-      default:
-        return colors.error;
-    }
+    return switch (errorType) {
+      ErrorType.network => colors.warning,
+      ErrorType.server => colors.error,
+      ErrorType.validation => colors.warning,
+      ErrorType.permission => colors.error,
+      ErrorType.general => colors.error,
+    };
   }
 
   IconData _getErrorIcon() {
-    switch (errorType) {
-      case ErrorType.network:
-        return Icons.wifi_off_outlined;
-      case ErrorType.server:
-        return Icons.error_outline;
-      case ErrorType.validation:
-        return Icons.warning_outlined;
-      case ErrorType.permission:
-        return Icons.lock_outline;
-      case ErrorType.general:
-      default:
-        return Icons.error_outline;
-    }
+    return switch (errorType) {
+      ErrorType.network => Icons.wifi_off_outlined,
+      ErrorType.server => Icons.error_outline,
+      ErrorType.validation => Icons.warning_outlined,
+      ErrorType.permission => Icons.lock_outline,
+      ErrorType.general => Icons.error_outline,
+    };
   }
 }
 
@@ -210,12 +202,12 @@ class InlineErrorWidget extends StatelessWidget {
   final EdgeInsets padding;
 
   const InlineErrorWidget({
-    Key? key,
+    super.key,
     required this.message,
     this.icon,
     this.color,
     this.padding = const EdgeInsets.symmetric(vertical: 8),
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -247,52 +239,99 @@ class InlineErrorWidget extends StatelessWidget {
   }
 }
 
-/// Snackbar-style error notification
-class ErrorSnackBar extends SnackBar {
-  ErrorSnackBar({
-    Key? key,
-    required String message,
-    String? actionLabel,
-    VoidCallback? onActionPressed,
-    Duration duration = const Duration(seconds: 4),
-  }) : super(
-    key: key,
-    content: Row(
-      children: [
-        const Icon(
-          Icons.error_outline,
-          color: Colors.white,
-          size: 20,
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            message,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
+/// Full-screen error page
+class ErrorPage extends StatelessWidget {
+  final String title;
+  final String? message;
+  final VoidCallback? onRetry;
+  final VoidCallback? onGoHome;
+
+  const ErrorPage({
+    super.key,
+    required this.title,
+    this.message,
+    this.onRetry,
+    this.onGoHome,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Scaffold(
+      backgroundColor: colors.primaryBackground,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 80,
+                  color: colors.error,
+                ),
+
+                const SizedBox(height: 24),
+
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: colors.primaryText,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                if (message != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    message!,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: colors.secondaryText,
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+
+                const SizedBox(height: 32),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (onGoHome != null) ...[
+                      OutlinedButton(
+                        onPressed: onGoHome,
+                        child: const Text('Bosh sahifa'),
+                      ),
+                      if (onRetry != null) const SizedBox(width: 16),
+                    ],
+                    if (onRetry != null) ...[
+                      ElevatedButton(
+                        onPressed: onRetry,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colors.info,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Qayta urinish'),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
             ),
           ),
         ),
-      ],
-    ),
-    backgroundColor: Colors.red[600],
-    duration: duration,
-    action: actionLabel != null && onActionPressed != null
-        ? SnackBarAction(
-      label: actionLabel,
-      textColor: Colors.white,
-      onPressed: onActionPressed,
-    )
-        : null,
-    behavior: SnackBarBehavior.floating,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8),
-    ),
-  );
+      ),
+    );
+  }
 }
 
-/// Predefined error widgets for common scenarios
+/// Pre-configured error widgets for common scenarios
 class ErrorWidgets {
   /// Network connection error
   static Widget networkError({VoidCallback? onRetry}) {
@@ -300,215 +339,89 @@ class ErrorWidgets {
       title: 'Internet aloqasi yo\'q',
       message: 'Internet aloqasini tekshiring va qayta urinib ko\'ring.',
       errorType: ErrorType.network,
-      retryText: 'Qayta urinish',
       onRetry: onRetry,
+      retryText: 'Qayta urinish',
     );
   }
 
   /// Server error
-  static Widget serverError({VoidCallback? onRetry, String? details}) {
+  static Widget serverError({VoidCallback? onRetry}) {
     return CustomErrorWidget(
       title: 'Server xatosi',
       message: 'Serverda muammo yuz berdi. Iltimos, keyinroq qayta urinib ko\'ring.',
-      details: details,
       errorType: ErrorType.server,
-      retryText: 'Qayta urinish',
       onRetry: onRetry,
+      retryText: 'Qayta yuklash',
     );
   }
 
   /// Authentication error
   static Widget authError({VoidCallback? onLogin}) {
     return CustomErrorWidget(
-      title: 'Autentifikatsiya xatosi',
-      message: 'Tizimga kirishda muammo. Iltimos, qayta kiring.',
+      title: 'Avtorizatsiya xatosi',
+      message: 'Hisobingizga kirishda muammo yuz berdi. Qayta kirish talab etiladi.',
       errorType: ErrorType.permission,
-      retryText: 'Qayta kirish',
       onRetry: onLogin,
+      retryText: 'Qayta kirish',
     );
   }
 
   /// Validation error
-  static Widget validationError({
-    required String message,
-    VoidCallback? onRetry,
-  }) {
+  static Widget validationError(String message, {VoidCallback? onDismiss}) {
     return CustomErrorWidget(
       title: 'Ma\'lumot xatosi',
       message: message,
       errorType: ErrorType.validation,
-      retryText: 'Qayta urinish',
-      onRetry: onRetry,
+      onDismiss: onDismiss,
+      dismissText: 'Tushundim',
     );
   }
 
   /// Permission denied error
-  static Widget permissionDenied() {
+  static Widget permissionDenied({VoidCallback? onContactSupport}) {
     return CustomErrorWidget(
-      title: 'Ruxsat berilmagan',
-      message: 'Sizda bu amalni bajarish huquqi yo\'q.',
+      title: 'Ruxsat rad etildi',
+      message: 'Bu amalni bajarish uchun sizda yetarli ruxsat yo\'q.',
       errorType: ErrorType.permission,
+      onRetry: onContactSupport,
+      retryText: 'Yordam so\'rash',
     );
   }
 
-  /// Data loading error
-  static Widget loadingError({
-    required String dataType,
-    VoidCallback? onRetry,
-    String? details,
-  }) {
+  /// File operation error
+  static Widget fileError({VoidCallback? onRetry}) {
     return CustomErrorWidget(
-      title: '$dataType yuklanmadi',
-      message: 'Ma\'lumotlarni yuklashda xatolik yuz berdi.',
-      details: details,
+      title: 'Fayl xatosi',
+      message: 'Faylni yuklash yoki saqlashda xatolik yuz berdi.',
       errorType: ErrorType.general,
-      retryText: 'Qayta yuklash',
       onRetry: onRetry,
-    );
-  }
-
-  /// File upload error
-  static Widget uploadError({
-    VoidCallback? onRetry,
-    String? fileName,
-  }) {
-    return CustomErrorWidget(
-      title: 'Fayl yuklanmadi',
-      message: fileName != null
-          ? '$fileName faylini yuklashda xatolik yuz berdi.'
-          : 'Faylni yuklashda xatolik yuz berdi.',
-      errorType: ErrorType.general,
-      retryText: 'Qayta yuklash',
-      onRetry: onRetry,
-    );
-  }
-
-  /// Search error
-  static Widget searchError({
-    required String query,
-    VoidCallback? onRetry,
-  }) {
-    return CustomErrorWidget(
-      title: 'Qidiruv xatosi',
-      message: '"$query" bo\'yicha qidirishda xatolik yuz berdi.',
-      errorType: ErrorType.general,
-      retryText: 'Qayta qidirish',
-      onRetry: onRetry,
-    );
-  }
-
-  /// Generic error with custom message
-  static Widget generic({
-    required String message,
-    VoidCallback? onRetry,
-    String? details,
-  }) {
-    return CustomErrorWidget(
-      title: 'Xatolik yuz berdi',
-      message: message,
-      details: details,
-      errorType: ErrorType.general,
       retryText: 'Qayta urinish',
-      onRetry: onRetry,
     );
   }
 }
 
-/// Error boundary widget for catching and displaying widget errors
-class ErrorBoundary extends StatefulWidget {
-  final Widget child;
-  final Widget Function(FlutterErrorDetails)? errorBuilder;
-  final void Function(FlutterErrorDetails)? onError;
-
-  const ErrorBoundary({
-    Key? key,
-    required this.child,
-    this.errorBuilder,
-    this.onError,
-  }) : super(key: key);
-
-  @override
-  State<ErrorBoundary> createState() => _ErrorBoundaryState();
-}
-
-class _ErrorBoundaryState extends State<ErrorBoundary> {
-  FlutterErrorDetails? _errorDetails;
-
-  @override
-  void initState() {
-    super.initState();
-    FlutterError.onError = (details) {
-      if (mounted) {
-        setState(() {
-          _errorDetails = details;
-        });
-      }
-      widget.onError?.call(details);
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_errorDetails != null) {
-      return widget.errorBuilder?.call(_errorDetails!) ??
-          ErrorWidgets.generic(
-            message: 'Dasturda xatolik yuz berdi',
-            details: _errorDetails!.exceptionAsString(),
-            onRetry: () {
-              setState(() {
-                _errorDetails = null;
-              });
-            },
-          );
-    }
-
-    return widget.child;
-  }
-}
-
-/// Utility class for showing error dialogs and snackbars
-class ErrorUtils {
-  /// Show error dialog
-  static Future<void> showErrorDialog(
-      BuildContext context, {
-        required String title,
-        required String message,
-        String? details,
-        VoidCallback? onRetry,
-      }) {
-    return showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        content: CustomErrorWidget(
-          title: title,
-          message: message,
-          details: details,
-          onRetry: onRetry,
-          onDismiss: () => Navigator.of(context).pop(),
-          padding: EdgeInsets.zero,
+/// Error snackbar helper
+class ErrorSnackBar {
+  static void show(String message, {String? title, VoidCallback? onRetry}) {
+    Get.snackbar(
+      title ?? 'Xatolik',
+      message,
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: Colors.red.withOpacity(0.9),
+      colorText: Colors.white,
+      duration: const Duration(seconds: 4),
+      margin: const EdgeInsets.all(16),
+      borderRadius: 8,
+      icon: const Icon(Icons.error, color: Colors.white),
+      mainButton: onRetry != null
+          ? TextButton(
+        onPressed: onRetry,
+        child: const Text(
+          'Qayta urinish',
+          style: TextStyle(color: Colors.white),
         ),
-      ),
+      )
+          : null,
     );
-  }
-
-  /// Show error snackbar
-  static void showErrorSnackBar(
-      BuildContext context, {
-        required String message,
-        String? actionLabel,
-        VoidCallback? onActionPressed,
-      }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      ErrorSnackBar(
-        message: message,
-        actionLabel: actionLabel,
-        onActionPressed: onActionPressed,
-      ),
-    );
-  }
-
-  /// Show inline error
-  static Widget showInlineError(String message) {
-    return InlineErrorWidget(message: message);
   }
 }

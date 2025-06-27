@@ -4,7 +4,6 @@ import 'package:get_storage/get_storage.dart';
 import '../../presentation/controllers/auth_controller.dart';
 import '../routes/app_routes.dart';
 
-/// Simple authentication middleware for protecting routes
 class AuthMiddleware extends GetMiddleware {
   @override
   int? get priority => 1;
@@ -25,7 +24,6 @@ class AuthMiddleware extends GetMiddleware {
     return null;
   }
 
-  /// Check if route is public (no auth required)
   bool _isPublicRoute(String? route) {
     const publicRoutes = [
       AppRoutes.LOGIN,
@@ -34,7 +32,6 @@ class AuthMiddleware extends GetMiddleware {
     return route != null && publicRoutes.contains(route);
   }
 
-  /// Check authentication status
   bool _isAuthenticated() {
     try {
       // Try to get from controller first
@@ -43,13 +40,12 @@ class AuthMiddleware extends GetMiddleware {
     } catch (e) {
       // Fallback: check storage directly
       final storage = GetStorage();
-      final token = storage.read<String>('auth_token');
+      final token = storage.read<String>('user_token');
       return token != null && token.isNotEmpty;
     }
   }
 }
 
-/// Guest middleware - redirects authenticated users away from login
 class GuestMiddleware extends GetMiddleware {
   @override
   int? get priority => 1;
@@ -69,8 +65,35 @@ class GuestMiddleware extends GetMiddleware {
       return authController.isAuthenticated;
     } catch (e) {
       final storage = GetStorage();
-      final token = storage.read<String>('auth_token');
+      final token = storage.read<String>('user_token');
       return token != null && token.isNotEmpty;
+    }
+  }
+}
+
+class RoleMiddleware extends GetMiddleware {
+  final List<String> allowedRoles;
+
+  RoleMiddleware({required this.allowedRoles});
+
+  @override
+  int? get priority => 2; // After auth middleware
+
+  @override
+  RouteSettings? redirect(String? route) {
+    try {
+      final authController = Get.find<AuthController>();
+      final userRole = authController.selectedRole;
+
+      if (!allowedRoles.contains(userRole)) {
+        print('❌ RoleMiddleware: User role $userRole not allowed for $route');
+        return const RouteSettings(name: AppRoutes.PROFILE);
+      }
+
+      return null;
+    } catch (e) {
+      print('❌ RoleMiddleware: Error checking role - $e');
+      return const RouteSettings(name: AppRoutes.LOGIN);
     }
   }
 }

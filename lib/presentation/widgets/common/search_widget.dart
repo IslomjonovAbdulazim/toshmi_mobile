@@ -1,49 +1,183 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
+import 'package:get/get.dart';
 import '../../../core/themes/app_themes.dart';
 
-/// Custom search widget with theming and debouncing
-class CustomSearchWidget extends StatefulWidget {
-  final String hintText;
+/// Custom search bar widget with enhanced features
+class CustomSearchBar extends StatefulWidget {
+  final String? hintText;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final VoidCallback? onClear;
+  final VoidCallback? onTap;
   final TextEditingController? controller;
   final bool autofocus;
-  final Duration debounceTime;
+  final bool enabled;
+  final bool readOnly;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
   final List<String>? suggestions;
-  final Widget? leading;
-  final List<Widget>? actions;
-  final bool showClearButton;
-  final EdgeInsets padding;
-  final TextInputType keyboardType;
+  final Color? backgroundColor;
+  final Color? borderColor;
+  final double borderRadius;
+  final EdgeInsets contentPadding;
+  final TextStyle? textStyle;
+  final TextStyle? hintStyle;
 
-  const CustomSearchWidget({
-    Key? key,
-    this.hintText = 'Qidirish...',
+  const CustomSearchBar({
+    super.key,
+    this.hintText,
     this.onChanged,
     this.onSubmitted,
     this.onClear,
+    this.onTap,
     this.controller,
     this.autofocus = false,
-    this.debounceTime = const Duration(milliseconds: 300),
+    this.enabled = true,
+    this.readOnly = false,
+    this.prefixIcon,
+    this.suffixIcon,
     this.suggestions,
-    this.leading,
-    this.actions,
-    this.showClearButton = true,
-    this.padding = const EdgeInsets.all(16),
-    this.keyboardType = TextInputType.text,
-  }) : super(key: key);
+    this.backgroundColor,
+    this.borderColor,
+    this.borderRadius = 12.0,
+    this.contentPadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    this.textStyle,
+    this.hintStyle,
+  });
 
   @override
-  State<CustomSearchWidget> createState() => _CustomSearchWidgetState();
+  State<CustomSearchBar> createState() => _CustomSearchBarState();
 }
 
-class _CustomSearchWidgetState extends State<CustomSearchWidget> {
+class _CustomSearchBarState extends State<CustomSearchBar> {
   late TextEditingController _controller;
-  Timer? _debounceTimer;
   final FocusNode _focusNode = FocusNode();
-  bool _showSuggestions = false;
+  bool _showClearButton = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = widget.controller ?? TextEditingController();
+    _controller.addListener(_updateClearButton);
+
+    if (widget.autofocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _focusNode.requestFocus();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    if (widget.controller == null) {
+      _controller.dispose();
+    }
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _updateClearButton() {
+    final showClear = _controller.text.isNotEmpty;
+    if (showClear != _showClearButton) {
+      setState(() {
+        _showClearButton = showClear;
+      });
+    }
+  }
+
+  void _clearSearch() {
+    _controller.clear();
+    widget.onClear?.call();
+    widget.onChanged?.call('');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: widget.backgroundColor ?? colors.cardBackground,
+        borderRadius: BorderRadius.circular(widget.borderRadius),
+        border: Border.all(
+          color: widget.borderColor ?? colors.secondaryText.withOpacity(0.2),
+        ),
+      ),
+      child: TextField(
+        controller: _controller,
+        focusNode: _focusNode,
+        onChanged: widget.onChanged,
+        onSubmitted: widget.onSubmitted,
+        onTap: widget.onTap,
+        autofocus: widget.autofocus,
+        enabled: widget.enabled,
+        readOnly: widget.readOnly,
+        style: widget.textStyle ?? TextStyle(
+          color: colors.primaryText,
+          fontSize: 16,
+        ),
+        decoration: InputDecoration(
+          hintText: widget.hintText ?? 'Qidirish...',
+          hintStyle: widget.hintStyle ?? TextStyle(
+            color: colors.secondaryText,
+            fontSize: 16,
+          ),
+          border: InputBorder.none,
+          contentPadding: widget.contentPadding,
+          prefixIcon: widget.prefixIcon ?? Icon(
+            Icons.search,
+            color: colors.secondaryText,
+          ),
+          suffixIcon: widget.suffixIcon ?? (_showClearButton
+              ? IconButton(
+            icon: Icon(
+              Icons.clear,
+              color: colors.secondaryText,
+            ),
+            onPressed: _clearSearch,
+          )
+              : null),
+        ),
+      ),
+    );
+  }
+}
+
+/// Search bar with suggestions dropdown
+class SearchBarWithSuggestions extends StatefulWidget {
+  final String? hintText;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final ValueChanged<String>? onSuggestionSelected;
+  final TextEditingController? controller;
+  final List<String> suggestions;
+  final int maxSuggestions;
+  final bool showSuggestionsOnFocus;
+  final Widget Function(String suggestion)? suggestionBuilder;
+
+  const SearchBarWithSuggestions({
+    super.key,
+    this.hintText,
+    this.onChanged,
+    this.onSubmitted,
+    this.onSuggestionSelected,
+    this.controller,
+    required this.suggestions,
+    this.maxSuggestions = 5,
+    this.showSuggestionsOnFocus = false,
+    this.suggestionBuilder,
+  });
+
+  @override
+  State<SearchBarWithSuggestions> createState() => _SearchBarWithSuggestionsState();
+}
+
+class _SearchBarWithSuggestionsState extends State<SearchBarWithSuggestions> {
+  late TextEditingController _controller;
+  final FocusNode _focusNode = FocusNode();
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+  List<String> _filteredSuggestions = [];
 
   @override
   void initState() {
@@ -55,7 +189,9 @@ class _CustomSearchWidgetState extends State<CustomSearchWidget> {
 
   @override
   void dispose() {
-    _debounceTimer?.cancel();
+    _removeOverlay();
+    _focusNode.removeListener(_onFocusChanged);
+    _controller.removeListener(_onTextChanged);
     if (widget.controller == null) {
       _controller.dispose();
     }
@@ -64,224 +200,185 @@ class _CustomSearchWidgetState extends State<CustomSearchWidget> {
   }
 
   void _onTextChanged() {
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(widget.debounceTime, () {
-      if (widget.onChanged != null) {
-        widget.onChanged!(_controller.text);
-      }
-    });
+    final query = _controller.text.toLowerCase();
 
-    setState(() {
-      _showSuggestions = _controller.text.isNotEmpty &&
-          widget.suggestions != null &&
-          widget.suggestions!.isNotEmpty;
-    });
+    if (query.isEmpty) {
+      if (widget.showSuggestionsOnFocus && _focusNode.hasFocus) {
+        _updateSuggestions(widget.suggestions);
+      } else {
+        _removeOverlay();
+      }
+    } else {
+      final filtered = widget.suggestions
+          .where((suggestion) => suggestion.toLowerCase().contains(query))
+          .take(widget.maxSuggestions)
+          .toList();
+      _updateSuggestions(filtered);
+    }
+
+    widget.onChanged?.call(_controller.text);
   }
 
   void _onFocusChanged() {
-    setState(() {
-      _showSuggestions = _focusNode.hasFocus &&
-          _controller.text.isNotEmpty &&
-          widget.suggestions != null &&
-          widget.suggestions!.isNotEmpty;
-    });
+    if (_focusNode.hasFocus) {
+      if (widget.showSuggestionsOnFocus || _controller.text.isNotEmpty) {
+        _onTextChanged();
+      }
+    } else {
+      Future.delayed(const Duration(milliseconds: 150), () {
+        _removeOverlay();
+      });
+    }
   }
 
-  void _clearSearch() {
-    _controller.clear();
-    widget.onClear?.call();
-    if (widget.onChanged != null) {
-      widget.onChanged!('');
+  void _updateSuggestions(List<String> suggestions) {
+    _filteredSuggestions = suggestions;
+
+    if (suggestions.isNotEmpty) {
+      _showOverlay();
+    } else {
+      _removeOverlay();
     }
+  }
+
+  void _showOverlay() {
+    _removeOverlay();
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => _buildSuggestionOverlay(),
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  Widget _buildSuggestionOverlay() {
+    final colors = context.colors;
+
+    return Positioned(
+      width: context.width - 32, // Account for padding
+      child: CompositedTransformFollower(
+        link: _layerLink,
+        showWhenUnlinked: false,
+        offset: const Offset(0, 60),
+        child: Material(
+          elevation: 4,
+          borderRadius: BorderRadius.circular(8),
+          color: colors.cardBackground,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 200),
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              itemCount: _filteredSuggestions.length,
+              itemBuilder: (context, index) {
+                final suggestion = _filteredSuggestions[index];
+                return widget.suggestionBuilder?.call(suggestion) ??
+                    _buildDefaultSuggestionTile(suggestion, colors);
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDefaultSuggestionTile(String suggestion, AppThemeColors colors) {
+    return ListTile(
+      dense: true,
+      title: Text(
+        suggestion,
+        style: TextStyle(color: colors.primaryText),
+      ),
+      leading: Icon(
+        Icons.search,
+        color: colors.secondaryText,
+        size: 20,
+      ),
+      onTap: () {
+        _controller.text = suggestion;
+        _removeOverlay();
+        _focusNode.unfocus();
+        widget.onSuggestionSelected?.call(suggestion);
+        widget.onSubmitted?.call(suggestion);
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-
-    return Padding(
-      padding: widget.padding,
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: colors.cardBackground,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _focusNode.hasFocus ? colors.info : colors.border,
-              ),
-              boxShadow: _focusNode.hasFocus ? [
-                BoxShadow(
-                  color: colors.info.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ] : null,
-            ),
-            child: Row(
-              children: [
-                // Leading widget or default search icon
-                Padding(
-                  padding: const EdgeInsets.only(left: 16),
-                  child: widget.leading ?? Icon(
-                    Icons.search,
-                    color: colors.secondaryText,
-                    size: 20,
-                  ),
-                ),
-
-                // Search input field
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    focusNode: _focusNode,
-                    autofocus: widget.autofocus,
-                    keyboardType: widget.keyboardType,
-                    style: TextStyle(
-                      color: colors.primaryText,
-                      fontSize: 16,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: widget.hintText,
-                      hintStyle: TextStyle(
-                        color: colors.secondaryText,
-                        fontSize: 16,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                    ),
-                    onSubmitted: widget.onSubmitted,
-                    textInputAction: TextInputAction.search,
-                  ),
-                ),
-
-                // Clear button
-                if (widget.showClearButton && _controller.text.isNotEmpty)
-                  IconButton(
-                    onPressed: _clearSearch,
-                    icon: Icon(
-                      Icons.clear,
-                      color: colors.secondaryText,
-                      size: 20,
-                    ),
-                    tooltip: 'Tozalash',
-                  ),
-
-                // Action buttons
-                if (widget.actions != null) ...widget.actions!,
-              ],
-            ),
-          ),
-
-          // Suggestions dropdown
-          if (_showSuggestions) ...[
-            const SizedBox(height: 8),
-            _buildSuggestionsDropdown(colors),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSuggestionsDropdown(AppThemeColors colors) {
-    final filteredSuggestions = widget.suggestions!
-        .where((suggestion) => suggestion
-        .toLowerCase()
-        .contains(_controller.text.toLowerCase()))
-        .take(5)
-        .toList();
-
-    if (filteredSuggestions.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListView.separated(
-        shrinkWrap: true,
-        itemCount: filteredSuggestions.length,
-        separatorBuilder: (context, index) => Divider(
-          height: 1,
-          color: colors.divider,
-        ),
-        itemBuilder: (context, index) {
-          final suggestion = filteredSuggestions[index];
-          return ListTile(
-            dense: true,
-            leading: Icon(
-              Icons.history,
-              color: colors.secondaryText,
-              size: 18,
-            ),
-            title: Text(
-              suggestion,
-              style: TextStyle(
-                color: colors.primaryText,
-                fontSize: 14,
-              ),
-            ),
-            onTap: () {
-              _controller.text = suggestion;
-              widget.onSubmitted?.call(suggestion);
-              setState(() {
-                _showSuggestions = false;
-              });
-              _focusNode.unfocus();
-            },
-          );
-        },
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: CustomSearchBar(
+        controller: _controller,
+        // focusNode: _focusNode,
+        hintText: widget.hintText,
+        onSubmitted: widget.onSubmitted,
       ),
     );
   }
 }
 
-/// Compact search bar for app bars
-class CompactSearchBar extends StatefulWidget {
-  final String hintText;
+/// Expandable search bar
+class ExpandableSearchBar extends StatefulWidget {
+  final String? hintText;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final VoidCallback? onClosed;
   final TextEditingController? controller;
-  final bool autofocus;
+  final IconData? searchIcon;
+  final IconData? closeIcon;
+  final Color? backgroundColor;
+  final Color? iconColor;
+  final Duration animationDuration;
 
-  const CompactSearchBar({
-    Key? key,
-    this.hintText = 'Qidirish...',
+  const ExpandableSearchBar({
+    super.key,
+    this.hintText,
     this.onChanged,
     this.onSubmitted,
     this.onClosed,
     this.controller,
-    this.autofocus = true,
-  }) : super(key: key);
+    this.searchIcon,
+    this.closeIcon,
+    this.backgroundColor,
+    this.iconColor,
+    this.animationDuration = const Duration(milliseconds: 300),
+  });
 
   @override
-  State<CompactSearchBar> createState() => _CompactSearchBarState();
+  State<ExpandableSearchBar> createState() => _ExpandableSearchBarState();
 }
 
-class _CompactSearchBarState extends State<CompactSearchBar> {
+class _ExpandableSearchBarState extends State<ExpandableSearchBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _animation;
   late TextEditingController _controller;
   final FocusNode _focusNode = FocusNode();
+  bool _isExpanded = false;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: widget.animationDuration,
+      vsync: this,
+    );
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
     _controller = widget.controller ?? TextEditingController();
   }
 
   @override
   void dispose() {
+    _animationController.dispose();
     if (widget.controller == null) {
       _controller.dispose();
     }
@@ -289,563 +386,190 @@ class _CompactSearchBarState extends State<CompactSearchBar> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
+  void _toggleSearch() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
 
-    return Container(
-      height: 40,
-      decoration: BoxDecoration(
-        color: colors.secondaryBackground,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 16),
-          Icon(
-            Icons.search,
-            color: colors.secondaryText,
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              focusNode: _focusNode,
-              autofocus: widget.autofocus,
-              style: TextStyle(
-                color: colors.primaryText,
-                fontSize: 14,
-              ),
-              decoration: InputDecoration(
-                hintText: widget.hintText,
-                hintStyle: TextStyle(
-                  color: colors.secondaryText,
-                  fontSize: 14,
-                ),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-              ),
-              onChanged: widget.onChanged,
-              onSubmitted: widget.onSubmitted,
-              textInputAction: TextInputAction.search,
-            ),
-          ),
-          if (_controller.text.isNotEmpty)
-            IconButton(
-              onPressed: () {
-                _controller.clear();
-                widget.onChanged?.call('');
-              },
-              icon: Icon(
-                Icons.clear,
-                color: colors.secondaryText,
-                size: 18,
-              ),
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(
-                minWidth: 32,
-                minHeight: 32,
-              ),
-            ),
-          const SizedBox(width: 8),
-        ],
-      ),
-    );
-  }
-}
-
-/// Search filter chips
-class SearchFilterChips extends StatefulWidget {
-  final List<SearchFilter> filters;
-  final ValueChanged<List<SearchFilter>>? onFiltersChanged;
-  final EdgeInsets padding;
-  final bool isScrollable;
-
-  const SearchFilterChips({
-    Key? key,
-    required this.filters,
-    this.onFiltersChanged,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    this.isScrollable = true,
-  }) : super(key: key);
-
-  @override
-  State<SearchFilterChips> createState() => _SearchFilterChipsState();
-}
-
-class _SearchFilterChipsState extends State<SearchFilterChips> {
-  late List<SearchFilter> _filters;
-
-  @override
-  void initState() {
-    super.initState();
-    _filters = List.from(widget.filters);
-  }
-
-  @override
-  void didUpdateWidget(SearchFilterChips oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.filters != oldWidget.filters) {
-      _filters = List.from(widget.filters);
+    if (_isExpanded) {
+      _animationController.forward();
+      Future.delayed(widget.animationDuration, () {
+        _focusNode.requestFocus();
+      });
+    } else {
+      _animationController.reverse();
+      _focusNode.unfocus();
+      _controller.clear();
+      widget.onClosed?.call();
     }
   }
 
-  void _toggleFilter(int index) {
-    setState(() {
-      _filters[index] = _filters[index].copyWith(
-        isSelected: !_filters[index].isSelected,
-      );
-    });
-    widget.onFiltersChanged?.call(_filters);
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    Widget content = Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: _filters.asMap().entries.map((entry) {
-        final index = entry.key;
-        final filter = entry.value;
-
-        return FilterChip(
-          label: Text(filter.label),
-          selected: filter.isSelected,
-          onSelected: (_) => _toggleFilter(index),
-          backgroundColor: colors.cardBackground,
-          selectedColor: colors.info.withOpacity(0.2),
-          checkmarkColor: colors.info,
-          labelStyle: TextStyle(
-            color: filter.isSelected ? colors.info : colors.primaryText,
-            fontSize: 12,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: filter.isSelected ? colors.info : colors.border,
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Container(
+          width: _isExpanded ? double.infinity : 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: widget.backgroundColor ?? colors.cardBackground,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: colors.secondaryText.withOpacity(0.2),
             ),
           ),
-        );
-      }).toList(),
-    );
-
-    if (widget.isScrollable) {
-      content = SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: _filters.asMap().entries.map((entry) {
-            final index = entry.key;
-            final filter = entry.value;
-
-            return Padding(
-              padding: EdgeInsets.only(right: index < _filters.length - 1 ? 8 : 0),
-              child: FilterChip(
-                label: Text(filter.label),
-                selected: filter.isSelected,
-                onSelected: (_) => _toggleFilter(index),
-                backgroundColor: colors.cardBackground,
-                selectedColor: colors.info.withOpacity(0.2),
-                checkmarkColor: colors.info,
-                labelStyle: TextStyle(
-                  color: filter.isSelected ? colors.info : colors.primaryText,
-                  fontSize: 12,
+          child: Row(
+            children: [
+              IconButton(
+                icon: Icon(
+                  _isExpanded
+                      ? (widget.closeIcon ?? Icons.arrow_back)
+                      : (widget.searchIcon ?? Icons.search),
+                  color: widget.iconColor ?? colors.primaryText,
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(
-                    color: filter.isSelected ? colors.info : colors.border,
+                onPressed: _toggleSearch,
+              ),
+              if (_isExpanded)
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    onChanged: widget.onChanged,
+                    onSubmitted: widget.onSubmitted,
+                    style: TextStyle(color: colors.primaryText),
+                    decoration: InputDecoration(
+                      hintText: widget.hintText ?? 'Qidirish...',
+                      hintStyle: TextStyle(color: colors.secondaryText),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
                   ),
                 ),
-              ),
-            );
-          }).toList(),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: widget.padding,
-      child: content,
-    );
-  }
-}
-
-/// Search filter model
-class SearchFilter {
-  final String label;
-  final String value;
-  final bool isSelected;
-  final IconData? icon;
-
-  const SearchFilter({
-    required this.label,
-    required this.value,
-    this.isSelected = false,
-    this.icon,
-  });
-
-  SearchFilter copyWith({
-    String? label,
-    String? value,
-    bool? isSelected,
-    IconData? icon,
-  }) {
-    return SearchFilter(
-      label: label ?? this.label,
-      value: value ?? this.value,
-      isSelected: isSelected ?? this.isSelected,
-      icon: icon ?? this.icon,
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
 /// Search results widget
 class SearchResultsWidget<T> extends StatelessWidget {
+  final String query;
   final List<T> results;
-  final Widget Function(BuildContext, T, int) itemBuilder;
-  final String? emptyMessage;
+  final Widget Function(T item) itemBuilder;
+  final VoidCallback? onClearSearch;
+  final Widget? emptyWidget;
+  final Widget? loadingWidget;
   final bool isLoading;
-  final VoidCallback? onLoadMore;
-  final bool hasMore;
-  final ScrollController? scrollController;
+  final String? emptyMessage;
 
   const SearchResultsWidget({
-    Key? key,
+    super.key,
+    required this.query,
     required this.results,
     required this.itemBuilder,
-    this.emptyMessage,
+    this.onClearSearch,
+    this.emptyWidget,
+    this.loadingWidget,
     this.isLoading = false,
-    this.onLoadMore,
-    this.hasMore = false,
-    this.scrollController,
-  }) : super(key: key);
+    this.emptyMessage,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    if (isLoading && results.isEmpty) {
-      return const Center(
+    if (isLoading) {
+      return loadingWidget ?? const Center(
         child: CircularProgressIndicator(),
       );
     }
 
     if (results.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.search_off,
-                size: 64,
+      return emptyWidget ?? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off,
+              size: 64,
+              color: colors.secondaryText,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              emptyMessage ?? 'Qidiruv natijalari topilmadi',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: colors.primaryText,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '"$query" bo\'yicha hech narsa topilmadi',
+              style: TextStyle(
                 color: colors.secondaryText,
               ),
+              textAlign: TextAlign.center,
+            ),
+            if (onClearSearch != null) ...[
               const SizedBox(height: 16),
-              Text(
-                emptyMessage ?? 'Qidiruv natijalari topilmadi',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: colors.secondaryText,
-                ),
-                textAlign: TextAlign.center,
+              TextButton(
+                onPressed: onClearSearch,
+                child: const Text('Qidiruvni tozalash'),
               ),
             ],
-          ),
+          ],
         ),
       );
     }
 
     return ListView.builder(
-      controller: scrollController,
-      itemCount: results.length + (hasMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == results.length) {
-          // Load more indicator
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Center(
-              child: isLoading
-                  ? const CircularProgressIndicator()
-                  : TextButton(
-                onPressed: onLoadMore,
-                child: const Text('Ko\'proq yuklash'),
-              ),
-            ),
-          );
-        }
-
-        return itemBuilder(context, results[index], index);
-      },
+      itemCount: results.length,
+      itemBuilder: (context, index) => itemBuilder(results[index]),
     );
   }
 }
 
-/// Advanced search dialog
-class AdvancedSearchDialog extends StatefulWidget {
-  final List<SearchField> fields;
-  final Map<String, dynamic>? initialValues;
-  final ValueChanged<Map<String, dynamic>>? onSearch;
+/// Search filter chip
+class SearchFilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback? onSelected;
+  final Color? selectedColor;
+  final Color? backgroundColor;
 
-  const AdvancedSearchDialog({
-    Key? key,
-    required this.fields,
-    this.initialValues,
-    this.onSearch,
-  }) : super(key: key);
-
-  @override
-  State<AdvancedSearchDialog> createState() => _AdvancedSearchDialogState();
-}
-
-class _AdvancedSearchDialogState extends State<AdvancedSearchDialog> {
-  late Map<String, dynamic> _values;
-  final Map<String, TextEditingController> _controllers = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _values = Map.from(widget.initialValues ?? {});
-
-    for (final field in widget.fields) {
-      if (field.type == SearchFieldType.text) {
-        _controllers[field.key] = TextEditingController(
-          text: _values[field.key]?.toString() ?? '',
-        );
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    for (final controller in _controllers.values) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
-
-  void _handleSearch() {
-    for (final entry in _controllers.entries) {
-      _values[entry.key] = entry.value.text;
-    }
-    widget.onSearch?.call(_values);
-    Navigator.of(context).pop();
-  }
+  const SearchFilterChip({
+    super.key,
+    required this.label,
+    required this.isSelected,
+    this.onSelected,
+    this.selectedColor,
+    this.backgroundColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return AlertDialog(
-      title: const Text('Qo\'shimcha qidiruv'),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: widget.fields.map((field) => _buildField(field, colors)).toList(),
-          ),
-        ),
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: onSelected != null ? (_) => onSelected!() : null,
+      selectedColor: selectedColor ?? colors.info.withOpacity(0.2),
+      backgroundColor: backgroundColor ?? colors.cardBackground,
+      checkmarkColor: colors.info,
+      labelStyle: TextStyle(
+        color: isSelected ? colors.info : colors.primaryText,
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Bekor qilish'),
-        ),
-        ElevatedButton(
-          onPressed: _handleSearch,
-          child: const Text('Qidirish'),
-        ),
-      ],
+      side: BorderSide(
+        color: isSelected ? colors.info : colors.secondaryText.withOpacity(0.2),
+      ),
     );
   }
-
-  Widget _buildField(SearchField field, AppThemeColors colors) {
-    switch (field.type) {
-      case SearchFieldType.text:
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: TextField(
-            controller: _controllers[field.key],
-            decoration: InputDecoration(
-              labelText: field.label,
-              hintText: field.hint,
-              border: const OutlineInputBorder(),
-            ),
-          ),
-        );
-
-      case SearchFieldType.dropdown:
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: DropdownButtonFormField<String>(
-            value: _values[field.key],
-            decoration: InputDecoration(
-              labelText: field.label,
-              border: const OutlineInputBorder(),
-            ),
-            items: field.options?.map((option) {
-              return DropdownMenuItem<String>(
-                value: option.value,
-                child: Text(option.label),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _values[field.key] = value;
-              });
-            },
-          ),
-        );
-
-      case SearchFieldType.dateRange:
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime.now(),
-                    );
-                    if (date != null) {
-                      setState(() {
-                        _values['${field.key}_start'] = date;
-                      });
-                    }
-                  },
-                  child: Text(
-                    _values['${field.key}_start'] != null
-                        ? _formatDate(_values['${field.key}_start'])
-                        : 'Boshlanish sanasi',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextButton(
-                  onPressed: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime.now(),
-                    );
-                    if (date != null) {
-                      setState(() {
-                        _values['${field.key}_end'] = date;
-                      });
-                    }
-                  },
-                  child: Text(
-                    _values['${field.key}_end'] != null
-                        ? _formatDate(_values['${field.key}_end'])
-                        : 'Tugash sanasi',
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}.${date.month}.${date.year}';
-  }
-}
-
-/// Search field model
-class SearchField {
-  final String key;
-  final String label;
-  final String? hint;
-  final SearchFieldType type;
-  final List<SearchOption>? options;
-
-  const SearchField({
-    required this.key,
-    required this.label,
-    this.hint,
-    required this.type,
-    this.options,
-  });
-}
-
-/// Search field types
-enum SearchFieldType {
-  text,
-  dropdown,
-  dateRange,
-}
-
-/// Search option model
-class SearchOption {
-  final String label;
-  final String value;
-
-  const SearchOption({
-    required this.label,
-    required this.value,
-  });
-}
-
-/// Predefined search configurations
-class SearchConfigurations {
-  /// Student search filters
-  static List<SearchFilter> studentFilters = [
-    const SearchFilter(label: 'Vazifalar', value: 'homework'),
-    const SearchFilter(label: 'Imtihonlar', value: 'exams'),
-    const SearchFilter(label: 'Baholar', value: 'grades'),
-    const SearchFilter(label: 'Davomat', value: 'attendance'),
-  ];
-
-  /// Teacher search filters
-  static List<SearchFilter> teacherFilters = [
-    const SearchFilter(label: 'Talabalar', value: 'students'),
-    const SearchFilter(label: 'Vazifalar', value: 'homework'),
-    const SearchFilter(label: 'Imtihonlar', value: 'exams'),
-    const SearchFilter(label: 'Guruhlar', value: 'groups'),
-  ];
-
-  /// Parent search filters
-  static List<SearchFilter> parentFilters = [
-    const SearchFilter(label: 'Bolalarim', value: 'children'),
-    const SearchFilter(label: 'Baholar', value: 'grades'),
-    const SearchFilter(label: 'To\'lovlar', value: 'payments'),
-    const SearchFilter(label: 'Hisobotlar', value: 'reports'),
-  ];
-
-  /// Advanced search fields for students
-  static List<SearchField> studentSearchFields = [
-    const SearchField(
-      key: 'subject',
-      label: 'Fan',
-      type: SearchFieldType.dropdown,
-      options: [
-        SearchOption(label: 'Matematika', value: 'math'),
-        SearchOption(label: 'Fizika', value: 'physics'),
-        SearchOption(label: 'Ingliz tili', value: 'english'),
-      ],
-    ),
-    const SearchField(
-      key: 'grade_range',
-      label: 'Baho oralig\'i',
-      type: SearchFieldType.text,
-      hint: 'Masalan: 80-100',
-    ),
-    const SearchField(
-      key: 'date_range',
-      label: 'Sana oralig\'i',
-      type: SearchFieldType.dateRange,
-    ),
-  ];
 }

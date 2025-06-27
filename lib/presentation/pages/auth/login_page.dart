@@ -9,7 +9,6 @@ import '../../widgets/common/loading_widget.dart';
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
-  // ✅ Uzbek phone number mask formatter
   static final MaskTextInputFormatter _phoneMaskFormatter = MaskTextInputFormatter(
     mask: '+998 ## ### ## ##',
     filter: {"#": RegExp(r'[0-9]')},
@@ -21,7 +20,7 @@ class LoginPage extends StatelessWidget {
     final authController = Get.find<AuthController>();
     final colors = context.colors;
 
-    // ✅ Set default +998 prefix if phone field is empty
+    // Set default +998 prefix if phone field is empty
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (authController.phoneController.text.isEmpty) {
         authController.phoneController.text = '+998 ';
@@ -39,16 +38,15 @@ class LoginPage extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 40),
-
-              // App Logo and Title
               _buildHeader(colors),
-
               const SizedBox(height: 48),
-
-              // Login Form
               _buildLoginForm(authController, colors),
-
-              const SizedBox(height: 40),
+              const SizedBox(height: 24),
+              _buildRoleSelector(authController, colors),
+              const SizedBox(height: 32),
+              _buildLoginButton(authController, colors),
+              const SizedBox(height: 24),
+              _buildFooter(colors),
             ],
           ),
         ),
@@ -59,47 +57,49 @@ class LoginPage extends StatelessWidget {
   Widget _buildHeader(AppThemeColors colors) {
     return Column(
       children: [
-        // App Logo
+        // App logo
         Container(
-          width: 120,
-          height: 120,
+          width: 80,
+          height: 80,
           decoration: BoxDecoration(
-            color: colors.info.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(60),
-            border: Border.all(
-              color: colors.info.withOpacity(0.3),
-              width: 2,
-            ),
-          ),
-          child: Icon(
-            Icons.school_outlined,
-            size: 60,
             color: colors.info,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: colors.info.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.school,
+            size: 40,
+            color: Colors.white,
           ),
         ),
 
         const SizedBox(height: 24),
 
-        // App Title
+        // Welcome text
         Text(
-          'Toshmi',
+          'Xush kelibsiz!',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: colors.info,
+            color: colors.primaryText,
           ),
         ),
 
         const SizedBox(height: 8),
 
-        // Subtitle
         Text(
-          'Ta\'lim markaziga xush kelibsiz',
+          'Hisobingizga kirish uchun ma\'lumotlaringizni kiriting',
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 16,
             color: colors.secondaryText,
           ),
-          textAlign: TextAlign.center,
         ),
       ],
     );
@@ -108,240 +108,198 @@ class LoginPage extends StatelessWidget {
   Widget _buildLoginForm(AuthController authController, AppThemeColors colors) {
     return Column(
       children: [
-        // Phone Input
-        Obx(() => _buildPhoneInput(authController, colors)),
-
-        const SizedBox(height: 16),
-
-        // Password Input
-        Obx(() => _buildPasswordInput(authController, colors)),
-
-        const SizedBox(height: 16),
-
-        // Role Selection
-        Obx(() => _buildRoleSelection(authController, colors)),
-
-        const SizedBox(height: 32),
-
-        // Login Button
-        Obx(() => _buildLoginButton(authController, colors)),
-      ],
-    );
-  }
-
-  Widget _buildPhoneInput(AuthController authController, AppThemeColors colors) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Telefon raqami',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: colors.primaryText,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
+        // Phone number field
+        TextFormField(
           controller: authController.phoneController,
-          keyboardType: TextInputType.phone,
-          style: TextStyle(color: colors.primaryText),
           inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s]')),
             _phoneMaskFormatter,
-            // Prevent deletion of +998 prefix
-            FilteringTextInputFormatter.allow(RegExp(r'[\+0-9\s]')),
           ],
-          onChanged: (value) {
-            // Ensure +998 prefix is always present
-            if (!value.startsWith('+998')) {
-              authController.phoneController.text = '+998 ';
-              authController.phoneController.selection = TextSelection.fromPosition(
-                TextPosition(offset: authController.phoneController.text.length),
-              );
-            }
-          },
+          keyboardType: TextInputType.phone,
           decoration: InputDecoration(
-            hintText: '+998 90 123 45 67',
-            hintStyle: TextStyle(color: colors.secondaryText),
-            prefixIcon: Icon(
-              Icons.phone_outlined,
-              color: colors.secondaryText,
-            ),
-            filled: true,
-            fillColor: colors.secondaryBackground,
+            labelText: 'Telefon raqami',
+            hintText: '+998 XX XXX XX XX',
+            prefixIcon: Icon(Icons.phone, color: colors.info),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: colors.info, width: 2),
+              borderSide: BorderSide(color: colors.info),
             ),
-            errorText: authController.phoneError,
-            errorStyle: TextStyle(color: colors.error),
           ),
         ),
-      ],
-    );
-  }
 
-  Widget _buildPasswordInput(AuthController authController, AppThemeColors colors) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Parol',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: colors.primaryText,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
+        const SizedBox(height: 16),
+
+        // Password field
+        Obx(() => TextFormField(
           controller: authController.passwordController,
           obscureText: !authController.isPasswordVisible,
-          style: TextStyle(color: colors.primaryText),
           decoration: InputDecoration(
+            labelText: 'Parol',
             hintText: 'Parolingizni kiriting',
-            hintStyle: TextStyle(color: colors.secondaryText),
-            prefixIcon: Icon(
-              Icons.lock_outlined,
-              color: colors.secondaryText,
-            ),
+            prefixIcon: Icon(Icons.lock, color: colors.info),
             suffixIcon: IconButton(
               icon: Icon(
                 authController.isPasswordVisible
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
+                    ? Icons.visibility_off
+                    : Icons.visibility,
                 color: colors.secondaryText,
               ),
               onPressed: authController.togglePasswordVisibility,
             ),
-            filled: true,
-            fillColor: colors.secondaryBackground,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: colors.info, width: 2),
+              borderSide: BorderSide(color: colors.info),
             ),
-            errorText: authController.passwordError,
-            errorStyle: TextStyle(color: colors.error),
           ),
-        ),
+        )),
       ],
     );
   }
 
-  Widget _buildRoleSelection(AuthController authController, AppThemeColors colors) {
+  Widget _buildRoleSelector(AuthController authController, AppThemeColors colors) {
+    final roles = [
+      {'value': 'student', 'label': 'Talaba'},
+      {'value': 'teacher', 'label': 'Ustoz'},
+      {'value': 'parent', 'label': 'Ota-ona'},
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Rol tanlang',
+          'Rolni tanlang',
           style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
             color: colors.primaryText,
           ),
         ),
-        const SizedBox(height: 8),
+
+        const SizedBox(height: 12),
+
         Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
-            color: colors.secondaryBackground,
+            border: Border.all(color: colors.secondaryText.withOpacity(0.3)),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: colors.divider,
-              width: 1,
-            ),
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: authController.selectedRole,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              isExpanded: true,
-              icon: Icon(
-                Icons.keyboard_arrow_down,
-                color: colors.secondaryText,
-              ),
-              style: TextStyle(color: colors.primaryText),
-              dropdownColor: colors.secondaryBackground,
-              borderRadius: BorderRadius.circular(12),
-              items: authController.roleOptions.map((role) {
-                return DropdownMenuItem<String>(
-                  value: role['value'],
-                  child: Row(
-                    children: [
-                      Icon(
-                        _getRoleIcon(role['value']!),
-                        size: 20,
-                        color: colors.secondaryText,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        role['label']!,
-                        style: TextStyle(color: colors.primaryText),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  authController.setSelectedRole(value);
-                }
-              },
-            ),
-          ),
+          child: Obx(() => DropdownButton<String>(
+            value: authController.selectedRole,
+            isExpanded: true,
+            underline: const SizedBox(),
+            icon: Icon(Icons.arrow_drop_down, color: colors.secondaryText),
+            items: roles.map((role) {
+              return DropdownMenuItem<String>(
+                value: role['value']!,
+                child: Row(
+                  children: [
+                    Icon(
+                      _getRoleIcon(role['value']!),
+                      size: 20,
+                      color: colors.secondaryText,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      role['label']!,
+                      style: TextStyle(color: colors.primaryText),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) {
+                authController.setSelectedRole(value);
+              }
+            },
+          )),
         ),
       ],
     );
   }
 
   Widget _buildLoginButton(AuthController authController, AppThemeColors colors) {
-    final isLoading = authController.isLoginLoading;
-    final isFormValid = authController.formValid;
+    return Obx(() {
+      final isLoading = authController.isLoginLoading;
+      final isFormValid = authController.formValid;
 
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        onPressed: isLoading || !isFormValid ? null : authController.login,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: colors.info,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: colors.secondaryText.withOpacity(0.3),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+      return SizedBox(
+        width: double.infinity,
+        height: 50,
+        child: ElevatedButton(
+          onPressed: isLoading || !isFormValid ? null : authController.login,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: colors.info,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: colors.secondaryText.withOpacity(0.3),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 2,
           ),
-          elevation: 2,
+          child: isLoading
+              ? const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          )
+              : const Text(
+            'Kirish',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
-        child: isLoading
-            ? LoadingWidgets.button(size: 20)
-            : Text(
-          'Kirish',
+      );
+    });
+  }
+
+  Widget _buildFooter(AppThemeColors colors) {
+    return Column(
+      children: [
+        Text(
+          'Muammoga duch keldingizmi?',
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: colors.secondaryText,
           ),
         ),
-      ),
+
+        const SizedBox(height: 8),
+
+        TextButton(
+          onPressed: () {
+            // Handle support contact
+          },
+          child: Text(
+            'Yordam olish',
+            style: TextStyle(
+              fontSize: 14,
+              color: colors.info,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   IconData _getRoleIcon(String role) {
-    switch (role) {
-      case 'student':
-        return Icons.school_outlined;
-      case 'teacher':
-        return Icons.person_outline;
-      case 'parent':
-        return Icons.family_restroom_outlined;
-      default:
-        return Icons.person_outline;
-    }
+    return switch (role) {
+      'student' => Icons.school_outlined,
+      'teacher' => Icons.person_outline,
+      'parent' => Icons.family_restroom_outlined,
+      _ => Icons.person_outline,
+    };
   }
 }

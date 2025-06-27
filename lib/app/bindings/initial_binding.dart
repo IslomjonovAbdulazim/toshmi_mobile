@@ -4,31 +4,28 @@ import 'package:get_storage/get_storage.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_service.dart';
 import '../../data/services/auth_service.dart';
+import '../../data/services/file_service.dart';
+import '../../data/services/notification_service.dart';
+import '../../data/services/teacher_service.dart';
+import '../../data/services/student_service.dart';
+import '../../data/services/parent_service.dart';
 
-/// ✅ FIXED: Initial binding that properly sets up core services and dependencies
 class InitialBinding extends Bindings {
   @override
   void dependencies() {
     print('🔧 InitialBinding: Setting up core dependencies...');
 
-    // Initialize GetStorage first
     _initializeStorage();
-
-    // Core services (order matters)
     _registerCoreServices();
-
-    // Repositories
     _registerRepositories();
+    _registerOptionalServices();
 
     print('✅ InitialBinding: All dependencies registered successfully');
   }
 
-  /// Initialize GetStorage
   void _initializeStorage() {
     print('💾 InitialBinding: Initializing storage...');
 
-    // GetStorage should be initialized in main.dart before runApp()
-    // This is just a safety check
     if (!GetStorage().hasData('_initialized')) {
       GetStorage().write('_initialized', true);
     }
@@ -36,72 +33,81 @@ class InitialBinding extends Bindings {
     print('✅ InitialBinding: Storage initialized');
   }
 
-  /// Register core services that other services depend on
   void _registerCoreServices() {
     print('🔧 InitialBinding: Registering core services...');
 
     // API Service - foundation for all network operations
     Get.put<ApiService>(
       ApiService(),
-      permanent: true, // Keep alive throughout app lifecycle
+      permanent: true,
     );
     print('✅ InitialBinding: ApiService registered');
 
     // Auth Service - depends on ApiService
     Get.put<AuthService>(
       AuthService(),
-      permanent: true, // Keep alive throughout app lifecycle
+      permanent: true,
     );
     print('✅ InitialBinding: AuthService registered');
   }
 
-  /// ✅ FIXED: Register repository layer with proper dependency injection
   void _registerRepositories() {
     print('🔧 InitialBinding: Registering repositories...');
 
-    // Create single instance of AuthRepository
     final authRepository = AuthRepository();
 
-    // ✅ SOLUTION: Register as both interface and concrete class
-    // This allows controllers to use either:
-    // - IAuthRepository (recommended for dependency injection)
-    // - AuthRepository (for existing code compatibility)
+    // Register as both interface and concrete class for compatibility
     Get.put<IAuthRepository>(
       authRepository,
-      permanent: true, // Keep alive throughout app lifecycle
+      permanent: true,
     );
 
     Get.put<AuthRepository>(
       authRepository,
-      permanent: true, // Keep alive throughout app lifecycle
+      permanent: true,
     );
 
-    print('✅ InitialBinding: AuthRepository registered (both interface and concrete)');
+    print('✅ InitialBinding: AuthRepository registered');
+  }
 
-    // Add other repositories here as needed
-    // Example:
-    // final studentRepo = StudentRepository();
-    // Get.put<IStudentRepository>(studentRepo, permanent: true);
-    // Get.put<StudentRepository>(studentRepo, permanent: true);
+  void _registerOptionalServices() {
+    print('🔧 InitialBinding: Registering optional services...');
+
+    // File Service
+    Get.put<FileService>(
+      FileService(),
+      permanent: true,
+    );
+    print('✅ InitialBinding: FileService registered');
+
+    // Notification Service
+    Get.put<NotificationService>(
+      NotificationService(),
+      permanent: true,
+    );
+    print('✅ InitialBinding: NotificationService registered');
+
+    // Role-specific services (lazy loading)
+    Get.lazyPut<TeacherService>(() => TeacherService(), fenix: true);
+    Get.lazyPut<StudentService>(() => StudentService(), fenix: true);
+    Get.lazyPut<ParentService>(() => ParentService(), fenix: true);
+    print('✅ InitialBinding: Role-specific services registered (lazy)');
   }
 }
 
-/// ✅ OPTIMIZED: Minimal binding for better performance
+// Minimal binding for better performance during app startup
 class MinimalBinding extends Bindings {
   @override
   void dependencies() {
     print('⚡ MinimalBinding: Setting up minimal dependencies...');
 
-    // Only essential services for app startup
     final apiService = ApiService();
     final authService = AuthService();
     final authRepository = AuthRepository();
 
-    // Register services
+    // Register essential services only
     Get.put<ApiService>(apiService, permanent: true);
     Get.put<AuthService>(authService, permanent: true);
-
-    // Register repository as both types
     Get.put<IAuthRepository>(authRepository, permanent: true);
     Get.put<AuthRepository>(authRepository, permanent: true);
 
@@ -109,34 +115,16 @@ class MinimalBinding extends Bindings {
   }
 }
 
-/// ✅ PERFORMANCE: Lazy loading binding for non-critical services
+// Lazy loading binding for non-critical services
 class LazyServicesBinding extends Bindings {
   @override
   void dependencies() {
     print('🔄 LazyServicesBinding: Setting up lazy dependencies...');
 
-    // Non-critical services that can be loaded on demand
-    // Get.lazyPut<NotificationService>(() => NotificationService(), fenix: true);
-    // Get.lazyPut<CacheService>(() => CacheService(), fenix: true);
-    // Get.lazyPut<ThemeService>(() => ThemeService(), fenix: true);
+    // Services loaded on demand
+    Get.lazyPut<FileService>(() => FileService(), fenix: true);
+    Get.lazyPut<NotificationService>(() => NotificationService(), fenix: true);
 
     print('✅ LazyServicesBinding: Lazy dependencies registered');
-  }
-}
-
-/// ✅ DEVELOPMENT: Debug binding for development environment
-class DebugBinding extends Bindings {
-  @override
-  void dependencies() {
-    print('🐛 DebugBinding: Setting up debug dependencies...');
-
-    // Load initial binding first
-    InitialBinding().dependencies();
-
-    // Debug-specific services for development
-    // Get.put<LoggingService>(LoggingService(), permanent: true);
-    // Get.put<AnalyticsService>(AnalyticsService(), permanent: true);
-
-    print('✅ DebugBinding: Debug dependencies registered');
   }
 }

@@ -8,11 +8,9 @@ import '../bindings/auth_binding.dart';
 import '../middleware/auth_middleware.dart';
 import 'app_routes.dart';
 
-/// Application pages configuration
 class AppPages {
   AppPages._();
 
-  // ===================== ROUTE DEFINITIONS =====================
   static final routes = [
     // Splash Page
     GetPage(
@@ -27,7 +25,7 @@ class AppPages {
       name: AppRoutes.LOGIN,
       page: () => const LoginPage(),
       binding: AuthBinding(),
-      middlewares: [GuestMiddleware()], // Redirect if already logged in
+      middlewares: [GuestMiddleware()],
       transition: Transition.rightToLeft,
     ),
 
@@ -36,35 +34,45 @@ class AppPages {
       name: AppRoutes.PROFILE,
       page: () => const ProfilePage(),
       binding: ProfileBinding(),
-      middlewares: [AuthMiddleware()], // Require authentication
+      middlewares: [AuthMiddleware()],
+      transition: Transition.rightToLeft,
+    ),
+
+    // Edit Profile Page
+    GetPage(
+      name: AppRoutes.EDIT_PROFILE,
+      page: () => const EditProfilePage(),
+      binding: ProfileBinding(),
+      middlewares: [AuthMiddleware()],
+      transition: Transition.rightToLeft,
+    ),
+
+    // Change Password Page
+    GetPage(
+      name: AppRoutes.CHANGE_PASSWORD,
+      page: () => const ChangePasswordPage(),
+      binding: ProfileBinding(),
+      middlewares: [AuthMiddleware()],
       transition: Transition.rightToLeft,
     ),
   ];
 
-  // ===================== UNKNOWN ROUTE HANDLER =====================
   static GetPage unknownRoute = GetPage(
-    name: '/not-found',
-    page: () => const Scaffold(
-      body: Center(
-        child: Text('Sahifa topilmadi'),
-      ),
-    ),
+    name: AppRoutes.NOT_FOUND,
+    page: () => const NotFoundPage(),
   );
 }
 
-// ===================== BINDINGS =====================
-
-/// ✅ FIXED: Splash binding now properly registers AuthController
+// Bindings
 class SplashBinding extends Bindings {
   @override
   void dependencies() {
     print('💫 SplashBinding: Setting up splash screen dependencies...');
 
-    // ✅ Register AuthController for splash page auth checking
     if (!Get.isRegistered<AuthController>()) {
       Get.put<AuthController>(
         AuthController(),
-        permanent: true, // Keep alive for smooth transition
+        permanent: true,
       );
       print('✅ SplashBinding: AuthController registered');
     } else {
@@ -80,7 +88,6 @@ class ProfileBinding extends Bindings {
   void dependencies() {
     print('👤 ProfileBinding: Setting up profile management dependencies...');
 
-    // Ensure AuthController is available
     if (!Get.isRegistered<AuthController>()) {
       Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
       print('✅ ProfileBinding: AuthController registered');
@@ -89,5 +96,67 @@ class ProfileBinding extends Bindings {
     }
 
     print('✅ ProfileBinding: Profile dependencies registered');
+  }
+}
+
+// Placeholder pages for routes that are defined but not yet implemented
+class EditProfilePage extends StatelessWidget {
+  const EditProfilePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Profilni tahrirlash')),
+      body: const Center(
+        child: Text('Edit Profile Page - Coming Soon'),
+      ),
+    );
+  }
+}
+
+class ChangePasswordPage extends StatelessWidget {
+  const ChangePasswordPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Parolni o\'zgartirish')),
+      body: const Center(
+        child: Text('Change Password Page - Coming Soon'),
+      ),
+    );
+  }
+}
+
+class NotFoundPage extends StatelessWidget {
+  const NotFoundPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Sahifa topilmadi')),
+      body: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              '404 - Sahifa topilmadi',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Siz qidirayotgan sahifa mavjud emas',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Get.offAllNamed(AppRoutes.LOGIN),
+        child: const Icon(Icons.home),
+      ),
+    );
   }
 }

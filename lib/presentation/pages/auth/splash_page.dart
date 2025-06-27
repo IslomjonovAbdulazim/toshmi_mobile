@@ -5,7 +5,7 @@ import '../../controllers/auth_controller.dart';
 import '../../../core/themes/app_themes.dart';
 
 class SplashPage extends StatefulWidget {
-  const SplashPage({Key? key}) : super(key: key);
+  const SplashPage({super.key});
 
   @override
   State<SplashPage> createState() => _SplashPageState();
@@ -22,6 +22,12 @@ class _SplashPageState extends State<SplashPage>
     super.initState();
     _setupAnimations();
     _initializeApp();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   void _setupAnimations() {
@@ -61,25 +67,15 @@ class _SplashPageState extends State<SplashPage>
     try {
       final authController = Get.find<AuthController>();
 
-      // Simply check if user is authenticated
       if (authController.isAuthenticated) {
-        // User is authenticated, go to profile
         Get.offAllNamed(AppRoutes.PROFILE);
       } else {
-        // User not authenticated, go to login
         Get.offAllNamed(AppRoutes.LOGIN);
       }
     } catch (e) {
-      // Error getting auth controller, go to login
-      print('❌ Splash: Error checking auth: $e');
+      print('Error during auth check: $e');
       Get.offAllNamed(AppRoutes.LOGIN);
     }
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
   }
 
   @override
@@ -88,99 +84,79 @@ class _SplashPageState extends State<SplashPage>
 
     return Scaffold(
       backgroundColor: colors.primaryBackground,
-      body: AnimatedBuilder(
-        animation: _animationController,
-        builder: (context, child) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // App Logo
-                Transform.scale(
-                  scale: _scaleAnimation.value,
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Container(
+      body: Center(
+        child: AnimatedBuilder(
+          animation: _animationController,
+          builder: (context, child) {
+            return FadeTransition(
+              opacity: _fadeAnimation,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // App logo
+                    Container(
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: colors.info.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(60),
-                        border: Border.all(
-                          color: colors.info.withOpacity(0.3),
-                          width: 3,
-                        ),
+                        color: colors.info,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colors.info.withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.school,
                         size: 60,
-                        color: colors.info,
+                        color: Colors.white,
                       ),
                     ),
-                  ),
-                ),
 
-                const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                // App Title
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Text(
-                    'Toshmi Mobile',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: colors.primaryText,
+                    // App name
+                    Text(
+                      'Toshmi Mobile',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: colors.primaryText,
+                      ),
                     ),
-                  ),
-                ),
 
-                const SizedBox(height: 8),
+                    const SizedBox(height: 8),
 
-                // Subtitle
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Text(
-                    'Ta\'lim boshqaruv tizimi',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: colors.secondaryText,
+                    // App tagline
+                    Text(
+                      'Ta\'lim boshqaruv tizimi',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: colors.secondaryText,
+                      ),
                     ),
-                  ),
-                ),
 
-                const SizedBox(height: 48),
+                    const SizedBox(height: 64),
 
-                // Loading Indicator
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SizedBox(
-                    width: 32,
-                    height: 32,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      valueColor: AlwaysStoppedAnimation<Color>(colors.info),
+                    // Loading indicator
+                    SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        valueColor: AlwaysStoppedAnimation<Color>(colors.info),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-
-                const SizedBox(height: 16),
-
-                // Loading Text
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Text(
-                    'Yuklanmoqda...',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: colors.secondaryText,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }

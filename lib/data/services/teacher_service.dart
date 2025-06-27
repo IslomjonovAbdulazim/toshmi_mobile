@@ -1,13 +1,8 @@
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../core/constants/api_constants.dart';
-import '../models/homework_model.dart';
-import '../models/exam_model.dart';
-import '../models/teacher_models.dart';
-import '../models/attendance_model.dart';
-import '../models/student_model.dart';
-import '../models/auth_models.dart';
 import '../models/api_response_models.dart';
+import '../models/auth_models.dart';
 import 'api_service.dart';
 
 class TeacherService extends GetxService {
@@ -18,7 +13,24 @@ class TeacherService extends GetxService {
 
   // ===================== HOMEWORK MANAGEMENT =====================
 
-  /// Create new homework assignment
+  /// Get teacher's homework assignments
+  Future<ApiResult<List<Map<String, dynamic>>>> getHomework({
+    int skip = 0,
+    int limit = 20,
+    bool useCache = true,
+  }) async {
+    if (useCache) {
+      final cached = _getCachedHomework();
+      if (cached.isNotEmpty) {
+        _refreshHomeworkInBackground();
+        return ApiResult.success(cached);
+      }
+    }
+
+    return await _refreshHomework(skip: skip, limit: limit);
+  }
+
+  /// Create new homework
   Future<ApiResult<CreateResponse>> createHomework({
     required int groupSubjectId,
     required String title,
@@ -27,141 +39,88 @@ class TeacherService extends GetxService {
     required int maxPoints,
     List<String> externalLinks = const [],
   }) async {
-    final request = HomeworkRequest(
-      groupSubjectId: groupSubjectId,
-      title: title,
-      description: description,
-      dueDate: dueDate,
-      maxPoints: maxPoints,
-      externalLinks: externalLinks,
-    );
+    final data = {
+      'group_subject_id': groupSubjectId,
+      'title': title,
+      'description': description,
+      'due_date': dueDate.toIso8601String(),
+      'max_points': maxPoints,
+      'external_links': externalLinks,
+    };
 
     final result = await _apiService.post<CreateResponse>(
       TeacherEndpoints.homework,
-      data: request.toJson(),
+      data: data,
       fromJson: (data) => CreateResponse.fromJson(data),
     );
 
-    // Refresh cached homework if successful
     if (result.isSuccess) {
-      await _refreshTeacherHomework();
+      await _refreshHomework();
     }
 
     return result;
   }
 
-  /// Update existing homework
+  /// Update homework
   Future<ApiResult<ApiResponse>> updateHomework({
     required int homeworkId,
-    required int groupSubjectId,
     required String title,
     required String description,
     required DateTime dueDate,
     required int maxPoints,
-    List<String> externalLinks = const [],
   }) async {
-    final request = HomeworkRequest(
-      groupSubjectId: groupSubjectId,
-      title: title,
-      description: description,
-      dueDate: dueDate,
-      maxPoints: maxPoints,
-      externalLinks: externalLinks,
-    );
+    final data = {
+      'title': title,
+      'description': description,
+      'due_date': dueDate.toIso8601String(),
+      'max_points': maxPoints,
+    };
 
     final result = await _apiService.put<ApiResponse>(
       TeacherEndpoints.homeworkById(homeworkId),
-      data: request.toJson(),
+      data: data,
       fromJson: (data) => ApiResponse.fromJson(data),
     );
 
-    // Refresh cached homework if successful
     if (result.isSuccess) {
-      await _refreshTeacherHomework();
+      await _refreshHomework();
     }
 
     return result;
   }
 
-  /// Delete homework (if no grades exist)
+  /// Delete homework
   Future<ApiResult<ApiResponse>> deleteHomework(int homeworkId) async {
     final result = await _apiService.delete<ApiResponse>(
       TeacherEndpoints.homeworkById(homeworkId),
       fromJson: (data) => ApiResponse.fromJson(data),
     );
 
-    // Refresh cached homework if successful
     if (result.isSuccess) {
-      await _refreshTeacherHomework();
+      await _refreshHomework();
     }
 
     return result;
-  }
-
-  /// Get teacher's homework assignments
-  Future<ApiResult<List<HomeworkModel>>> getMyHomework({
-    bool useCache = true,
-  }) async {
-    // Try cache first if requested
-    if (useCache) {
-      final cachedHomework = getCachedTeacherHomework();
-      if (cachedHomework.isNotEmpty) {
-        // Return cached data and refresh in background
-        _refreshTeacherHomeworkInBackground();
-        return ApiResult.success(cachedHomework);
-      }
-    }
-
-    return await _refreshTeacherHomework();
-  }
-
-  /// Refresh teacher homework from API
-  Future<ApiResult<List<HomeworkModel>>> _refreshTeacherHomework() async {
-    final result = await _apiService.get<List<HomeworkModel>>(
-      TeacherEndpoints.homework,
-      fromJson: (data) {
-        if (data is List) {
-          return data.map((item) => HomeworkModel.fromJson(item)).toList();
-        }
-        return <HomeworkModel>[];
-      },
-    );
-
-    // Cache successful results
-    if (result.isSuccess && result.data != null) {
-      await _cacheTeacherHomework(result.data!);
-    }
-
-    return result;
-  }
-
-  /// Refresh teacher homework in background
-  Future<void> _refreshTeacherHomeworkInBackground() async {
-    try {
-      await _refreshTeacherHomework();
-    } catch (e) {
-      print('⚠️ Background teacher homework refresh failed: $e');
-    }
-  }
-
-  /// Cache teacher homework locally
-  Future<void> _cacheTeacherHomework(List<HomeworkModel> homework) async {
-    final homeworkJson = homework.map((h) => h.toJson()).toList();
-    await _storage.write(CacheKeys.teacherHomework, homeworkJson);
-  }
-
-  /// Get cached teacher homework
-  List<HomeworkModel> getCachedTeacherHomework() {
-    final cachedData = _storage.read<List>(CacheKeys.teacherHomework);
-    if (cachedData != null) {
-      return cachedData
-          .map((item) => HomeworkModel.fromJson(item))
-          .toList();
-    }
-    return [];
   }
 
   // ===================== EXAM MANAGEMENT =====================
+
+  /// Get teacher's exams
+  Future<ApiResult<List<Map<String, dynamic>>>> getExams({
+    int skip = 0,
+    int limit = 20,
+    bool useCache = true,
+  }) async {
+    if (useCache) {
+      final cached = _getCachedExams();
+      if (cached.isNotEmpty) {
+        _refreshExamsInBackground();
+        return ApiResult.success(cached);
+      }
+    }
+
+    return await _refreshExams(skip: skip, limit: limit);
+  }
 
   /// Create new exam
   Future<ApiResult<CreateResponse>> createExam({
@@ -169,512 +128,241 @@ class TeacherService extends GetxService {
     required String title,
     required String description,
     required DateTime examDate,
+    required int duration,
     required int maxPoints,
-    List<String> externalLinks = const [],
   }) async {
-    final request = ExamRequest(
-      groupSubjectId: groupSubjectId,
-      title: title,
-      description: description,
-      examDate: examDate,
-      maxPoints: maxPoints,
-      externalLinks: externalLinks,
-    );
+    final data = {
+      'group_subject_id': groupSubjectId,
+      'title': title,
+      'description': description,
+      'exam_date': examDate.toIso8601String(),
+      'duration': duration,
+      'max_points': maxPoints,
+    };
 
     final result = await _apiService.post<CreateResponse>(
       TeacherEndpoints.exams,
-      data: request.toJson(),
+      data: data,
       fromJson: (data) => CreateResponse.fromJson(data),
     );
 
-    // Refresh cached exams if successful
     if (result.isSuccess) {
-      await _refreshTeacherExams();
+      await _refreshExams();
     }
 
     return result;
-  }
-
-  /// Update existing exam
-  Future<ApiResult<ApiResponse>> updateExam({
-    required int examId,
-    required int groupSubjectId,
-    required String title,
-    required String description,
-    required DateTime examDate,
-    required int maxPoints,
-    List<String> externalLinks = const [],
-  }) async {
-    final request = ExamRequest(
-      groupSubjectId: groupSubjectId,
-      title: title,
-      description: description,
-      examDate: examDate,
-      maxPoints: maxPoints,
-      externalLinks: externalLinks,
-    );
-
-    final result = await _apiService.put<ApiResponse>(
-      TeacherEndpoints.examById(examId),
-      data: request.toJson(),
-      fromJson: (data) => ApiResponse.fromJson(data),
-    );
-
-    // Refresh cached exams if successful
-    if (result.isSuccess) {
-      await _refreshTeacherExams();
-    }
-
-    return result;
-  }
-
-  /// Delete exam (if no grades exist)
-  Future<ApiResult<ApiResponse>> deleteExam(int examId) async {
-    final result = await _apiService.delete<ApiResponse>(
-      TeacherEndpoints.examById(examId),
-      fromJson: (data) => ApiResponse.fromJson(data),
-    );
-
-    // Refresh cached exams if successful
-    if (result.isSuccess) {
-      await _refreshTeacherExams();
-    }
-
-    return result;
-  }
-
-  /// Get teacher's exams
-  Future<ApiResult<List<ExamModel>>> getMyExams({
-    bool useCache = true,
-  }) async {
-    // Try cache first if requested
-    if (useCache) {
-      final cachedExams = getCachedTeacherExams();
-      if (cachedExams.isNotEmpty) {
-        // Return cached data and refresh in background
-        _refreshTeacherExamsInBackground();
-        return ApiResult.success(cachedExams);
-      }
-    }
-
-    return await _refreshTeacherExams();
-  }
-
-  /// Refresh teacher exams from API
-  Future<ApiResult<List<ExamModel>>> _refreshTeacherExams() async {
-    final result = await _apiService.get<List<ExamModel>>(
-      TeacherEndpoints.exams,
-      fromJson: (data) {
-        if (data is List) {
-          return data.map((item) => ExamModel.fromJson(item)).toList();
-        }
-        return <ExamModel>[];
-      },
-    );
-
-    // Cache successful results
-    if (result.isSuccess && result.data != null) {
-      await _cacheTeacherExams(result.data!);
-    }
-
-    return result;
-  }
-
-  /// Refresh teacher exams in background
-  Future<void> _refreshTeacherExamsInBackground() async {
-    try {
-      await _refreshTeacherExams();
-    } catch (e) {
-      print('⚠️ Background teacher exams refresh failed: $e');
-    }
-  }
-
-  /// Cache teacher exams locally
-  Future<void> _cacheTeacherExams(List<ExamModel> exams) async {
-    final examsJson = exams.map((e) => e.toJson()).toList();
-    await _storage.write(CacheKeys.teacherExams, examsJson);
-  }
-
-  /// Get cached teacher exams
-  List<ExamModel> getCachedTeacherExams() {
-    final cachedData = _storage.read<List>(CacheKeys.teacherExams);
-    if (cachedData != null) {
-      return cachedData
-          .map((item) => ExamModel.fromJson(item))
-          .toList();
-    }
-    return [];
   }
 
   // ===================== GRADING =====================
 
-  /// Get homework grading table
-  Future<ApiResult<GradingTableModel>> getHomeworkGradingTable(int homeworkId) async {
-    return await _apiService.get<GradingTableModel>(
-      TeacherEndpoints.homeworkGradingTable(homeworkId),
-      fromJson: (data) => GradingTableModel.fromJson(data),
-    );
-  }
-
-  /// Get exam grading table
-  Future<ApiResult<GradingTableModel>> getExamGradingTable(int examId) async {
-    return await _apiService.get<GradingTableModel>(
-      TeacherEndpoints.examGradingTable(examId),
-      fromJson: (data) => GradingTableModel.fromJson(data),
-    );
-  }
-
-  /// Submit bulk homework grades
+  /// Submit homework grades
   Future<ApiResult<ApiResponse>> submitHomeworkGrades({
     required int homeworkId,
-    required List<GradeRequest> grades,
+    required List<Map<String, dynamic>> grades,
   }) async {
-    final request = BulkHomeworkGradeRequest(
-      homeworkId: homeworkId,
-      grades: grades,
-    );
+    final data = {
+      'homework_id': homeworkId,
+      'grades': grades,
+    };
 
     return await _apiService.post<ApiResponse>(
-      TeacherEndpoints.bulkHomeworkGrades,
-      data: request.toJson(),
+      '${TeacherEndpoints.homework}/$homeworkId/grades',
+      data: data,
       fromJson: (data) => ApiResponse.fromJson(data),
     );
   }
 
-  /// Submit bulk exam grades
+  /// Submit exam grades
   Future<ApiResult<ApiResponse>> submitExamGrades({
     required int examId,
-    required List<GradeRequest> grades,
+    required List<Map<String, dynamic>> grades,
   }) async {
-    final request = BulkExamGradeRequest(
-      examId: examId,
-      grades: grades,
-    );
+    final data = {
+      'exam_id': examId,
+      'grades': grades,
+    };
 
     return await _apiService.post<ApiResponse>(
-      TeacherEndpoints.bulkExamGrades,
-      data: request.toJson(),
+      '${TeacherEndpoints.exams}/$examId/grades',
+      data: data,
       fromJson: (data) => ApiResponse.fromJson(data),
     );
   }
 
-  /// Submit single homework grade
-  Future<ApiResult<ApiResponse>> submitSingleHomeworkGrade({
-    required int homeworkId,
-    required int studentId,
-    required int points,
-    String comment = '',
-  }) async {
-    final grades = [
-      GradeRequest(
-        studentId: studentId,
-        points: points,
-        comment: comment,
-      ),
-    ];
+  // ===================== ATTENDANCE =====================
 
-    return await submitHomeworkGrades(
-      homeworkId: homeworkId,
-      grades: grades,
-    );
-  }
-
-  /// Submit single exam grade
-  Future<ApiResult<ApiResponse>> submitSingleExamGrade({
-    required int examId,
-    required int studentId,
-    required int points,
-    String comment = '',
-  }) async {
-    final grades = [
-      GradeRequest(
-        studentId: studentId,
-        points: points,
-        comment: comment,
-      ),
-    ];
-
-    return await submitExamGrades(
-      examId: examId,
-      grades: grades,
-    );
-  }
-
-  // ===================== ATTENDANCE MANAGEMENT =====================
-
-  /// Get attendance table for group-subject
-  Future<ApiResult<AttendanceTableModel>> getAttendanceTable({
+  /// Get attendance table
+  Future<ApiResult<Map<String, dynamic>>> getAttendanceTable({
     required int groupSubjectId,
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    final queryParams = <String, dynamic>{
-      QueryParams.groupSubjectId: groupSubjectId.toString(),
+    final queryParams = {
+      'group_subject_id': groupSubjectId.toString(),
+      if (startDate != null) 'start_date': startDate.toIso8601String().split('T')[0],
+      if (endDate != null) 'end_date': endDate.toIso8601String().split('T')[0],
     };
 
-    if (startDate != null || endDate != null) {
-      queryParams.addAll(ApiConstants.buildDateRangeParams(
-        startDate: startDate,
-        endDate: endDate,
-      ));
-    }
-
-    return await _apiService.get<AttendanceTableModel>(
-      TeacherEndpoints.attendanceTable,
+    return await _apiService.get<Map<String, dynamic>>(
+      TeacherEndpoints.attendance,
       queryParameters: queryParams,
-      fromJson: (data) => AttendanceTableModel.fromJson(data),
+      fromJson: (data) => data as Map<String, dynamic>,
     );
   }
 
-  /// Submit bulk attendance for a specific date
+  /// Submit attendance
   Future<ApiResult<ApiResponse>> submitAttendance({
     required int groupSubjectId,
     required DateTime date,
-    required List<AttendanceRecord> records,
+    required List<Map<String, dynamic>> records,
   }) async {
-    final request = BulkAttendanceRequest(
-      groupSubjectId: groupSubjectId,
-      date: date,
-      records: records,
-    );
+    final data = {
+      'group_subject_id': groupSubjectId,
+      'date': date.toIso8601String().split('T')[0],
+      'records': records,
+    };
 
     return await _apiService.post<ApiResponse>(
-      TeacherEndpoints.bulkAttendance,
-      data: request.toJson(),
+      TeacherEndpoints.attendance,
+      data: data,
       fromJson: (data) => ApiResponse.fromJson(data),
     );
   }
 
-  /// Submit single student attendance
-  Future<ApiResult<ApiResponse>> submitSingleAttendance({
-    required int groupSubjectId,
-    required DateTime date,
-    required int studentId,
-    required String status,
-  }) async {
-    final records = [
-      AttendanceRecord(
-        studentId: studentId,
-        status: status,
-      ),
-    ];
+  // ===================== GROUP MANAGEMENT =====================
 
-    return await submitAttendance(
-      groupSubjectId: groupSubjectId,
-      date: date,
-      records: records,
-    );
-  }
-
-  /// Mark all students present for a date
-  Future<ApiResult<ApiResponse>> markAllPresent({
-    required int groupSubjectId,
-    required DateTime date,
-    required List<int> studentIds,
-  }) async {
-    final records = studentIds.map((id) => AttendanceRecord(
-      studentId: id,
-      status: AttendanceStatus.present,
-    )).toList();
-
-    return await submitAttendance(
-      groupSubjectId: groupSubjectId,
-      date: date,
-      records: records,
-    );
-  }
-
-  // ===================== GROUP & STUDENT MANAGEMENT =====================
-
-  /// Get students in a specific group
-  Future<ApiResult<List<StudentModel>>> getGroupStudents(int groupId) async {
-    return await _apiService.get<List<StudentModel>>(
-      TeacherEndpoints.groupStudents(groupId),
+  /// Get teacher's groups
+  Future<ApiResult<List<Map<String, dynamic>>>> getGroups() async {
+    return await _apiService.get<List<Map<String, dynamic>>>(
+      TeacherEndpoints.groups,
       fromJson: (data) {
         if (data is List) {
-          return data.map((item) => StudentModel.fromJson(item)).toList();
+          return data.map((item) => item as Map<String, dynamic>).toList();
         }
-        return <StudentModel>[];
+        return <Map<String, dynamic>>[];
       },
     );
   }
 
-  // ===================== ANALYTICS & INSIGHTS =====================
+  /// Get group students
+  Future<ApiResult<List<Map<String, dynamic>>>> getGroupStudents(int groupId) async {
+    return await _apiService.get<List<Map<String, dynamic>>>(
+      TeacherEndpoints.groupStudents(groupId),
+      fromJson: (data) {
+        if (data is List) {
+          return data.map((item) => item as Map<String, dynamic>).toList();
+        }
+        return <Map<String, dynamic>>[];
+      },
+    );
+  }
 
-  /// Get homework completion statistics
-  Future<Map<String, dynamic>> getHomeworkStats() async {
-    final homework = getCachedTeacherHomework();
+  // ===================== ANALYTICS =====================
+
+  /// Get homework statistics
+  Map<String, dynamic> getHomeworkStats() {
+    final homework = _getCachedHomework();
     if (homework.isEmpty) return {};
 
     final now = DateTime.now();
     final thisWeek = now.subtract(Duration(days: now.weekday - 1));
-    final thisMonth = DateTime(now.year, now.month, 1);
-
-    final stats = {
-      'total': homework.length,
-      'thisWeek': homework.where((h) => h.createdAt?.isAfter(thisWeek) == true).length,
-      'thisMonth': homework.where((h) => h.createdAt?.isAfter(thisMonth) == true).length,
-      'upcoming': homework.where((h) => h.dueDate.isAfter(now)).length,
-      'overdue': homework.where((h) => h.isOverdue).length,
-      'dueSoon': homework.where((h) => h.isDueToday || h.isDueTomorrow).length,
-    };
-
-    return stats;
-  }
-
-  /// Get exam scheduling statistics
-  Future<Map<String, dynamic>> getExamStats() async {
-    final exams = getCachedTeacherExams();
-    if (exams.isEmpty) return {};
-
-    final now = DateTime.now();
-    final thisWeek = now.subtract(Duration(days: now.weekday - 1));
-    final thisMonth = DateTime(now.year, now.month, 1);
-    final nextMonth = DateTime(now.year, now.month + 1, 1);
-
-    final stats = {
-      'total': exams.length,
-      'thisWeek': exams.where((e) => e.createdAt?.isAfter(thisWeek) == true).length,
-      'thisMonth': exams.where((e) => e.createdAt?.isAfter(thisMonth) == true).length,
-      'upcoming': exams.where((e) => e.examDate.isAfter(now)).length,
-      'nextMonth': exams.where((e) =>
-      e.examDate.isAfter(now) && e.examDate.isBefore(nextMonth)).length,
-      'today': exams.where((e) => e.isToday).length,
-      'thisWeekExams': exams.where((e) =>
-      e.examDate.isAfter(thisWeek) && e.examDate.isBefore(thisWeek.add(const Duration(days: 7)))).length,
-    };
-
-    return stats;
-  }
-
-  /// Get teacher workload summary
-  Map<String, dynamic> getWorkloadSummary() {
-    final homework = getCachedTeacherHomework();
-    final exams = getCachedTeacherExams();
-    final now = DateTime.now();
-
-    // Get subjects taught
-    final subjects = <String>{};
-    subjects.addAll(homework.map((h) => h.displaySubject));
-    subjects.addAll(exams.map((e) => e.displaySubject));
-
-    // Get groups taught
-    final groups = <String>{};
-    groups.addAll(homework.map((h) => h.displayGroup));
-    groups.addAll(exams.map((e) => e.displayGroup));
-
-    // Get pending work
-    final pendingHomework = homework.where((h) =>
-    h.dueDate.isAfter(now) && h.daysUntilDue <= 7).length;
-    final upcomingExams = exams.where((e) =>
-    e.examDate.isAfter(now) && e.daysUntilExam <= 7).length;
 
     return {
-      'totalSubjects': subjects.length,
-      'totalGroups': groups.length,
-      'totalHomework': homework.length,
-      'totalExams': exams.length,
-      'pendingHomework': pendingHomework,
-      'upcomingExams': upcomingExams,
-      'workloadLevel': _calculateWorkloadLevel(pendingHomework + upcomingExams),
-      'subjects': subjects.toList(),
-      'groups': groups.toList(),
+      'total': homework.length,
+      'thisWeek': homework.where((h) {
+        final createdAt = DateTime.tryParse(h['created_at']?.toString() ?? '');
+        return createdAt?.isAfter(thisWeek) == true;
+      }).length,
+      'upcoming': homework.where((h) {
+        final dueDate = DateTime.tryParse(h['due_date']?.toString() ?? '');
+        return dueDate?.isAfter(now) == true;
+      }).length,
     };
   }
 
-  /// Calculate workload level
-  String _calculateWorkloadLevel(int totalPending) {
-    if (totalPending >= 10) return 'Yuqori';
-    if (totalPending >= 5) return 'O\'rta';
-    if (totalPending >= 2) return 'Past';
-    return 'Engil';
+  // ===================== PRIVATE METHODS =====================
+
+  Future<ApiResult<List<Map<String, dynamic>>>> _refreshHomework({
+    int skip = 0,
+    int limit = 20,
+  }) async {
+    final result = await _apiService.get<List<Map<String, dynamic>>>(
+      TeacherEndpoints.homework,
+      queryParameters: {'skip': skip, 'limit': limit},
+      fromJson: (data) {
+        if (data is List) {
+          return data.map((item) => item as Map<String, dynamic>).toList();
+        }
+        return <Map<String, dynamic>>[];
+      },
+    );
+
+    if (result.isSuccess && result.data != null) {
+      _cacheHomework(result.data!);
+    }
+
+    return result;
   }
 
-  // ===================== UTILITY METHODS =====================
+  Future<ApiResult<List<Map<String, dynamic>>>> _refreshExams({
+    int skip = 0,
+    int limit = 20,
+  }) async {
+    final result = await _apiService.get<List<Map<String, dynamic>>>(
+      TeacherEndpoints.exams,
+      queryParameters: {'skip': skip, 'limit': limit},
+      fromJson: (data) {
+        if (data is List) {
+          return data.map((item) => item as Map<String, dynamic>).toList();
+        }
+        return <Map<String, dynamic>>[];
+      },
+    );
 
-  /// Refresh all teacher data
-  Future<void> refreshAllData() async {
+    if (result.isSuccess && result.data != null) {
+      _cacheExams(result.data!);
+    }
+
+    return result;
+  }
+
+  void _refreshHomeworkInBackground() async {
     try {
-      await Future.wait([
-        getMyHomework(useCache: false),
-        getMyExams(useCache: false),
-      ]);
-      print('✅ All teacher data refreshed');
+      await _refreshHomework();
     } catch (e) {
-      print('❌ Error refreshing teacher data: $e');
+      print('Background homework refresh failed: $e');
     }
   }
 
-  /// Clear all cached teacher data
-  Future<void> clearCache() async {
-    await _storage.remove(CacheKeys.teacherHomework);
-    await _storage.remove(CacheKeys.teacherExams);
-    print('🗑️ Teacher cache cleared');
+  void _refreshExamsInBackground() async {
+    try {
+      await _refreshExams();
+    } catch (e) {
+      print('Background exams refresh failed: $e');
+    }
   }
 
-  /// Get today's urgent tasks
-  List<dynamic> getTodaysUrgentTasks() {
-    final homework = getCachedTeacherHomework();
-    final exams = getCachedTeacherExams();
-    final urgentTasks = <dynamic>[];
-
-    // Homework due today or tomorrow
-    urgentTasks.addAll(homework.where((h) => h.isDueToday || h.isDueTomorrow));
-
-    // Exams today or tomorrow
-    urgentTasks.addAll(exams.where((e) => e.isToday || e.isTomorrow));
-
-    // Sort by urgency
-    urgentTasks.sort((a, b) {
-      final aUrgency = a is HomeworkModel ? a.priorityLevel : (a as ExamModel).priorityLevel;
-      final bUrgency = b is HomeworkModel ? b.priorityLevel : (b as ExamModel).priorityLevel;
-      return bUrgency.compareTo(aUrgency);
-    });
-
-    return urgentTasks;
+  void _cacheHomework(List<Map<String, dynamic>> homework) {
+    _storage.write('teacher_homework', homework);
   }
 
-  /// Check if teacher has urgent tasks
-  bool hasUrgentTasks() => getTodaysUrgentTasks().isNotEmpty;
+  void _cacheExams(List<Map<String, dynamic>> exams) {
+    _storage.write('teacher_exams', exams);
+  }
 
-  /// Get quick actions for teacher dashboard
-  List<Map<String, dynamic>> getQuickActions() {
-    final urgentCount = getTodaysUrgentTasks().length;
-    final workload = getWorkloadSummary();
+  List<Map<String, dynamic>> _getCachedHomework() {
+    final cached = _storage.read<List>('teacher_homework');
+    if (cached != null) {
+      return cached.map((item) => item as Map<String, dynamic>).toList();
+    }
+    return [];
+  }
 
-    return [
-      {
-        'title': 'Yangi vazifa yaratish',
-        'icon': '📝',
-        'color': '#2196F3',
-        'action': 'create_homework',
-      },
-      {
-        'title': 'Yangi imtihon rejalashtirish',
-        'icon': '📋',
-        'color': '#9C27B0',
-        'action': 'create_exam',
-      },
-      {
-        'title': 'Baholarni kiritish',
-        'icon': '🎯',
-        'color': '#4CAF50',
-        'action': 'grade_assignments',
-        'badge': urgentCount > 0 ? urgentCount.toString() : null,
-      },
-      {
-        'title': 'Davomatni belgilash',
-        'icon': '📅',
-        'color': '#00BCD4',
-        'action': 'mark_attendance',
-      },
-      {
-        'title': 'Talabalarni ko\'rish',
-        'icon': '👥',
-        'color': '#FF9800',
-        'action': 'view_students',
-        'badge': workload['totalGroups'].toString(),
-      },
-    ];
+  List<Map<String, dynamic>> _getCachedExams() {
+    final cached = _storage.read<List>('teacher_exams');
+    if (cached != null) {
+      return cached.map((item) => item as Map<String, dynamic>).toList();
+    }
+    return [];
   }
 }
