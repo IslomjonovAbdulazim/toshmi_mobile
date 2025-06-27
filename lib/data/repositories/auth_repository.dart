@@ -6,8 +6,9 @@ import '../models/api_response_models.dart';
 import '../services/auth_service.dart';
 
 /// Repository interface for authentication operations
+/// Repository interface for authentication operations
 abstract class IAuthRepository {
-  // Authentication
+  // ===================== AUTHENTICATION =====================
   Future<AuthResult<User>> login({
     required String phone,
     required String password,
@@ -16,7 +17,7 @@ abstract class IAuthRepository {
   Future<void> logout();
   Future<bool> checkAuthenticationStatus();
 
-  // Profile Management
+  // ===================== PROFILE MANAGEMENT =====================
   Future<AuthResult<ProfileResponse>> getProfile();
   Future<AuthResult<void>> updateProfile({
     required String firstName,
@@ -27,7 +28,7 @@ abstract class IAuthRepository {
     required String newPassword,
   });
 
-  // Notifications
+  // ===================== NOTIFICATIONS =====================
   Future<AuthResult<List<NotificationModel>>> getNotifications({
     int skip = 0,
     int limit = 20,
@@ -36,16 +37,29 @@ abstract class IAuthRepository {
   Future<AuthResult<void>> markAllNotificationsRead();
   Future<AuthResult<int>> getUnreadNotificationCount();
 
-  // Auth State
+  // ===================== AUTH STATE =====================
   bool get isAuthenticated;
   String? get userRole;
   User? get currentUser;
   int get cachedUnreadCount;
 
-  // Validation
+  // ✅ MISSING ROLE GETTERS (ADDED)
+  bool get isAdmin;
+  bool get isTeacher;
+  bool get isStudent;
+  bool get isParent;
+
+  // ✅ MISSING DISPLAY GETTERS (ADDED)
+  String get userDisplayName;
+  String get userDisplayPhone;
+
+  // ===================== VALIDATION =====================
   bool isValidPhone(String phone);
   PasswordValidation validatePassword(String password);
   String formatPhoneForDisplay(String phone);
+
+  // ✅ MISSING REFRESH METHOD (ADDED)
+  Future<void> refreshUserData();
 }
 
 /// Authentication repository implementation

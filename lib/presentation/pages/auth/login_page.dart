@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import '../../../core/themes/app_themes.dart';
 import '../../controllers/auth_controller.dart';
 import '../../widgets/common/loading_widget.dart';
@@ -7,10 +9,27 @@ import '../../widgets/common/loading_widget.dart';
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
+  // ✅ Uzbek phone number mask formatter
+  static final MaskTextInputFormatter _phoneMaskFormatter = MaskTextInputFormatter(
+    mask: '+998 ## ### ## ##',
+    filter: {"#": RegExp(r'[0-9]')},
+    type: MaskAutoCompletionType.lazy,
+  );
+
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
     final colors = context.colors;
+
+    // ✅ Set default +998 prefix if phone field is empty
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (authController.phoneController.text.isEmpty) {
+        authController.phoneController.text = '+998 ';
+        authController.phoneController.selection = TextSelection.fromPosition(
+          TextPosition(offset: authController.phoneController.text.length),
+        );
+      }
+    });
 
     return Scaffold(
       backgroundColor: colors.primaryBackground,
@@ -28,11 +47,6 @@ class LoginPage extends StatelessWidget {
 
               // Login Form
               _buildLoginForm(authController, colors),
-
-              const SizedBox(height: 24),
-
-              // Additional Options
-              _buildAdditionalOptions(colors),
 
               const SizedBox(height: 40),
             ],
@@ -53,12 +67,12 @@ class LoginPage extends StatelessWidget {
             color: colors.info.withOpacity(0.1),
             borderRadius: BorderRadius.circular(60),
             border: Border.all(
-              color: colors.info.withOpacity(0.2),
+              color: colors.info.withOpacity(0.3),
               width: 2,
             ),
           ),
           child: Icon(
-            Icons.school,
+            Icons.school_outlined,
             size: 60,
             color: colors.info,
           ),
@@ -68,11 +82,11 @@ class LoginPage extends StatelessWidget {
 
         // App Title
         Text(
-          'Toshmi Mobile',
+          'Toshmi',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: colors.primaryText,
+            color: colors.info,
           ),
         ),
 
@@ -80,66 +94,38 @@ class LoginPage extends StatelessWidget {
 
         // Subtitle
         Text(
-          'Ta\'lim boshqaruv tizimi',
+          'Ta\'lim markaziga xush kelibsiz',
           style: TextStyle(
             fontSize: 16,
             color: colors.secondaryText,
           ),
+          textAlign: TextAlign.center,
         ),
       ],
     );
   }
 
   Widget _buildLoginForm(AuthController authController, AppThemeColors colors) {
-    return Card(
-      elevation: 4,
-      color: colors.cardBackground,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Form Title
-            Text(
-              'Tizimga kirish',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: colors.primaryText,
-              ),
-              textAlign: TextAlign.center,
-            ),
+    return Column(
+      children: [
+        // Phone Input
+        Obx(() => _buildPhoneInput(authController, colors)),
 
-            const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
-            // Phone Input
-            Obx(() => _buildPhoneInput(authController, colors)),
+        // Password Input
+        Obx(() => _buildPasswordInput(authController, colors)),
 
-            const SizedBox(height: 16),
+        const SizedBox(height: 16),
 
-            // Password Input
-            Obx(() => _buildPasswordInput(authController, colors)),
+        // Role Selection
+        Obx(() => _buildRoleSelection(authController, colors)),
 
-            const SizedBox(height: 16),
+        const SizedBox(height: 32),
 
-            // Role Selection
-            Obx(() => _buildRoleSelection(authController, colors)),
-
-            const SizedBox(height: 20),
-
-            // Remember Me Checkbox
-            Obx(() => _buildRememberMe(authController, colors)),
-
-            const SizedBox(height: 24),
-
-            // Login Button
-            Obx(() => _buildLoginButton(authController, colors)),
-          ],
-        ),
-      ),
+        // Login Button
+        Obx(() => _buildLoginButton(authController, colors)),
+      ],
     );
   }
 
@@ -160,6 +146,20 @@ class LoginPage extends StatelessWidget {
           controller: authController.phoneController,
           keyboardType: TextInputType.phone,
           style: TextStyle(color: colors.primaryText),
+          inputFormatters: [
+            _phoneMaskFormatter,
+            // Prevent deletion of +998 prefix
+            FilteringTextInputFormatter.allow(RegExp(r'[\+0-9\s]')),
+          ],
+          onChanged: (value) {
+            // Ensure +998 prefix is always present
+            if (!value.startsWith('+998')) {
+              authController.phoneController.text = '+998 ';
+              authController.phoneController.selection = TextSelection.fromPosition(
+                TextPosition(offset: authController.phoneController.text.length),
+              );
+            }
+          },
           decoration: InputDecoration(
             hintText: '+998 90 123 45 67',
             hintStyle: TextStyle(color: colors.secondaryText),
@@ -212,8 +212,8 @@ class LoginPage extends StatelessWidget {
             suffixIcon: IconButton(
               icon: Icon(
                 authController.isPasswordVisible
-                    ? Icons.visibility_off
-                    : Icons.visibility,
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
                 color: colors.secondaryText,
               ),
               onPressed: authController.togglePasswordVisibility,
@@ -241,7 +241,7 @@ class LoginPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Lavozim',
+          'Rol tanlang',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -253,76 +253,48 @@ class LoginPage extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.secondaryBackground,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: colors.divider,
+              width: 1,
+            ),
           ),
-          child: DropdownButtonFormField<String>(
-            value: authController.selectedRole,
-            style: TextStyle(color: colors.primaryText),
-            decoration: InputDecoration(
-              prefixIcon: Icon(
-                Icons.person_outline,
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: authController.selectedRole,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              isExpanded: true,
+              icon: Icon(
+                Icons.keyboard_arrow_down,
                 color: colors.secondaryText,
               ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colors.info, width: 2),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
+              style: TextStyle(color: colors.primaryText),
+              dropdownColor: colors.secondaryBackground,
+              borderRadius: BorderRadius.circular(12),
+              items: authController.roleOptions.map((role) {
+                return DropdownMenuItem<String>(
+                  value: role['value'],
+                  child: Row(
+                    children: [
+                      Icon(
+                        _getRoleIcon(role['value']!),
+                        size: 20,
+                        color: colors.secondaryText,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        role['label']!,
+                        style: TextStyle(color: colors.primaryText),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  authController.setSelectedRole(value);
+                }
+              },
             ),
-            dropdownColor: colors.cardBackground,
-            items: authController.roleOptions.map((role) {
-              return DropdownMenuItem<String>(
-                value: role['value'],
-                child: Row(
-                  children: [
-                    Icon(
-                      _getRoleIcon(role['value']!),
-                      size: 20,
-                      color: colors.secondaryText,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      role['label']!,
-                      style: TextStyle(color: colors.primaryText),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (value != null) {
-                authController.setSelectedRole(value);
-              }
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRememberMe(AuthController authController, AppThemeColors colors) {
-    return Row(
-      children: [
-        Checkbox(
-          value: authController.rememberMe,
-          onChanged: (_) => authController.toggleRememberMe(),
-          activeColor: colors.info,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          'Meni eslab qol',
-          style: TextStyle(
-            fontSize: 14,
-            color: colors.primaryText,
           ),
         ),
       ],
@@ -334,6 +306,7 @@ class LoginPage extends StatelessWidget {
     final isFormValid = authController.formValid;
 
     return SizedBox(
+      width: double.infinity,
       height: 50,
       child: ElevatedButton(
         onPressed: isLoading || !isFormValid ? null : authController.login,
@@ -359,181 +332,16 @@ class LoginPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAdditionalOptions(AppThemeColors colors) {
-    return Column(
-      children: [
-        // Divider
-        Row(
-          children: [
-            Expanded(
-              child: Divider(color: colors.divider),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'yoki',
-                style: TextStyle(
-                  color: colors.secondaryText,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-            Expanded(
-              child: Divider(color: colors.divider),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 20),
-
-        // Help Options
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildHelpButton(
-              icon: Icons.help_outline,
-              label: 'Yordam',
-              onTap: () => _showHelpDialog(),
-              colors: colors,
-            ),
-            _buildHelpButton(
-              icon: Icons.info_outline,
-              label: 'Ma\'lumot',
-              onTap: () => _showInfoDialog(),
-              colors: colors,
-            ),
-            _buildHelpButton(
-              icon: Icons.phone,
-              label: 'Aloqa',
-              onTap: () => _showContactDialog(),
-              colors: colors,
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 24),
-
-        // Version Info
-        Text(
-          'Versiya 1.0.0',
-          style: TextStyle(
-            fontSize: 12,
-            color: colors.tertiaryText,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHelpButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    required AppThemeColors colors,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: colors.info,
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: colors.secondaryText,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   IconData _getRoleIcon(String role) {
     switch (role) {
       case 'student':
-        return Icons.school;
+        return Icons.school_outlined;
       case 'teacher':
-        return Icons.person;
+        return Icons.person_outline;
       case 'parent':
-        return Icons.family_restroom;
+        return Icons.family_restroom_outlined;
       default:
-        return Icons.person;
+        return Icons.person_outline;
     }
-  }
-
-  void _showHelpDialog() {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Yordam'),
-        content: const Text(
-          'Tizimga kirish uchun:\n\n'
-              '1. Telefon raqamingizni kiriting\n'
-              '2. Parolingizni kiriting\n'
-              '3. Lavozimingizni tanlang\n'
-              '4. "Kirish" tugmasini bosing\n\n'
-              'Agar parolingizni unutgan bo\'lsangiz, '
-              'administratorga murojaat qiling.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Yopish'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showInfoDialog() {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Dastur haqida'),
-        content: const Text(
-          'Toshmi Mobile - Ta\'lim muassasalari uchun '
-              'boshqaruv tizimi.\n\n'
-              'Bu dastur orqali siz:\n'
-              '• Vazifalarni ko\'rishingiz\n'
-              '• Baholarni kuzatishingiz\n'
-              '• Davomatni nazorat qilishingiz\n'
-              '• Bildirishnomalar olishingiz mumkin.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Yopish'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showContactDialog() {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Aloqa'),
-        content: const Text(
-          'Texnik yordam uchun:\n\n'
-              '📞 +998 71 123 45 67\n'
-              '📧 support@toshmi.uz\n'
-              '🌐 www.toshmi.uz\n\n'
-              'Ish vaqti: 09:00 - 18:00',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Yopish'),
-          ),
-        ],
-      ),
-    );
   }
 }

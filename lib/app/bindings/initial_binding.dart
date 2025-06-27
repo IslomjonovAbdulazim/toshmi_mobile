@@ -5,8 +5,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_service.dart';
 import '../../data/services/auth_service.dart';
 
-/// Initial binding that sets up core services and dependencies
-/// This binding is loaded when the app starts and provides essential services
+/// ✅ FIXED: Initial binding that properly sets up core services and dependencies
 class InitialBinding extends Bindings {
   @override
   void dependencies() {
@@ -56,109 +55,76 @@ class InitialBinding extends Bindings {
     print('✅ InitialBinding: AuthService registered');
   }
 
-  /// Register repository layer
+  /// ✅ FIXED: Register repository layer with proper dependency injection
   void _registerRepositories() {
     print('🔧 InitialBinding: Registering repositories...');
 
-    // Auth Repository - depends on AuthService
+    // Create single instance of AuthRepository
+    final authRepository = AuthRepository();
+
+    // ✅ SOLUTION: Register as both interface and concrete class
+    // This allows controllers to use either:
+    // - IAuthRepository (recommended for dependency injection)
+    // - AuthRepository (for existing code compatibility)
     Get.put<IAuthRepository>(
-      AuthRepository(),
+      authRepository,
       permanent: true, // Keep alive throughout app lifecycle
     );
-    print('✅ InitialBinding: AuthRepository registered');
+
+    Get.put<AuthRepository>(
+      authRepository,
+      permanent: true, // Keep alive throughout app lifecycle
+    );
+
+    print('✅ InitialBinding: AuthRepository registered (both interface and concrete)');
 
     // Add other repositories here as needed
     // Example:
-    // Get.put<IStudentRepository>(StudentRepository(), permanent: true);
-    // Get.put<ITeacherRepository>(TeacherRepository(), permanent: true);
+    // final studentRepo = StudentRepository();
+    // Get.put<IStudentRepository>(studentRepo, permanent: true);
+    // Get.put<StudentRepository>(studentRepo, permanent: true);
   }
 }
 
-/// Network-related bindings for API and connectivity services
-class NetworkBinding extends Bindings {
-  @override
-  void dependencies() {
-    print('🌐 NetworkBinding: Setting up network dependencies...');
-
-    // Network status checker (if you have one)
-    // Get.put<NetworkService>(NetworkService(), permanent: true);
-
-    // HTTP cache service (if you have one)
-    // Get.put<CacheService>(CacheService(), permanent: true);
-
-    print('✅ NetworkBinding: Network dependencies registered');
-  }
-}
-
-/// Storage-related bindings for local data persistence
-class StorageBinding extends Bindings {
-  @override
-  void dependencies() {
-    print('💾 StorageBinding: Setting up storage dependencies...');
-
-    // Local database service (if you have one)
-    // Get.put<DatabaseService>(DatabaseService(), permanent: true);
-
-    // File storage service (if you have one)
-    // Get.put<FileStorageService>(FileStorageService(), permanent: true);
-
-    print('✅ StorageBinding: Storage dependencies registered');
-  }
-}
-
-/// Utility bindings for helper services
-class UtilityBinding extends Bindings {
-  @override
-  void dependencies() {
-    print('🛠️ UtilityBinding: Setting up utility dependencies...');
-
-    // Permission service (if you have one)
-    // Get.put<PermissionService>(PermissionService(), permanent: true);
-
-    // Notification service (if you have one)
-    // Get.put<NotificationService>(NotificationService(), permanent: true);
-
-    // Theme service (if you have one)
-    // Get.put<ThemeService>(ThemeService(), permanent: true);
-
-    print('✅ UtilityBinding: Utility dependencies registered');
-  }
-}
-
-/// Combined binding that includes all essential bindings
-/// Use this if you want to load everything at once
-class AppBinding extends Bindings {
-  @override
-  void dependencies() {
-    print('🚀 AppBinding: Setting up all app dependencies...');
-
-    // Load all bindings in order
-    InitialBinding().dependencies();
-    NetworkBinding().dependencies();
-    StorageBinding().dependencies();
-    UtilityBinding().dependencies();
-
-    print('🎉 AppBinding: All app dependencies loaded successfully');
-  }
-}
-
-/// Minimal binding for essential services only
-/// Use this for better app startup performance
+/// ✅ OPTIMIZED: Minimal binding for better performance
 class MinimalBinding extends Bindings {
   @override
   void dependencies() {
     print('⚡ MinimalBinding: Setting up minimal dependencies...');
 
-    // Only essential services
-    Get.put<ApiService>(ApiService(), permanent: true);
-    Get.put<AuthService>(AuthService(), permanent: true);
-    Get.put<IAuthRepository>(AuthRepository(), permanent: true);
+    // Only essential services for app startup
+    final apiService = ApiService();
+    final authService = AuthService();
+    final authRepository = AuthRepository();
+
+    // Register services
+    Get.put<ApiService>(apiService, permanent: true);
+    Get.put<AuthService>(authService, permanent: true);
+
+    // Register repository as both types
+    Get.put<IAuthRepository>(authRepository, permanent: true);
+    Get.put<AuthRepository>(authRepository, permanent: true);
 
     print('✅ MinimalBinding: Minimal dependencies registered');
   }
 }
 
-/// Development binding with additional debugging services
+/// ✅ PERFORMANCE: Lazy loading binding for non-critical services
+class LazyServicesBinding extends Bindings {
+  @override
+  void dependencies() {
+    print('🔄 LazyServicesBinding: Setting up lazy dependencies...');
+
+    // Non-critical services that can be loaded on demand
+    // Get.lazyPut<NotificationService>(() => NotificationService(), fenix: true);
+    // Get.lazyPut<CacheService>(() => CacheService(), fenix: true);
+    // Get.lazyPut<ThemeService>(() => ThemeService(), fenix: true);
+
+    print('✅ LazyServicesBinding: Lazy dependencies registered');
+  }
+}
+
+/// ✅ DEVELOPMENT: Debug binding for development environment
 class DebugBinding extends Bindings {
   @override
   void dependencies() {
@@ -167,9 +133,9 @@ class DebugBinding extends Bindings {
     // Load initial binding first
     InitialBinding().dependencies();
 
-    // Debug-specific services
+    // Debug-specific services for development
     // Get.put<LoggingService>(LoggingService(), permanent: true);
-    // Get.put<DebugService>(DebugService(), permanent: true);
+    // Get.put<AnalyticsService>(AnalyticsService(), permanent: true);
 
     print('✅ DebugBinding: Debug dependencies registered');
   }

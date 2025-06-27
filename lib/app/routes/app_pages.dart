@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../presentation/pages/auth/login_page.dart';
 import '../../presentation/pages/auth/profile_page.dart';
 import '../../presentation/pages/auth/splash_page.dart';
+import '../../presentation/controllers/auth_controller.dart';
 import '../bindings/auth_binding.dart';
 import '../middleware/auth_middleware.dart';
 import 'app_routes.dart';
@@ -53,16 +54,40 @@ class AppPages {
 
 // ===================== BINDINGS =====================
 
+/// ✅ FIXED: Splash binding now properly registers AuthController
 class SplashBinding extends Bindings {
   @override
   void dependencies() {
-    // Core services are already initialized in InitialBinding
+    print('💫 SplashBinding: Setting up splash screen dependencies...');
+
+    // ✅ Register AuthController for splash page auth checking
+    if (!Get.isRegistered<AuthController>()) {
+      Get.put<AuthController>(
+        AuthController(),
+        permanent: true, // Keep alive for smooth transition
+      );
+      print('✅ SplashBinding: AuthController registered');
+    } else {
+      print('✅ SplashBinding: AuthController already available');
+    }
+
+    print('✅ SplashBinding: Splash dependencies registered');
   }
 }
 
 class ProfileBinding extends Bindings {
   @override
   void dependencies() {
-    // AuthController should already be available
+    print('👤 ProfileBinding: Setting up profile management dependencies...');
+
+    // Ensure AuthController is available
+    if (!Get.isRegistered<AuthController>()) {
+      Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
+      print('✅ ProfileBinding: AuthController registered');
+    } else {
+      print('✅ ProfileBinding: AuthController already available');
+    }
+
+    print('✅ ProfileBinding: Profile dependencies registered');
   }
 }

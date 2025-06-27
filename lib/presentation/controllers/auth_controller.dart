@@ -6,7 +6,7 @@ import '../../data/repositories/auth_repository.dart';
 class AuthController extends GetxController {
   static AuthController get to => Get.find();
 
-  final AuthRepository _authRepository = Get.find<AuthRepository>();
+  final IAuthRepository _authRepository = Get.find<IAuthRepository>();
 
   // ===================== REACTIVE VARIABLES =====================
 
@@ -62,14 +62,22 @@ class AuthController extends GetxController {
   bool get isAuthenticated => _isAuthenticated.value;
   User? get currentUser => _currentUser.value;
 
-  // Derived getters
-  bool get isAdmin => _authRepository.isAdmin;
-  bool get isTeacher => _authRepository.isTeacher;
-  bool get isStudent => _authRepository.isStudent;
-  bool get isParent => _authRepository.isParent;
+  // ✅ FIXED: Local implementation of role getters
+  bool get isAdmin => _authRepository.userRole == UserRoles.admin;
+  bool get isTeacher => _authRepository.userRole == UserRoles.teacher;
+  bool get isStudent => _authRepository.userRole == UserRoles.student;
+  bool get isParent => _authRepository.userRole == UserRoles.parent;
 
-  String get userDisplayName => _authRepository.userDisplayName;
-  String get userDisplayPhone => _authRepository.userDisplayPhone;
+  // ✅ FIXED: Local implementation of display getters
+  String get userDisplayName {
+    final user = _authRepository.currentUser;
+    return user?.name ?? 'Unknown User';
+  }
+
+  String get userDisplayPhone {
+    final user = _authRepository.currentUser;
+    return user != null ? _authRepository.formatPhoneForDisplay(user.phone) : '';
+  }
 
   // Role options for UI (only roles that can login)
   List<Map<String, String>> get roleOptions => [
@@ -116,15 +124,16 @@ class AuthController extends GetxController {
   }
 
   void _setupFormValidation() {
-    // Real-time validation
-    ever(phoneController.text.obs, _validatePhone);
-    ever(passwordController.text.obs, _validatePassword);
+    // Listen to text controller changes properly
+    phoneController.addListener(() {
+      _validatePhone(phoneController.text);
+      _updateFormValidity();
+    });
 
-    // Form validity check
-    everAll([
-      phoneController.text.obs,
-      passwordController.text.obs,
-    ], (_) => _updateFormValidity());
+    passwordController.addListener(() {
+      _validatePassword(passwordController.text);
+      _updateFormValidity();
+    });
   }
 
   void _disposeControllers() {
@@ -141,7 +150,7 @@ class AuthController extends GetxController {
 
   /// Login with phone, password and role
   Future<void> login() async {
-    if (!formValid) {
+    if (!validateForm()) {
       _showErrorSnackbar('Iltimos, barcha maydonlarni to\'g\'ri to\'ldiring');
       return;
     }
@@ -149,8 +158,11 @@ class AuthController extends GetxController {
     _isLoginLoading.value = true;
 
     try {
+      // ✅ FIXED: Clean phone number (remove spaces) before sending to API
+      final cleanPhone = phoneController.text.trim().replaceAll(' ', '');
+
       final result = await _authRepository.login(
-        phone: phoneController.text.trim(),
+        phone: cleanPhone,
         password: passwordController.text,
         role: selectedRole,
       );
@@ -165,7 +177,7 @@ class AuthController extends GetxController {
         // Navigate to appropriate dashboard
         _navigateToHomePage();
       } else {
-        _showErrorSnackbar(result.failure!.message);
+        _showErrorSnackbar(result.failure?.message ?? 'Kirish jarayonida xatolik');
       }
     } catch (e) {
       _showErrorSnackbar('Kirish jarayonida xatolik yuz berdi');
@@ -221,7 +233,7 @@ class AuthController extends GetxController {
         _showSuccessSnackbar('Profil muvaffaqiyatli yangilandi');
         Get.back();
       } else {
-        _showErrorSnackbar(result.failure!.message);
+        _showErrorSnackbar(result.failure?.message ?? 'Profilni yangilashda xatolik');
       }
     } catch (e) {
       _showErrorSnackbar('Profilni yangilashda xatolik yuz berdi');
@@ -272,7 +284,7 @@ class AuthController extends GetxController {
         _showSuccessSnackbar('Parol muvaffaqiyatli o\'zgartirildi');
         Get.back();
       } else {
-        _showErrorSnackbar(result.failure!.message);
+        _showErrorSnackbar(result.failure?.message ?? 'Parolni o\'zgartirishda xatolik');
       }
     } catch (e) {
       _showErrorSnackbar('Parolni o\'zgartirishda xatolik yuz berdi');
@@ -336,27 +348,33 @@ class AuthController extends GetxController {
   void _validatePhone(String phone) {
     if (phone.isEmpty) {
       _phoneError.value = 'Telefon raqamini kiriting';
-    } else if (!_authRepository.isValidPhone(phone)) {
-      _phoneError.value = 'Telefon raqami noto\'g\'ri formatda (+998XXXXXXXXX)';
     } else {
-      _phoneError.value = null;
+      // ✅ FIXED: Remove spaces before validation
+      final cleanPhone = phone.replaceAll(' ', '');
+      if (!_authRepository.isValidPhone(cleanPhone)) {
+        _phoneError.value = 'Telefon raqami noto\'g\'ri formatda (+998XXXXXXXXX)';
+      } else {
+        _phoneError.value = null;
+      }
     }
   }
 
   void _validatePassword(String password) {
     if (password.isEmpty) {
       _passwordError.value = 'Parolni kiriting';
-    } else if (password.length < AppConstants.minPasswordLength) {
-      _passwordError.value = 'Parol kamida ${AppConstants.minPasswordLength} ta belgidan iborat bo\'lishi kerak';
+    } else if (password.length < 6) {
+      _passwordError.value = 'Parol kamida 6 ta belgidan iborat bo\'lishi kerak';
     } else {
       _passwordError.value = null;
     }
   }
 
   void _updateFormValidity() {
+    // ✅ FIXED: Check cleaned phone for proper validation
+    final cleanPhone = phoneController.text.replaceAll(' ', '');
     _formValid.value = phoneError == null &&
         passwordError == null &&
-        phoneController.text.isNotEmpty &&
+        cleanPhone.isNotEmpty &&
         passwordController.text.isNotEmpty;
   }
 
@@ -370,13 +388,17 @@ class AuthController extends GetxController {
 
   // ===================== USER DATA MANAGEMENT =====================
 
-  /// Refresh user data
+  /// ✅ FIXED: Local implementation of refresh user data
   Future<void> refreshUserData() => _refreshUserData();
 
   Future<void> _refreshUserData() async {
     try {
-      await _authRepository.refreshUserData();
-      _currentUser.value = _authRepository.currentUser;
+      // Since interface doesn't have refreshUserData, get profile directly
+      final profileResult = await _authRepository.getProfile();
+      if (profileResult.isSuccess) {
+        // Update current user from repository
+        _currentUser.value = _authRepository.currentUser;
+      }
     } catch (e) {
       print('❌ Refresh user data error: $e');
     }
