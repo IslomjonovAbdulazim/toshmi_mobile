@@ -7,11 +7,12 @@ import 'auth_service.dart';
 
 class ApiService extends GetxService {
   late Dio _dio;
-  final AuthService _authService = Get.find<AuthService>();
+  late AuthService _authService;
 
   @override
   Future<void> onInit() async {
     super.onInit();
+    _authService = Get.find<AuthService>();
     _initializeDio();
   }
 
@@ -30,15 +31,21 @@ class ApiService extends GetxService {
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         final token = _authService.token;
-        if (token != null) {
+        if (token != null && token.isNotEmpty) {
           options.headers['Authorization'] = 'Bearer $token';
+          print('Adding auth token to request: ${options.path}');
+        } else {
+          print('No auth token available for request: ${options.path}');
         }
         handler.next(options);
       },
       onError: (error, handler) {
-        // FIXED: Only logout on 401 if NOT a login attempt
+        print('API Error: ${error.response?.statusCode} - ${error.message}');
+
+        // Only logout on 401 if NOT a login attempt
         if (error.response?.statusCode == 401 &&
             !error.requestOptions.path.contains('/auth/login')) {
+          print('401 Unauthorized - logging out user');
           _authService.logout();
         }
         handler.next(error);

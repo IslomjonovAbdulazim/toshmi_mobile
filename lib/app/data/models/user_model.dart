@@ -24,15 +24,32 @@ class User {
   String get fullName => '$firstName $lastName';
 
   factory User.fromJson(Map<String, dynamic> json) {
+    // Handle different API response formats
+    String firstName = '';
+    String lastName = '';
+
+    if (json.containsKey('name')) {
+      // Login response format: {id, name, phone}
+      final nameParts = (json['name'] as String).split(' ');
+      firstName = nameParts.isNotEmpty ? nameParts.first : '';
+      lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+    } else {
+      // Profile response format: {first_name, last_name}
+      firstName = json['first_name'] ?? '';
+      lastName = json['last_name'] ?? '';
+    }
+
     return User(
       id: json['id'],
       phone: json['phone'],
       passwordHash: json['password_hash'] ?? '',
-      role: json['role'],
-      firstName: json['first_name'],
-      lastName: json['last_name'],
+      role: json['role'] ?? '',
+      firstName: firstName,
+      lastName: lastName,
       isActive: json['is_active'] ?? true,
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
       profileImageId: json['profile_image_id'],
     );
   }

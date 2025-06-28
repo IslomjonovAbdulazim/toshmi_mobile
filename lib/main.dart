@@ -14,7 +14,7 @@ import 'core/theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize services
+  // Initialize services in correct order
   await initServices();
 
   // Set system UI
@@ -29,20 +29,28 @@ void main() async {
 }
 
 Future<void> initServices() async {
-  // Core services
+  print('Initializing services...');
+
+  // Core services first
   await Get.putAsync(() => StorageService().init());
   Get.put(StorageProvider());
+  print('✓ Storage services initialized');
 
   // Auth service (required by ApiService)
   await Get.putAsync(() => AuthService().init());
+  print('✓ Auth service initialized');
 
   // API services
   Get.put(ApiService());
   Get.put(ApiProvider());
+  print('✓ API services initialized');
 
-  // Other services
+  // Other services (don't auto-initialize NotificationService)
   Get.put(FileService());
-  Get.put(NotificationService());
+  Get.lazyPut(() => NotificationService()); // Lazy initialization
+  print('✓ Other services initialized');
+
+  print('All services ready!');
 }
 
 class MyApp extends StatelessWidget {
