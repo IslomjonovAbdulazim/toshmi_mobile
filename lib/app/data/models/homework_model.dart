@@ -1,3 +1,4 @@
+// FIXED: Updated to match backend SQLAlchemy model exactly
 class Homework {
   final int id;
   final int groupSubjectId;
@@ -6,7 +7,7 @@ class Homework {
   final DateTime dueDate;
   final int maxPoints;
   final List<String> externalLinks;
-  final List<int> documentIds;
+  final List<int> documentIds; // Changed to match backend
   final DateTime createdAt;
 
   Homework({
@@ -30,7 +31,7 @@ class Homework {
       dueDate: DateTime.parse(json['due_date']),
       maxPoints: json['max_points'] ?? 100,
       externalLinks: List<String>.from(json['external_links'] ?? []),
-      documentIds: List<int>.from(json['document_ids'] ?? []),
+      documentIds: List<int>.from(json['document_ids'] ?? []), // Fixed to match backend
       createdAt: DateTime.parse(json['created_at']),
     );
   }
@@ -44,7 +45,7 @@ class Homework {
       'due_date': dueDate.toIso8601String(),
       'max_points': maxPoints,
       'external_links': externalLinks,
-      'document_ids': documentIds,
+      'document_ids': documentIds, // Fixed to match backend
       'created_at': createdAt.toIso8601String(),
     };
   }

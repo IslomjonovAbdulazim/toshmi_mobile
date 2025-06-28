@@ -23,15 +23,14 @@ class ApiConstants {
   static const String adminPayments = '/admin/payments';
   static const String adminMonthlyPaymentStatus = '/admin/monthly-payment-status';
 
-  // Teacher endpoints
+  // FIXED: Teacher endpoints to match backend exactly
   static const String teacherHomework = '/teacher/homework';
   static const String teacherExams = '/teacher/exams';
-  // ❌ Fixed: These were wrong in original
   static const String teacherBulkHomeworkGrades = '/teacher/bulk-homework-grades';
   static const String teacherBulkExamGrades = '/teacher/bulk-exam-grades';
   static const String teacherBulkAttendance = '/teacher/bulk-attendance';
   static const String teacherAttendanceTable = '/teacher/attendance-table';
-  static const String teacherGroupStudents = '/teacher/groups'; // /{group_id}/students
+  static const String teacherGroups = '/teacher/groups'; // /{group_id}/students
 
   // Student endpoints
   static const String studentHomework = '/student/homework';

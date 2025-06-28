@@ -1,12 +1,12 @@
 // lib/app/modules/teacher/views/teacher_home_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../utils/widgets/common/custom_app_bar.dart';
-import '../../../utils/widgets/common/loading_widget.dart';
-import '../../../utils/widgets/common/error_widget.dart';
-import '../../../utils/extensions/datetime_extensions.dart';
-import '../controllers/teacher_home_controller.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../utils/widgets/common/custom_app_bar.dart';
+import '../../../../utils/widgets/common/loading_widget.dart';
+import '../../../../utils/widgets/common/error_widget.dart';
+import '../../../../utils/extensions/datetime_extensions.dart';
+import '../../controllers/teacher_home_controller.dart';
 
 class TeacherHomeView extends GetView<TeacherHomeController> {
   const TeacherHomeView({super.key});

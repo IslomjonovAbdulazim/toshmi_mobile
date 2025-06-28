@@ -1,4 +1,4 @@
-// lib/app/modules/teacher/controllers/attendance_controller.dart
+// FIXED: Updated to match backend API structure exactly
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/base/base_controller.dart';
@@ -14,12 +14,12 @@ class AttendanceController extends BaseController {
   final RxList<dynamic> students = <dynamic>[].obs;
   final RxMap<int, String> attendanceRecords = <int, String>{}.obs;
 
-  // Attendance table data
+  // Attendance table data (matches backend GET /teacher/attendance-table response)
   final RxMap<String, dynamic> attendanceTable = <String, dynamic>{}.obs;
   final RxList<String> tableDates = <String>[].obs;
   final RxList<dynamic> tableStudents = <dynamic>[].obs;
 
-  // Available group-subjects (teacher's assigned classes)
+  // Available group-subjects (teacher's assignments - would need separate endpoint)
   final RxList<Map<String, dynamic>> groupSubjects = <Map<String, dynamic>>[].obs;
 
   // Date range for viewing
@@ -50,23 +50,25 @@ class AttendanceController extends BaseController {
     endDate.value = monday.add(const Duration(days: 6));
   }
 
-  // Load teacher's assigned group-subjects
+  // Load teacher's assigned group-subjects (would need separate API endpoint)
   Future<void> loadGroupSubjects() async {
     try {
-      // This would come from an API that returns teacher's assignments
-      // For now, we'll use mock data
+      // TODO: This would need a proper API endpoint like GET /teacher/group-subjects
+      // For now, we'll use mock data based on the backend structure
       groupSubjects.assignAll([
         {
           'id': 1,
           'group_name': '10-A',
           'subject_name': 'Matematika',
           'group_subject_id': 1,
+          'group_id': 1,
         },
         {
           'id': 2,
           'group_name': '10-B',
           'subject_name': 'Matematika',
           'group_subject_id': 2,
+          'group_id': 2,
         },
       ]);
     } catch (e) {
@@ -74,7 +76,7 @@ class AttendanceController extends BaseController {
     }
   }
 
-  // Load students for selected group-subject
+  // Load students for selected group (matches backend GET /teacher/groups/{group_id}/students)
   Future<void> loadStudents(int groupId) async {
     try {
       isLoadingStudents.value = true;
@@ -97,10 +99,9 @@ class AttendanceController extends BaseController {
 
   // Set attendance for a student
   void setAttendance(int studentId, String status) {
-    if (!AppConstants.attendancePresent.contains(status) &&
-        !AppConstants.attendanceAbsent.contains(status) &&
-        !AppConstants.attendanceLate.contains(status) &&
-        !AppConstants.attendanceExcused.contains(status)) {
+    // Validate status against backend expected values
+    const validStatuses = ['present', 'absent', 'late', 'excused'];
+    if (!validStatuses.contains(status)) {
       showError('Noto\'g\'ri davomat holati');
       return;
     }
@@ -133,7 +134,7 @@ class AttendanceController extends BaseController {
     _updateAttendanceStats();
   }
 
-  // Save attendance
+  // Save attendance (matches backend POST /teacher/bulk-attendance)
   Future<void> saveAttendance() async {
     if (selectedGroupSubjectId.value == 0) {
       showError('Guruh va fanni tanlang');
@@ -148,6 +149,7 @@ class AttendanceController extends BaseController {
     try {
       isSavingAttendance.value = true;
 
+      // Convert to backend expected format
       final records = attendanceRecords.entries.map((entry) => {
         'student_id': entry.key,
         'status': entry.value,
@@ -172,7 +174,7 @@ class AttendanceController extends BaseController {
     }
   }
 
-  // Load attendance table
+  // Load attendance table (matches backend GET /teacher/attendance-table response)
   Future<void> loadAttendanceTable() async {
     if (selectedGroupSubjectId.value == 0) {
       showError('Guruh va fanni tanlang');
@@ -190,6 +192,8 @@ class AttendanceController extends BaseController {
       );
 
       attendanceTable.value = data;
+
+      // Process backend response structure
       tableDates.assignAll((data['dates'] as List<dynamic>? ?? []).map((d) => d.toString()));
       tableStudents.assignAll(data['students'] ?? []);
 
@@ -228,7 +232,7 @@ class AttendanceController extends BaseController {
     );
 
     if (groupSubject.isNotEmpty) {
-      final groupId = groupSubject['id'] as int;
+      final groupId = groupSubject['group_id'] as int;
       loadStudents(groupId);
     }
   }
@@ -236,10 +240,10 @@ class AttendanceController extends BaseController {
   // Update attendance statistics
   void _updateAttendanceStats() {
     final stats = <String, int>{
-      AppConstants.attendancePresent: 0,
-      AppConstants.attendanceAbsent: 0,
-      AppConstants.attendanceLate: 0,
-      AppConstants.attendanceExcused: 0,
+      'present': 0,
+      'absent': 0,
+      'late': 0,
+      'excused': 0,
     };
 
     for (final status in attendanceRecords.values) {
@@ -260,13 +264,13 @@ class AttendanceController extends BaseController {
 
   Color getStatusColor(String status) {
     switch (status) {
-      case AppConstants.attendancePresent:
+      case 'present':
         return Colors.green;
-      case AppConstants.attendanceAbsent:
+      case 'absent':
         return Colors.red;
-      case AppConstants.attendanceLate:
+      case 'late':
         return Colors.orange;
-      case AppConstants.attendanceExcused:
+      case 'excused':
         return Colors.blue;
       default:
         return Colors.grey;
@@ -275,13 +279,13 @@ class AttendanceController extends BaseController {
 
   String getStatusText(String status) {
     switch (status) {
-      case AppConstants.attendancePresent:
+      case 'present':
         return 'Bor';
-      case AppConstants.attendanceAbsent:
+      case 'absent':
         return 'Yo\'q';
-      case AppConstants.attendanceLate:
+      case 'late':
         return 'Kech';
-      case AppConstants.attendanceExcused:
+      case 'excused':
         return 'Uzrli';
       default:
         return '';
@@ -290,20 +294,20 @@ class AttendanceController extends BaseController {
 
   IconData getStatusIcon(String status) {
     switch (status) {
-      case AppConstants.attendancePresent:
+      case 'present':
         return Icons.check_circle;
-      case AppConstants.attendanceAbsent:
+      case 'absent':
         return Icons.cancel;
-      case AppConstants.attendanceLate:
+      case 'late':
         return Icons.access_time;
-      case AppConstants.attendanceExcused:
+      case 'excused':
         return Icons.info;
       default:
         return Icons.help;
     }
   }
 
-  // Get attendance for specific student and date from table
+  // Get attendance for specific student and date from table (backend response structure)
   String getTableAttendance(int studentId, String date) {
     final student = tableStudents.firstWhere(
           (s) => s['student_id'] == studentId,
@@ -316,7 +320,7 @@ class AttendanceController extends BaseController {
     return attendanceByDate[date]?.toString() ?? '';
   }
 
-  // Get attendance summary for a student
+  // Get attendance summary for a student (backend response structure)
   Map<String, dynamic> getStudentSummary(int studentId) {
     final student = tableStudents.firstWhere(
           (s) => s['student_id'] == studentId,

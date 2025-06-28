@@ -1,4 +1,4 @@
-// lib/app/modules/teacher/controllers/exam_controller.dart
+// FIXED: Updated to match backend API structure exactly
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/base/base_controller.dart';
@@ -8,7 +8,7 @@ import '../../../utils/helpers/validation_helper.dart';
 class ExamController extends BaseController {
   final TeacherRepository _repository = Get.find<TeacherRepository>();
 
-  // Exam list
+  // Exam list - matches backend response structure
   final RxList<dynamic> examsList = <dynamic>[].obs;
   final RxList<dynamic> filteredExamsList = <dynamic>[].obs;
 
@@ -27,7 +27,7 @@ class ExamController extends BaseController {
   final RxBool isCreating = false.obs;
   final RxBool isUpdating = false.obs;
 
-  // Available group-subjects
+  // Available group-subjects (will be loaded from API based on teacher assignments)
   final RxList<Map<String, dynamic>> groupSubjects = <Map<String, dynamic>>[].obs;
 
   // Search and filter
@@ -59,7 +59,7 @@ class ExamController extends BaseController {
     });
   }
 
-  // Load exams list
+  // Load exams list (matches backend GET /teacher/exams response)
   Future<void> loadExams() async {
     try {
       setLoading(true);
@@ -81,10 +81,10 @@ class ExamController extends BaseController {
   void filterExams() {
     var filtered = List<dynamic>.from(examsList);
 
-    // Apply search
+    // Apply search (backend returns: id, title, exam_date, max_points, subject, group, group_subject_id)
     if (searchQuery.value.isNotEmpty) {
       filtered = filtered.where((exam) {
-        final title = exam['title'].toString().toLowerCase();
+        final title = exam['title']?.toString().toLowerCase() ?? '';
         final subject = exam['subject']?.toString().toLowerCase() ?? '';
         final group = exam['group']?.toString().toLowerCase() ?? '';
         final query = searchQuery.value.toLowerCase();
@@ -131,7 +131,7 @@ class ExamController extends BaseController {
     filteredExamsList.assignAll(filtered);
   }
 
-  // Create exam
+  // Create exam (matches backend POST /teacher/exams request)
   Future<void> createExam() async {
     if (!formKey.currentState!.validate()) return;
     if (selectedExamDate.value == null) {
@@ -150,7 +150,7 @@ class ExamController extends BaseController {
     try {
       isCreating.value = true;
 
-      // Combine date and time
+      // Combine date and time for DateTime
       final examDateTime = DateTime(
         selectedExamDate.value!.year,
         selectedExamDate.value!.month,
@@ -179,7 +179,7 @@ class ExamController extends BaseController {
     }
   }
 
-  // Update exam
+  // Update exam (matches backend PUT /teacher/exams/{exam_id} request)
   Future<void> updateExam(int examId) async {
     if (!formKey.currentState!.validate()) return;
     if (selectedExamDate.value == null) {
@@ -194,7 +194,7 @@ class ExamController extends BaseController {
     try {
       isUpdating.value = true;
 
-      // Combine date and time
+      // Combine date and time for DateTime
       final examDateTime = DateTime(
         selectedExamDate.value!.year,
         selectedExamDate.value!.month,
@@ -224,7 +224,7 @@ class ExamController extends BaseController {
     }
   }
 
-  // Delete exam
+  // Delete exam (matches backend DELETE /teacher/exams/{exam_id})
   Future<void> deleteExam(int examId, String title) async {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
@@ -259,7 +259,7 @@ class ExamController extends BaseController {
     }
   }
 
-  // Navigate to grading
+  // Navigate to grading (uses exam grading table endpoint)
   void navigateToGrading(int examId, String title) {
     Get.toNamed('/teacher/exam/$examId/grading', arguments: {
       'exam_id': examId,
@@ -268,7 +268,7 @@ class ExamController extends BaseController {
     });
   }
 
-  // Load exam for editing
+  // Load exam for editing (from backend response structure)
   void loadExamForEdit(dynamic exam) {
     titleController.text = exam['title'] ?? '';
     descriptionController.text = exam['description'] ?? '';
@@ -279,8 +279,9 @@ class ExamController extends BaseController {
     selectedExamTime.value = TimeOfDay.fromDateTime(examDateTime);
     selectedGroupSubjectId.value = exam['group_subject_id'] ?? 0;
 
-    final links = exam['external_links'] as List<dynamic>? ?? [];
-    externalLinks.assignAll(links.map((e) => e.toString()).toList());
+    // External links would need to be loaded from full exam details
+    // For now, clear the list as the list endpoint doesn't include them
+    externalLinks.clear();
   }
 
   // Form management
@@ -340,14 +341,13 @@ class ExamController extends BaseController {
     return ValidationHelper.number(value, fieldName: 'Maksimal ball');
   }
 
-  // Helper methods
+  // Helper methods based on backend response structure
   String getStatusText(dynamic exam) {
     final examDate = DateTime.parse(exam['exam_date']);
     final now = DateTime.now();
 
-    if (exam['is_graded'] == true) {
-      return 'Baholangan';
-    } else if (examDate.isBefore(now)) {
+    // Note: Backend doesn't include graded status in list endpoint
+    if (examDate.isBefore(now)) {
       return 'O\'tgan';
     } else if (examDate.difference(now).inDays == 0) {
       return 'Bugun';

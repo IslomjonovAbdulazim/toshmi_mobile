@@ -1,15 +1,14 @@
-// lib/app/modules/teacher/controllers/homework_controller.dart
+// FIXED: Updated to match backend API structure exactly
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/base/base_controller.dart';
 import '../../../data/repositories/teacher_repository.dart';
-import '../../../data/models/homework_model.dart';
 import '../../../utils/helpers/validation_helper.dart';
 
 class HomeworkController extends BaseController {
   final TeacherRepository _repository = Get.find<TeacherRepository>();
 
-  // Homework list
+  // Homework list - matches backend response structure
   final RxList<dynamic> homeworkList = <dynamic>[].obs;
   final RxList<dynamic> filteredHomeworkList = <dynamic>[].obs;
 
@@ -27,7 +26,7 @@ class HomeworkController extends BaseController {
   final RxBool isCreating = false.obs;
   final RxBool isUpdating = false.obs;
 
-  // Available group-subjects (this would come from API)
+  // Available group-subjects (will be loaded from API based on teacher assignments)
   final RxList<Map<String, dynamic>> groupSubjects = <Map<String, dynamic>>[].obs;
 
   // Search and filter
@@ -59,7 +58,7 @@ class HomeworkController extends BaseController {
     });
   }
 
-  // Load homework list
+  // Load homework list (matches backend GET /teacher/homework response)
   Future<void> loadHomework() async {
     try {
       setLoading(true);
@@ -81,10 +80,10 @@ class HomeworkController extends BaseController {
   void filterHomework() {
     var filtered = List<dynamic>.from(homeworkList);
 
-    // Apply search
+    // Apply search (backend returns: id, title, due_date, max_points, subject, group, group_subject_id)
     if (searchQuery.value.isNotEmpty) {
       filtered = filtered.where((homework) {
-        final title = homework['title'].toString().toLowerCase();
+        final title = homework['title']?.toString().toLowerCase() ?? '';
         final subject = homework['subject']?.toString().toLowerCase() ?? '';
         final group = homework['group']?.toString().toLowerCase() ?? '';
         final query = searchQuery.value.toLowerCase();
@@ -110,8 +109,11 @@ class HomeworkController extends BaseController {
         }).toList();
         break;
       case 'completed':
+      // This would need additional field from backend to know if homework is graded
+      // For now, we'll filter by past due date
         filtered = filtered.where((homework) {
-          return homework['is_graded'] == true;
+          final dueDate = DateTime.parse(homework['due_date']);
+          return dueDate.isBefore(DateTime.now());
         }).toList();
         break;
     }
@@ -119,7 +121,7 @@ class HomeworkController extends BaseController {
     filteredHomeworkList.assignAll(filtered);
   }
 
-  // Create homework
+  // Create homework (matches backend POST /teacher/homework request)
   Future<void> createHomework() async {
     if (!formKey.currentState!.validate()) return;
     if (selectedDueDate.value == null) {
@@ -154,7 +156,7 @@ class HomeworkController extends BaseController {
     }
   }
 
-  // Update homework
+  // Update homework (matches backend PUT /teacher/homework/{homework_id} request)
   Future<void> updateHomework(int homeworkId) async {
     if (!formKey.currentState!.validate()) return;
     if (selectedDueDate.value == null) {
@@ -186,7 +188,7 @@ class HomeworkController extends BaseController {
     }
   }
 
-  // Delete homework
+  // Delete homework (matches backend DELETE /teacher/homework/{homework_id})
   Future<void> deleteHomework(int homeworkId, String title) async {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
@@ -221,7 +223,7 @@ class HomeworkController extends BaseController {
     }
   }
 
-  // Navigate to grading
+  // Navigate to grading (uses homework grading table endpoint)
   void navigateToGrading(int homeworkId, String title) {
     Get.toNamed('/teacher/homework/$homeworkId/grading', arguments: {
       'homework_id': homeworkId,
@@ -230,7 +232,7 @@ class HomeworkController extends BaseController {
     });
   }
 
-  // Load homework for editing
+  // Load homework for editing (from backend response structure)
   void loadHomeworkForEdit(dynamic homework) {
     titleController.text = homework['title'] ?? '';
     descriptionController.text = homework['description'] ?? '';
@@ -238,8 +240,9 @@ class HomeworkController extends BaseController {
     selectedDueDate.value = DateTime.parse(homework['due_date']);
     selectedGroupSubjectId.value = homework['group_subject_id'] ?? 0;
 
-    final links = homework['external_links'] as List<dynamic>? ?? [];
-    externalLinks.assignAll(links.map((e) => e.toString()).toList());
+    // External links would need to be loaded from full homework details
+    // For now, clear the list as the list endpoint doesn't include them
+    externalLinks.clear();
   }
 
   // Form management
@@ -294,14 +297,14 @@ class HomeworkController extends BaseController {
     return ValidationHelper.number(value, fieldName: 'Maksimal ball');
   }
 
-  // Helper methods
+  // Helper methods based on backend response structure
   String getStatusText(dynamic homework) {
     final dueDate = DateTime.parse(homework['due_date']);
     final now = DateTime.now();
 
-    if (homework['is_graded'] == true) {
-      return 'Baholangan';
-    } else if (dueDate.isBefore(now)) {
+    // Note: Backend doesn't include graded status in list endpoint
+    // This would need to be added to backend or fetched separately
+    if (dueDate.isBefore(now)) {
       return 'Muddati o\'tgan';
     } else if (dueDate.difference(now).inDays <= 1) {
       return 'Yaqin muddat';

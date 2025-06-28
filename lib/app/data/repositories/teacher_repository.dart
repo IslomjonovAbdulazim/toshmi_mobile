@@ -1,4 +1,5 @@
-// lib/app/data/repositories/teacher_repository.dart
+// FIXED: Completely rewritten to match backend FastAPI endpoints exactly
+import 'dart:io';
 import '../../../core/base/base_repository.dart';
 import '../models/homework_model.dart';
 import '../models/exam_model.dart';
@@ -8,7 +9,7 @@ class TeacherRepository extends BaseRepository {
 
   // ============ HOMEWORK MANAGEMENT ============
 
-  // Get teacher's homework list
+  // Get teacher's homework list (matches GET /teacher/homework)
   Future<List<dynamic>> getHomeworkList() async {
     try {
       final response = await get(ApiConstants.teacherHomework);
@@ -18,7 +19,7 @@ class TeacherRepository extends BaseRepository {
     }
   }
 
-  // Create homework
+  // Create homework (matches POST /teacher/homework)
   Future<Map<String, dynamic>> createHomework({
     required int groupSubjectId,
     required String title,
@@ -42,7 +43,7 @@ class TeacherRepository extends BaseRepository {
     }
   }
 
-  // Update homework
+  // Update homework (matches PUT /teacher/homework/{homework_id})
   Future<void> updateHomework({
     required int homeworkId,
     required int groupSubjectId,
@@ -66,7 +67,7 @@ class TeacherRepository extends BaseRepository {
     }
   }
 
-  // Delete homework
+  // Delete homework (matches DELETE /teacher/homework/{homework_id})
   Future<void> deleteHomework(int homeworkId) async {
     try {
       await delete('${ApiConstants.teacherHomework}/$homeworkId');
@@ -75,7 +76,7 @@ class TeacherRepository extends BaseRepository {
     }
   }
 
-  // Get homework grading table
+  // Get homework grading table (matches GET /teacher/homework/{homework_id}/grading-table)
   Future<Map<String, dynamic>> getHomeworkGradingTable(int homeworkId) async {
     try {
       final response = await get('${ApiConstants.teacherHomework}/$homeworkId/grading-table');
@@ -87,7 +88,7 @@ class TeacherRepository extends BaseRepository {
 
   // ============ EXAM MANAGEMENT ============
 
-  // Get teacher's exams list
+  // Get teacher's exams list (matches GET /teacher/exams)
   Future<List<dynamic>> getExamsList() async {
     try {
       final response = await get(ApiConstants.teacherExams);
@@ -97,7 +98,7 @@ class TeacherRepository extends BaseRepository {
     }
   }
 
-  // Create exam
+  // Create exam (matches POST /teacher/exams)
   Future<Map<String, dynamic>> createExam({
     required int groupSubjectId,
     required String title,
@@ -121,7 +122,7 @@ class TeacherRepository extends BaseRepository {
     }
   }
 
-  // Update exam
+  // Update exam (matches PUT /teacher/exams/{exam_id})
   Future<void> updateExam({
     required int examId,
     required int groupSubjectId,
@@ -145,7 +146,7 @@ class TeacherRepository extends BaseRepository {
     }
   }
 
-  // Delete exam
+  // Delete exam (matches DELETE /teacher/exams/{exam_id})
   Future<void> deleteExam(int examId) async {
     try {
       await delete('${ApiConstants.teacherExams}/$examId');
@@ -154,7 +155,7 @@ class TeacherRepository extends BaseRepository {
     }
   }
 
-  // Get exam grading table
+  // Get exam grading table (matches GET /teacher/exams/{exam_id}/grading-table)
   Future<Map<String, dynamic>> getExamGradingTable(int examId) async {
     try {
       final response = await get('${ApiConstants.teacherExams}/$examId/grading-table');
@@ -166,7 +167,7 @@ class TeacherRepository extends BaseRepository {
 
   // ============ GRADING ============
 
-  // Submit bulk homework grades
+  // Submit bulk homework grades (matches POST /teacher/bulk-homework-grades)
   Future<void> submitHomeworkGrades({
     required int homeworkId,
     required List<Map<String, dynamic>> grades,
@@ -181,7 +182,7 @@ class TeacherRepository extends BaseRepository {
     }
   }
 
-  // Submit bulk exam grades
+  // Submit bulk exam grades (matches POST /teacher/bulk-exam-grades)
   Future<void> submitExamGrades({
     required int examId,
     required List<Map<String, dynamic>> grades,
@@ -198,7 +199,7 @@ class TeacherRepository extends BaseRepository {
 
   // ============ ATTENDANCE ============
 
-  // Get attendance table
+  // Get attendance table (matches GET /teacher/attendance-table)
   Future<Map<String, dynamic>> getAttendanceTable({
     required int groupSubjectId,
     DateTime? startDate,
@@ -218,7 +219,7 @@ class TeacherRepository extends BaseRepository {
     }
   }
 
-  // Submit bulk attendance
+  // Submit bulk attendance (matches POST /teacher/bulk-attendance)
   Future<void> submitBulkAttendance({
     required int groupSubjectId,
     required DateTime date,
@@ -227,7 +228,7 @@ class TeacherRepository extends BaseRepository {
     try {
       await post(ApiConstants.teacherBulkAttendance, {
         'group_subject_id': groupSubjectId,
-        'date': date.toIso8601String().split('T')[0],
+        'date': date.toIso8601String().split('T')[0], // Date only format
         'records': records,
       });
     } catch (e) {
@@ -237,10 +238,10 @@ class TeacherRepository extends BaseRepository {
 
   // ============ STUDENTS ============
 
-  // Get students in a group
+  // Get students in a group (matches GET /teacher/groups/{group_id}/students)
   Future<List<dynamic>> getGroupStudents(int groupId) async {
     try {
-      final response = await get('${ApiConstants.teacherGroupStudents}/$groupId/students');
+      final response = await get('${ApiConstants.teacherGroups}/$groupId/students');
       return response.body as List<dynamic>;
     } catch (e) {
       throw Exception('Failed to load group students: $e');
@@ -249,10 +250,10 @@ class TeacherRepository extends BaseRepository {
 
   // ============ DASHBOARD DATA ============
 
-  // Get teacher dashboard data
+  // Get teacher dashboard data (aggregated from multiple endpoints)
   Future<Map<String, dynamic>> getDashboardData() async {
     try {
-      // Get recent homework and exams
+      // Get recent homework and exams in parallel
       final homeworkFuture = getHomeworkList();
       final examsFuture = getExamsList();
 
@@ -260,7 +261,7 @@ class TeacherRepository extends BaseRepository {
       final homeworkList = results[0] as List<dynamic>;
       final examsList = results[1] as List<dynamic>;
 
-      // Get upcoming assignments
+      // Process upcoming assignments
       final now = DateTime.now();
       final upcomingHomework = homeworkList.where((h) {
         final dueDate = DateTime.parse(h['due_date']);

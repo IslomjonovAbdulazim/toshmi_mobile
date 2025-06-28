@@ -1,4 +1,4 @@
-// lib/app/modules/teacher/controllers/grading_controller.dart
+// FIXED: Updated to match backend API structure exactly
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/base/base_controller.dart';
@@ -8,7 +8,7 @@ import '../../../utils/helpers/validation_helper.dart';
 class GradingController extends BaseController {
   final TeacherRepository _repository = Get.find<TeacherRepository>();
 
-  // Current assignment being graded
+  // Current assignment being graded (matches backend response structure)
   final RxMap<String, dynamic> currentAssignment = <String, dynamic>{}.obs;
   final RxList<dynamic> students = <dynamic>[].obs;
   final RxString assignmentType = ''.obs; // 'homework' or 'exam'
@@ -41,7 +41,7 @@ class GradingController extends BaseController {
     final args = Get.arguments as Map<String, dynamic>?;
     if (args != null) {
       assignmentType.value = args['type'] ?? '';
-      assignmentId.value = args['assignment_id'] ?? 0;
+      assignmentId.value = args['${assignmentType.value}_id'] ?? 0;
       loadGradingTable();
     }
   }
@@ -55,7 +55,7 @@ class GradingController extends BaseController {
     super.onClose();
   }
 
-  // Load grading table data
+  // Load grading table data (matches backend response structure)
   Future<void> loadGradingTable() async {
     try {
       setLoading(true);
@@ -64,15 +64,18 @@ class GradingController extends BaseController {
       Map<String, dynamic> data;
 
       if (assignmentType.value == 'homework') {
+        // Matches GET /teacher/homework/{homework_id}/grading-table response
         data = await _repository.getHomeworkGradingTable(assignmentId.value);
       } else {
+        // Matches GET /teacher/exams/{exam_id}/grading-table response
         data = await _repository.getExamGradingTable(assignmentId.value);
       }
 
+      // Backend response structure: { homework/exam: {...}, students: [...] }
       currentAssignment.value = data[assignmentType.value] ?? {};
       students.assignAll(data['students'] ?? []);
 
-      // Initialize grades map
+      // Initialize grades map from backend student data
       grades.clear();
       for (var student in students) {
         final studentId = student['student_id'] as int;
@@ -283,7 +286,7 @@ class GradingController extends BaseController {
     toggleBulkGrading();
   }
 
-  // Save all grades
+  // Save all grades (matches backend POST requests)
   Future<void> saveAllGrades() async {
     if (grades.isEmpty) {
       showError('Hech qanday ball kiritilmagan');
@@ -293,6 +296,7 @@ class GradingController extends BaseController {
     try {
       isSavingGrades.value = true;
 
+      // Convert to backend expected format
       final gradesList = grades.entries.map((entry) => {
         'student_id': entry.key,
         'points': entry.value['points'],
@@ -300,11 +304,13 @@ class GradingController extends BaseController {
       }).toList();
 
       if (assignmentType.value == 'homework') {
+        // Matches POST /teacher/bulk-homework-grades
         await _repository.submitHomeworkGrades(
           homeworkId: assignmentId.value,
           grades: gradesList,
         );
       } else {
+        // Matches POST /teacher/bulk-exam-grades
         await _repository.submitExamGrades(
           examId: assignmentId.value,
           grades: gradesList,
