@@ -1,6 +1,6 @@
 class ApiConstants {
   // Base URL
-  static const String baseUrl = 'http://your-api-domain.com';
+  static const String baseUrl = 'https://islomjonovabdulazim-vocab-builder-backend-f7aa.twc1.net';
 
   // Auth endpoints
   static const String login = '/auth/login';
