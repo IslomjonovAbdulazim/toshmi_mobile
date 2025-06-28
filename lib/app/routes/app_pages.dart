@@ -4,6 +4,7 @@ import '../modules/auth/bindings/auth_binding.dart';
 import '../modules/auth/views/login_view.dart';
 import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
+import '../modules/teacher/bindings/teacher_binding.dart'; // Add this import
 import '../modules/teacher/views/teacher_home_view.dart';
 import '../modules/student/views/student_home_view.dart';
 import '../modules/parent/views/parent_home_view.dart';
@@ -25,6 +26,7 @@ class AppPages {
     GetPage(
       name: Routes.teacher,
       page: () => const TeacherHomeView(),
+      binding: TeacherBinding(), // Add this line
     ),
     GetPage(
       name: Routes.student,
