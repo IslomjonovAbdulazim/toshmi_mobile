@@ -1,9 +1,13 @@
+// lib/app/data/models/student_model.dart
+import 'group_model.dart';
+
 class Student {
   final int id;
   final int userId;
   final int groupId;
   final String parentPhone;
   final int graduationYear;
+  final List<MonthlyPayment>? monthlyPayments; // Added this
 
   Student({
     required this.id,
@@ -11,6 +15,7 @@ class Student {
     required this.groupId,
     required this.parentPhone,
     required this.graduationYear,
+    this.monthlyPayments,
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
@@ -20,6 +25,11 @@ class Student {
       groupId: json['group_id'],
       parentPhone: json['parent_phone'],
       graduationYear: json['graduation_year'],
+      monthlyPayments: json['monthly_payments'] != null
+          ? (json['monthly_payments'] as List)
+          .map((m) => MonthlyPayment.fromJson(m))
+          .toList()
+          : null,
     );
   }
 
@@ -30,6 +40,7 @@ class Student {
       'group_id': groupId,
       'parent_phone': parentPhone,
       'graduation_year': graduationYear,
+      'monthly_payments': monthlyPayments?.map((m) => m.toJson()).toList(),
     };
   }
 
@@ -39,6 +50,7 @@ class Student {
     int? groupId,
     String? parentPhone,
     int? graduationYear,
+    List<MonthlyPayment>? monthlyPayments,
   }) {
     return Student(
       id: id ?? this.id,
@@ -46,6 +58,7 @@ class Student {
       groupId: groupId ?? this.groupId,
       parentPhone: parentPhone ?? this.parentPhone,
       graduationYear: graduationYear ?? this.graduationYear,
+      monthlyPayments: monthlyPayments ?? this.monthlyPayments,
     );
   }
 }

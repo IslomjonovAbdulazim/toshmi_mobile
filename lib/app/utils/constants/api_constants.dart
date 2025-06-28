@@ -1,12 +1,15 @@
 class ApiConstants {
   // Base URL
-  static const String baseUrl = 'https://islomjonovabdulazim-vocab-builder-backend-f7aa.twc1.net';
+  static const String baseUrl = 'https://islomjonovabdulazim-toshmi-backend-0914.twc1.net';
 
   // Auth endpoints
   static const String login = '/auth/login';
   static const String changePassword = '/auth/change-password';
   static const String profile = '/auth/profile';
   static const String notifications = '/auth/notifications';
+  static const String notificationRead = '/auth/notifications'; // /{notification_id}/read
+  static const String notificationMarkAllRead = '/auth/notifications/mark-all-read';
+  static const String notificationUnreadCount = '/auth/notifications/unread-count';
 
   // Admin endpoints
   static const String adminStudents = '/admin/students';
@@ -18,13 +21,17 @@ class ApiConstants {
   static const String adminSchedule = '/admin/schedule';
   static const String adminAssignTeacher = '/admin/assign-teacher';
   static const String adminPayments = '/admin/payments';
+  static const String adminMonthlyPaymentStatus = '/admin/monthly-payment-status';
 
   // Teacher endpoints
   static const String teacherHomework = '/teacher/homework';
   static const String teacherExams = '/teacher/exams';
-  static const String teacherBulkGrade = '/teacher/bulk-grade';
+  // ❌ Fixed: These were wrong in original
+  static const String teacherBulkHomeworkGrades = '/teacher/bulk-homework-grades';
+  static const String teacherBulkExamGrades = '/teacher/bulk-exam-grades';
   static const String teacherBulkAttendance = '/teacher/bulk-attendance';
   static const String teacherAttendanceTable = '/teacher/attendance-table';
+  static const String teacherGroupStudents = '/teacher/groups'; // /{group_id}/students
 
   // Student endpoints
   static const String studentHomework = '/student/homework';
@@ -50,6 +57,7 @@ class ApiConstants {
   static const String health = '/health';
   static const String stats = '/stats';
   static const String news = '/news';
+  static const String initDb = '/init-db';
 
   // HTTP Status Codes
   static const int statusOk = 200;

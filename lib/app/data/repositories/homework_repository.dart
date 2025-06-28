@@ -1,5 +1,5 @@
+// lib/app/data/repositories/homework_repository.dart
 import 'dart:io';
-
 import '../../../core/base/base_repository.dart';
 import '../models/homework_model.dart';
 import '../../utils/constants/api_constants.dart';
@@ -107,50 +107,6 @@ class HomeworkRepository extends BaseRepository {
     }
   }
 
-  // Get upcoming homework
-  Future<List<dynamic>> getUpcomingHomework({int limit = 5}) async {
-    try {
-      final homeworkList = await getHomework();
-      final now = DateTime.now();
-
-      final upcomingHomework = homeworkList
-          .where((h) => DateTime.parse(h['due_date']).isAfter(now))
-          .toList()
-        ..sort((a, b) => DateTime.parse(a['due_date']).compareTo(DateTime.parse(b['due_date'])));
-
-      return upcomingHomework.take(limit).toList();
-    } catch (e) {
-      throw Exception('Failed to load upcoming homework: $e');
-    }
-  }
-
-  // Get overdue homework
-  Future<List<dynamic>> getOverdueHomework() async {
-    try {
-      final homeworkList = await getHomework();
-      final now = DateTime.now();
-
-      return homeworkList
-          .where((h) => DateTime.parse(h['due_date']).isBefore(now) && h['grade']['points'] == null)
-          .toList();
-    } catch (e) {
-      throw Exception('Failed to load overdue homework: $e');
-    }
-  }
-
-  // Get completed homework
-  Future<List<dynamic>> getCompletedHomework() async {
-    try {
-      final homeworkList = await getHomework();
-
-      return homeworkList
-          .where((h) => h['grade']['points'] != null)
-          .toList();
-    } catch (e) {
-      throw Exception('Failed to load completed homework: $e');
-    }
-  }
-
   // Get child homework (parent)
   Future<List<dynamic>> getChildHomework(int childId) async {
     try {
@@ -161,44 +117,10 @@ class HomeworkRepository extends BaseRepository {
     }
   }
 
-  // Get homework by subject
-  Future<List<dynamic>> getHomeworkBySubject(String subjectName) async {
-    try {
-      final homeworkList = await getHomework();
-      return homeworkList.where((h) => h['subject'] == subjectName).toList();
-    } catch (e) {
-      throw Exception('Failed to load homework by subject: $e');
-    }
-  }
-
-  // Get homework by date range
-  Future<List<dynamic>> getHomeworkByDateRange({
-    DateTime? startDate,
-    DateTime? endDate,
-  }) async {
-    try {
-      final homeworkList = await getHomework();
-
-      return homeworkList.where((h) {
-        final dueDate = DateTime.parse(h['due_date']);
-        if (startDate != null && dueDate.isBefore(startDate)) {
-          return false;
-        }
-        if (endDate != null && dueDate.isAfter(endDate)) {
-          return false;
-        }
-        return true;
-      }).toList();
-    } catch (e) {
-      throw Exception('Failed to load homework by date range: $e');
-    }
-  }
-
   // Upload homework document
   Future<void> uploadHomeworkDocument(int homeworkId, File file) async {
     try {
-      final response = await uploadFile('${ApiConstants.filesHomework}/$homeworkId/upload', file);
-      // File upload handled by FileService
+      await uploadFile('${ApiConstants.filesHomework}/$homeworkId/upload', file);
     } catch (e) {
       throw Exception('Failed to upload homework document: $e');
     }

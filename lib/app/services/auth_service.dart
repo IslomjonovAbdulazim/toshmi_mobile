@@ -23,16 +23,20 @@ class AuthService extends GetxService {
   }
 
   Future<void> _loadAuthData() async {
-    final token = await _storage.getToken();
-    final userData = await _storage.getUserData();
+    final token = _storage.getToken();
+    final userData = _storage.getUserData();
 
     if (token != null && userData != null) {
       _token.value = token;
       _currentUser.value = User.fromJson(userData);
       _isLoggedIn.value = true;
+
+      // Navigate to appropriate home page if already logged in
+      _navigateToRoleBasedHome();
     }
   }
 
+  // FIXED: Manual login - doesn't auto-navigate
   Future<void> login({
     required String token,
     required User user,
@@ -44,6 +48,7 @@ class AuthService extends GetxService {
     await _storage.saveToken(token);
     await _storage.saveUserData(user.toJson());
 
+    // Navigate only after successful login
     _navigateToRoleBasedHome();
   }
 
@@ -103,14 +108,11 @@ class AuthService extends GetxService {
   String? get userPhone => _currentUser.value?.phone;
   int? get profileImageId => _currentUser.value?.profileImageId;
 
-  // Check if token is expired (implement based on your token structure)
   bool get isTokenExpired {
-    // Add token expiration logic here if needed
     return false;
   }
 
   Future<bool> refreshToken() async {
-    // Implement token refresh logic if your API supports it
     return true;
   }
 }

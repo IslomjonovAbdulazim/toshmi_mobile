@@ -95,28 +95,28 @@ class AuthRepository extends BaseRepository {
     }
   }
 
-  // Mark notification as read
+  // Mark notification as read - FIXED
   Future<void> markNotificationRead(int notificationId) async {
     try {
-      await put('${ApiConstants.notifications}/$notificationId/read', {});
+      await put('${ApiConstants.notificationRead}/$notificationId/read', {});
     } catch (e) {
       throw Exception('Failed to mark notification as read: $e');
     }
   }
 
-  // Mark all notifications as read
+  // Mark all notifications as read - FIXED
   Future<void> markAllNotificationsRead() async {
     try {
-      await put('${ApiConstants.notifications}/mark-all-read', {});
+      await put(ApiConstants.notificationMarkAllRead, {});
     } catch (e) {
       throw Exception('Failed to mark all notifications as read: $e');
     }
   }
 
-  // Get unread notification count
+  // Get unread notification count - FIXED
   Future<int> getUnreadNotificationCount() async {
     try {
-      final response = await get('${ApiConstants.notifications}/unread-count');
+      final response = await get(ApiConstants.notificationUnreadCount);
       final data = response.body as Map<String, dynamic>;
       return data['unread_count'] as int;
     } catch (e) {

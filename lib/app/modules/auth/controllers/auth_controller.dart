@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../../core/base/base_controller.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../services/auth_service.dart';
@@ -16,20 +15,11 @@ class AuthController extends BaseController {
   final passwordController = TextEditingController();
   final RxString selectedRole = 'student'.obs;
   final RxBool isPasswordVisible = false.obs;
+  final RxBool isLoginLoading = false.obs;
 
-  // Change password form
-  final changePasswordFormKey = GlobalKey<FormState>();
-  final oldPasswordController = TextEditingController();
-  final newPasswordController = TextEditingController();
-  final confirmPasswordController = TextEditingController();
-  final RxBool isOldPasswordVisible = false.obs;
-  final RxBool isNewPasswordVisible = false.obs;
-  final RxBool isConfirmPasswordVisible = false.obs;
-
-  // Profile form
-  final profileFormKey = GlobalKey<FormState>();
-  final firstNameController = TextEditingController();
-  final lastNameController = TextEditingController();
+  // Error handling
+  final RxString loginError = ''.obs;
+  final RxBool hasLoginError = false.obs;
 
   // Available roles
   final List<Map<String, String>> roles = [
@@ -41,122 +31,119 @@ class AuthController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    _loadProfileData();
+    _setupErrorClearListeners();
   }
 
   @override
   void onClose() {
-    phoneController.dispose();
-    passwordController.dispose();
-    oldPasswordController.dispose();
-    newPasswordController.dispose();
-    confirmPasswordController.dispose();
-    firstNameController.dispose();
-    lastNameController.dispose();
+    _disposeControllers();
     super.onClose();
   }
 
-  // Login
+  // Setup listeners to clear errors when user types
+  void _setupErrorClearListeners() {
+    phoneController.addListener(_clearLoginError);
+    passwordController.addListener(_clearLoginError);
+  }
+
+  void _clearLoginError() {
+    if (hasLoginError.value) {
+      hasLoginError.value = false;
+      loginError.value = '';
+    }
+  }
+
+  void _disposeControllers() {
+    phoneController.removeListener(_clearLoginError);
+    passwordController.removeListener(_clearLoginError);
+    phoneController.dispose();
+    passwordController.dispose();
+  }
+
+  // Clean phone number (remove formatting)
+  String _cleanPhoneNumber(String phone) {
+    return phone.replaceAll(RegExp(r'[^\+\d]'), '');
+  }
+
+  // Get user-friendly error message
+  String _getUserFriendlyError(String error) {
+    if (error.toLowerCase().contains('invalid credentials')) {
+      return 'Telefon raqam yoki parol noto\'g\'ri';
+    } else if (error.toLowerCase().contains('not found')) {
+      return 'Foydalanuvchi topilmadi';
+    } else if (error.toLowerCase().contains('network') ||
+        error.toLowerCase().contains('connection')) {
+      return 'Internet aloqasi yo\'q. Qayta urinib ko\'ring';
+    } else if (error.toLowerCase().contains('timeout')) {
+      return 'Ulanish vaqti tugadi. Qayta urinib ko\'ring';
+    } else if (error.toLowerCase().contains('server error')) {
+      return 'Server xatoligi. Keyinroq urinib ko\'ring';
+    }
+    return 'Kirish jarayonida xatolik yuz berdi';
+  }
+
+  // Login - FIXED: No navigation on error
   Future<void> login() async {
     if (!loginFormKey.currentState!.validate()) return;
 
     try {
-      setLoading(true);
-      clearError();
+      isLoginLoading.value = true;
+      hasLoginError.value = false;
+      loginError.value = '';
 
-      await _authRepository.login(
-        phone: phoneController.text.trim(),
+      // Clean phone number before sending
+      final cleanPhone = _cleanPhoneNumber(phoneController.text.trim());
+
+      // Validate cleaned phone
+      if (cleanPhone.length != 13 || !cleanPhone.startsWith('+998')) {
+        _showLoginError('Telefon raqam noto\'g\'ri formatda');
+        return;
+      }
+
+      // Attempt login
+      final result = await _authRepository.login(
+        phone: cleanPhone,
         password: passwordController.text,
         role: selectedRole.value,
       );
 
-      showSuccess('Muvaffaqiyatli kirildi');
-      _clearLoginForm();
+      // Only on SUCCESS - clear form and navigate
+      if (result != null) {
+        showSuccess('Muvaffaqiyatli kirildi');
+        _clearLoginForm();
+        // AuthService will handle navigation based on role
+      }
+
     } catch (e) {
-      setError(e.toString());
+      // Stay on login page and show error
+      _showLoginError(_getUserFriendlyError(e.toString()));
     } finally {
-      setLoading(false);
+      isLoginLoading.value = false;
     }
   }
 
-  // Change password
-  Future<void> changePassword() async {
-    if (!changePasswordFormKey.currentState!.validate()) return;
+  void _showLoginError(String message) {
+    hasLoginError.value = true;
+    loginError.value = message;
 
-    try {
-      setLoading(true);
-      clearError();
-
-      await _authRepository.changePassword(
-        oldPassword: oldPasswordController.text,
-        newPassword: newPasswordController.text,
-      );
-
-      showSuccess('Parol muvaffaqiyatli o\'zgartirildi');
-      _clearPasswordForm();
-      Get.back();
-    } catch (e) {
-      setError(e.toString());
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Update profile
-  Future<void> updateProfile() async {
-    if (!profileFormKey.currentState!.validate()) return;
-
-    try {
-      setLoading(true);
-      clearError();
-
-      await _authRepository.updateProfile(
-        firstName: firstNameController.text.trim(),
-        lastName: lastNameController.text.trim(),
-      );
-
-      showSuccess('Profil muvaffaqiyatli yangilandi');
-    } catch (e) {
-      setError(e.toString());
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Logout
-  Future<void> logout() async {
-    final confirm = await showConfirmDialog(
-      title: 'Chiqish',
-      message: 'Haqiqatan ham chiqmoqchimisiz?',
-      confirmText: 'Ha, chiqish',
-      cancelText: 'Bekor qilish',
+    // Also show snackbar for immediate feedback
+    Get.snackbar(
+      'Xatolik',
+      message,
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: Colors.red.shade100,
+      colorText: Colors.red.shade700,
+      duration: const Duration(seconds: 3),
+      margin: const EdgeInsets.all(16),
     );
-
-    if (confirm == true) {
-      await _authService.logout();
-      showInfo('Muvaffaqiyatli chiqildi');
-    }
   }
 
-  // Load profile data
-  void _loadProfileData() {
-    final user = _authService.currentUser;
-    if (user != null) {
-      firstNameController.text = user.firstName;
-      lastNameController.text = user.lastName;
-    }
-  }
-
-  // Clear forms
+  // Clear login form
   void _clearLoginForm() {
     phoneController.clear();
     passwordController.clear();
-  }
-
-  void _clearPasswordForm() {
-    oldPasswordController.clear();
-    newPasswordController.clear();
-    confirmPasswordController.clear();
+    hasLoginError.value = false;
+    loginError.value = '';
   }
 
   // Toggle password visibility
@@ -164,58 +151,43 @@ class AuthController extends BaseController {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
 
-  void toggleOldPasswordVisibility() {
-    isOldPasswordVisible.value = !isOldPasswordVisible.value;
-  }
-
-  void toggleNewPasswordVisibility() {
-    isNewPasswordVisible.value = !isNewPasswordVisible.value;
-  }
-
-  void toggleConfirmPasswordVisibility() {
-    isConfirmPasswordVisible.value = !isConfirmPasswordVisible.value;
-  }
-
   // Set role
   void setRole(String role) {
     selectedRole.value = role;
+    _clearLoginError();
   }
 
-  // Validation methods
+  // Enhanced validation methods
   String? validatePhone(String? value) {
     if (ValidationHelper.required(value, fieldName: 'Telefon raqami') != null) {
       return ValidationHelper.required(value, fieldName: 'Telefon raqami');
     }
-    // Clean the formatted phone number before validation
-    final cleanPhone = value?.replaceAll(RegExp(r'[^\+\d]'), '') ?? '';
-    return ValidationHelper.phone(cleanPhone);
+
+    final cleanPhone = _cleanPhoneNumber(value ?? '');
+
+    if (cleanPhone.length != 13) {
+      return 'Telefon raqam to\'liq kiritilmagan';
+    }
+
+    if (!cleanPhone.startsWith('+998')) {
+      return 'Telefon raqam +998 bilan boshlanishi kerak';
+    }
+
+    return null;
   }
 
   String? validatePassword(String? value) {
     if (ValidationHelper.required(value, fieldName: 'Parol') != null) {
       return ValidationHelper.required(value, fieldName: 'Parol');
     }
-    return ValidationHelper.password(value);
-  }
-
-  String? validateConfirmPassword(String? value) {
-    if (ValidationHelper.required(value, fieldName: 'Parolni tasdiqlash') !=
-        null) {
-      return ValidationHelper.required(value, fieldName: 'Parolni tasdiqlash');
+    if (value!.length < 3) {
+      return 'Parol kamida 3 ta belgidan iborat bo\'lishi kerak';
     }
-    return ValidationHelper.confirmPassword(value, newPasswordController.text);
-  }
-
-  String? validateName(String? value, String fieldName) {
-    if (ValidationHelper.required(value, fieldName: fieldName) != null) {
-      return ValidationHelper.required(value, fieldName: fieldName);
-    }
-    return ValidationHelper.minLength(value, 2, fieldName: fieldName);
+    return null;
   }
 
   @override
   Future<void> refreshData() async {
-    await _authRepository.getProfile();
-    _loadProfileData();
+    // Don't auto-refresh on login page
   }
 }

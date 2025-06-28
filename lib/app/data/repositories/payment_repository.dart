@@ -96,6 +96,29 @@ class PaymentRepository extends BaseRepository {
     }
   }
 
+  // Update monthly payment status (admin only) - NEW
+  Future<void> updateMonthlyPaymentStatus({
+    required int studentId,
+    required int month,
+    required int year,
+    required bool isCompleted,
+    required int paidAmount,
+    DateTime? dueDate,
+  }) async {
+    try {
+      await put(ApiConstants.adminMonthlyPaymentStatus, {
+        'student_id': studentId,
+        'month': month,
+        'year': year,
+        'is_completed': isCompleted,
+        'paid_amount': paidAmount,
+        'due_date': dueDate?.toIso8601String().split('T')[0],
+      });
+    } catch (e) {
+      throw Exception('Failed to update monthly payment status: $e');
+    }
+  }
+
   // Get all payments with filters (admin only)
   Future<List<dynamic>> getAllPayments({
     int skip = 0,

@@ -37,13 +37,13 @@ class GradeRepository extends BaseRepository {
     }
   }
 
-  // Submit bulk homework grades (teacher)
+  // Submit bulk homework grades (teacher) - FIXED
   Future<void> submitHomeworkGrades({
     required int homeworkId,
     required List<Map<String, dynamic>> grades,
   }) async {
     try {
-      await post('${ApiConstants.teacherBulkGrade}', {
+      await post(ApiConstants.teacherBulkHomeworkGrades, {
         'homework_id': homeworkId,
         'grades': grades,
       });
@@ -52,13 +52,13 @@ class GradeRepository extends BaseRepository {
     }
   }
 
-  // Submit bulk exam grades (teacher)
+  // Submit bulk exam grades (teacher) - FIXED
   Future<void> submitExamGrades({
     required int examId,
     required List<Map<String, dynamic>> grades,
   }) async {
     try {
-      await post('${ApiConstants.teacherBulkGrade}', {
+      await post(ApiConstants.teacherBulkExamGrades, {
         'exam_id': examId,
         'grades': grades,
       });

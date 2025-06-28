@@ -36,7 +36,9 @@ class ApiService extends GetxService {
         handler.next(options);
       },
       onError: (error, handler) {
-        if (error.response?.statusCode == 401) {
+        // FIXED: Only logout on 401 if NOT a login attempt
+        if (error.response?.statusCode == 401 &&
+            !error.requestOptions.path.contains('/auth/login')) {
           _authService.logout();
         }
         handler.next(error);
@@ -162,7 +164,7 @@ class ApiService extends GetxService {
     return 'So\'rov muvaffaqiyatsiz';
   }
 
-  // Update base URL (for switching environments)
+  // Update base URL
   void updateBaseUrl(String newBaseUrl) {
     _dio.options.baseUrl = newBaseUrl;
   }
