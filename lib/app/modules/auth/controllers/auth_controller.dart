@@ -1,3 +1,4 @@
+// lib/app/modules/auth/controllers/auth_controller.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/base/base_controller.dart';
@@ -31,16 +32,17 @@ class AuthController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    print('🎮 AuthController initialized');
     _setupErrorClearListeners();
   }
 
   @override
   void onClose() {
+    print('🗑️ AuthController disposing...');
     _disposeControllers();
     super.onClose();
   }
 
-  // Setup listeners to clear errors when user types
   void _setupErrorClearListeners() {
     phoneController.addListener(_clearLoginError);
     passwordController.addListener(_clearLoginError);
@@ -60,62 +62,68 @@ class AuthController extends BaseController {
     passwordController.dispose();
   }
 
-  // Clean phone number (remove formatting)
   String _cleanPhoneNumber(String phone) {
     return phone.replaceAll(RegExp(r'[^\+\d]'), '');
   }
 
-  // Get user-friendly error message
   String _getUserFriendlyError(String error) {
-    if (error.toLowerCase().contains('invalid credentials')) {
+    final errorLower = error.toLowerCase();
+
+    if (errorLower.contains('invalid credentials')) {
       return 'Telefon raqam yoki parol noto\'g\'ri';
-    } else if (error.toLowerCase().contains('not found')) {
+    } else if (errorLower.contains('not found')) {
       return 'Foydalanuvchi topilmadi';
-    } else if (error.toLowerCase().contains('network') ||
-        error.toLowerCase().contains('connection')) {
+    } else if (errorLower.contains('network') || errorLower.contains('connection')) {
       return 'Internet aloqasi yo\'q. Qayta urinib ko\'ring';
-    } else if (error.toLowerCase().contains('timeout')) {
+    } else if (errorLower.contains('timeout')) {
       return 'Ulanish vaqti tugadi. Qayta urinib ko\'ring';
-    } else if (error.toLowerCase().contains('server error')) {
+    } else if (errorLower.contains('server error')) {
       return 'Server xatoligi. Keyinroq urinib ko\'ring';
     }
     return 'Kirish jarayonida xatolik yuz berdi';
   }
 
-  // Login - FIXED: No navigation on error
+  // FIXED: Simplified login with better error handling
   Future<void> login() async {
-    if (!loginFormKey.currentState!.validate()) return;
+    if (!loginFormKey.currentState!.validate()) {
+      print('❌ Form validation failed');
+      return;
+    }
 
     try {
+      print('🔐 Starting login process...');
       isLoginLoading.value = true;
       hasLoginError.value = false;
       loginError.value = '';
 
-      // Clean phone number before sending
+      // Clean and validate phone number
       final cleanPhone = _cleanPhoneNumber(phoneController.text.trim());
+      print('📱 Clean phone: $cleanPhone');
 
-      // Validate cleaned phone
       if (cleanPhone.length != 13 || !cleanPhone.startsWith('+998')) {
         _showLoginError('Telefon raqam noto\'g\'ri formatda');
         return;
       }
 
       // Attempt login
+      print('🚀 Calling repository login...');
       final result = await _authRepository.login(
         phone: cleanPhone,
         password: passwordController.text,
         role: selectedRole.value,
       );
 
-      // Only on SUCCESS - clear form and navigate
       if (result != null) {
+        print('✅ Login successful');
         showSuccess('Muvaffaqiyatli kirildi');
         _clearLoginForm();
-        // AuthService will handle navigation based on role
+        // Navigation is handled by AuthService automatically
+      } else {
+        _showLoginError('Login jarayonida xatolik yuz berdi');
       }
 
     } catch (e) {
-      // Stay on login page and show error
+      print('❌ Login error: $e');
       _showLoginError(_getUserFriendlyError(e.toString()));
     } finally {
       isLoginLoading.value = false;
@@ -138,7 +146,6 @@ class AuthController extends BaseController {
     );
   }
 
-  // Clear login form
   void _clearLoginForm() {
     phoneController.clear();
     passwordController.clear();
@@ -146,15 +153,14 @@ class AuthController extends BaseController {
     loginError.value = '';
   }
 
-  // Toggle password visibility
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
 
-  // Set role
   void setRole(String role) {
     selectedRole.value = role;
     _clearLoginError();
+    print('🎭 Role selected: $role');
   }
 
   // Enhanced validation methods

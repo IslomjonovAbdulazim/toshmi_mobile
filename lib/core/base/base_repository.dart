@@ -1,3 +1,4 @@
+// lib/core/base/base_repository.dart
 import 'dart:convert';
 import 'dart:io';
 import 'package:get/get.dart';
@@ -77,23 +78,23 @@ abstract class BaseRepository {
     return headers;
   }
 
-  // Request handler with error handling
+  // FIXED: Request handler with proper error handling
   Future<Response> _handleRequest(Future<Response> Function() request) async {
     try {
       final response = await request();
       return _handleResponse(response);
     } on SocketException {
-      throw ApiException('No internet connection');
+      throw ApiException('Internet aloqasi yo\'q');
     } on HttpException catch (e) {
-      throw ApiException('Network error: ${e.message}');
+      throw ApiException('Tarmoq xatoligi: ${e.message}');
     } on FormatException {
-      throw ApiException('Invalid response format');
+      throw ApiException('Noto\'g\'ri javob formati');
     } catch (e) {
-      throw ApiException('Request failed: $e');
+      throw ApiException('So\'rov muvaffaqiyatsiz: $e');
     }
   }
 
-  // Response handler
+  // FIXED: Response handler
   Response _handleResponse(Response response) {
     switch (response.statusCode) {
       case 200:
@@ -103,23 +104,30 @@ abstract class BaseRepository {
       case 400:
         throw BadRequestException(_getErrorMessage(response));
       case 401:
-        _authService.logout();
-        throw UnauthorizedException('Session expired');
+      // FIXED: Don't call non-existent method
+        _handleUnauthorized();
+        throw UnauthorizedException('Avtorizatsiya xatoligi');
       case 403:
-        throw ForbiddenException('Access denied');
+        throw ForbiddenException('Ruxsat yo\'q');
       case 404:
-        throw NotFoundException('Resource not found');
+        throw NotFoundException('Ma\'lumot topilmadi');
       case 422:
         throw ValidationException(_getErrorMessage(response));
       case 429:
-        throw TooManyRequestsException('Too many requests');
+        throw TooManyRequestsException('Juda ko\'p so\'rov');
       case 500:
       case 502:
       case 503:
-        throw ServerException('Server error');
+        throw ServerException('Server xatoligi');
       default:
-        throw ApiException('Request failed with status: ${response.statusCode}');
+        throw ApiException('So\'rov muvaffaqiyatsiz: ${response.statusCode}');
     }
+  }
+
+  // FIXED: Handle unauthorized responses
+  void _handleUnauthorized() {
+    print('🚪 Unauthorized response - logging out');
+    _authService.logout();
   }
 
   // Extract error message from response
@@ -127,15 +135,15 @@ abstract class BaseRepository {
     try {
       if (response.body is String) {
         final data = jsonDecode(response.body);
-        return data['detail'] ?? data['message'] ?? 'Request failed';
+        return data['detail'] ?? data['message'] ?? 'So\'rov muvaffaqiyatsiz';
       } else if (response.body is Map) {
         final data = response.body as Map<String, dynamic>;
-        return data['detail'] ?? data['message'] ?? 'Request failed';
+        return data['detail'] ?? data['message'] ?? 'So\'rov muvaffaqiyatsiz';
       }
     } catch (_) {
       // Ignore parsing errors
     }
-    return 'Request failed';
+    return 'So\'rov muvaffaqiyatsiz';
   }
 
   // Pagination helper

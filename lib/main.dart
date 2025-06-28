@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -14,64 +15,91 @@ import 'core/theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize services in correct order
-  await initServices();
+  // Initialize core services
+  await _initializeServices();
 
-  // Set system UI
+  // Configure system UI
+  _configureSystemUI();
+
+  runApp(const ToshmiApp());
+}
+
+/// Initialize all required services in the correct order
+Future<void> _initializeServices() async {
+  try {
+    print('🚀 Initializing Toshmi services...');
+
+    // 1. Storage services (required first)
+    await Get.putAsync(() => StorageService().init());
+    Get.put(StorageProvider());
+    print('✅ Storage services initialized');
+
+    // 2. Authentication service
+    await Get.putAsync(() => AuthService().init());
+    print('✅ Authentication service initialized');
+
+    // 3. API services
+    Get.put(ApiService());
+    Get.put(ApiProvider());
+    print('✅ API services initialized');
+
+    // 4. Utility services (lazy loaded)
+    Get.put(FileService());
+    Get.lazyPut(() => NotificationService());
+    print('✅ Utility services initialized');
+
+    print('🎉 All services ready');
+  } catch (e) {
+    print('❌ Service initialization error: $e');
+    // Continue startup - app will handle errors gracefully
+  }
+}
+
+/// Configure system UI appearance
+void _configureSystemUI() {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
     ),
   );
 
-  runApp(const MyApp());
+  // Set preferred orientations
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 }
 
-Future<void> initServices() async {
-  print('Initializing services...');
-
-  // Core services first
-  await Get.putAsync(() => StorageService().init());
-  Get.put(StorageProvider());
-  print('✓ Storage services initialized');
-
-  // Auth service (required by ApiService)
-  await Get.putAsync(() => AuthService().init());
-  print('✓ Auth service initialized');
-
-  // API services
-  Get.put(ApiService());
-  Get.put(ApiProvider());
-  print('✓ API services initialized');
-
-  // Other services (don't auto-initialize NotificationService)
-  Get.put(FileService());
-  Get.lazyPut(() => NotificationService()); // Lazy initialization
-  print('✓ Other services initialized');
-
-  print('All services ready!');
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class ToshmiApp extends StatelessWidget {
+  const ToshmiApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Maktab Boshqaruv Tizimi',
+      // App configuration
+      title: 'Toshmi - Maktab Boshqaruv Tizimi',
       debugShowCheckedModeBanner: false,
 
-      // Theme
+      // Theme configuration
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
 
-      // Routes
+      // Navigation configuration
       initialRoute: AppPages.initial,
       getPages: AppPages.routes,
+      defaultTransition: Transition.cupertino,
+      transitionDuration: const Duration(milliseconds: 300),
 
-      // Text scaling restrictions
+      // Error handling
+      unknownRoute: GetPage(
+        name: '/404',
+        page: () => const NotFoundPage(),
+      ),
+
+      // Text scaling and accessibility
       builder: (context, child) {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(
@@ -82,13 +110,80 @@ class MyApp extends StatelessWidget {
         );
       },
 
-      // Locale
+      // Localization
       locale: const Locale('uz', 'UZ'),
       fallbackLocale: const Locale('en', 'US'),
+
+      // Navigation logging (debug mode only)
+      routingCallback: (routing) {
+        if (routing != null && kDebugMode) {
+          print('🧭 Navigation: ${routing.current}');
+        }
+      },
     );
   }
 }
 
+/// 404 Not Found page
+class NotFoundPage extends StatelessWidget {
+  const NotFoundPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Sahifa topilmadi'),
+        automaticallyImplyLeading: false,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 80,
+                color: Colors.grey.shade400,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                '404',
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Sahifa topilmadi',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Siz qidirayotgan sahifa mavjud emas yoki ko\'chirilgan',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey.shade500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: () => Get.offAllNamed('/splash'),
+                icon: const Icon(Icons.home),
+                label: const Text('Bosh sahifaga qaytish'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Extension methods for service initialization
 extension StorageServiceExtension on StorageService {
   Future<StorageService> init() async {
     await onInit();

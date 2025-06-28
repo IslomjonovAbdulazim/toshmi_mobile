@@ -1,3 +1,4 @@
+// lib/app/services/auth_service.dart
 import 'package:get/get.dart';
 import '../data/models/user_model.dart';
 import 'storage_service.dart';
@@ -23,74 +24,148 @@ class AuthService extends GetxService {
   }
 
   Future<void> _loadAuthData() async {
-    final token = _storage.getToken();
-    final userData = _storage.getUserData();
+    try {
+      print('🔄 Loading auth data from storage...');
 
-    if (token != null && userData != null) {
-      _token.value = token;
-      _currentUser.value = User.fromJson(userData);
-      _isLoggedIn.value = true;
+      final token = _storage.getToken();
+      final userData = _storage.getUserData();
 
-      // Navigate to appropriate home page if already logged in
-      _navigateToRoleBasedHome();
+      if (token != null && userData != null) {
+        print('📱 Found stored auth data');
+        _token.value = token;
+        _currentUser.value = User.fromJson(userData);
+        _isLoggedIn.value = true;
+
+        print('✅ Auth data loaded - User: ${_currentUser.value?.fullName}, Role: ${_currentUser.value?.role}');
+
+        // DON'T auto-navigate here - let splash controller handle it
+        print('📦 Auth state ready for splash controller');
+      } else {
+        print('❌ No stored auth data found');
+      }
+    } catch (e) {
+      print('⚠️ Error loading auth data: $e');
+      await _clearAuthData();
     }
   }
 
-  // FIXED: Manual login - doesn't auto-navigate
+  // FIXED: Login with better error handling and logging
   Future<void> login({
     required String token,
     required User user,
   }) async {
-    _token.value = token;
-    _currentUser.value = user;
-    _isLoggedIn.value = true;
+    try {
+      print('🔐 AuthService.login called');
+      print('👤 User: ${user.fullName}, Role: ${user.role}, ID: ${user.id}');
 
-    await _storage.saveToken(token);
-    await _storage.saveUserData(user.toJson());
+      // Validate required data
+      if (user.role.isEmpty) {
+        throw Exception('User role is empty');
+      }
 
-    // Navigate only after successful login
-    _navigateToRoleBasedHome();
+      if (user.id <= 0) {
+        throw Exception('Invalid user ID');
+      }
+
+      // Update reactive variables
+      _token.value = token;
+      _currentUser.value = user;
+      _isLoggedIn.value = true;
+
+      // Save to storage
+      await _storage.saveToken(token);
+      await _storage.saveUserData(user.toJson());
+
+      print('💾 Auth data saved to storage');
+      print('🎯 Current auth state - isLoggedIn: ${_isLoggedIn.value}, role: ${userRole}');
+
+      // Navigate to role-based home
+      _navigateToRoleBasedHome();
+    } catch (e) {
+      print('❌ AuthService.login error: $e');
+      await _clearAuthData();
+      throw Exception('Login failed: $e');
+    }
   }
 
   Future<void> logout() async {
+    try {
+      print('🚪 Logging out user');
+      await _clearAuthData();
+      Get.offAllNamed('/login');
+      print('✅ Logout completed');
+    } catch (e) {
+      print('❌ Logout error: $e');
+      // Force clear even if there's an error
+      _token.value = '';
+      _currentUser.value = null;
+      _isLoggedIn.value = false;
+      Get.offAllNamed('/login');
+    }
+  }
+
+  Future<void> _clearAuthData() async {
     _token.value = '';
     _currentUser.value = null;
     _isLoggedIn.value = false;
-
     await _storage.clearAuthData();
-
-    Get.offAllNamed('/login');
   }
 
   Future<void> updateUser(User updatedUser) async {
-    _currentUser.value = updatedUser;
-    await _storage.saveUserData(updatedUser.toJson());
+    try {
+      _currentUser.value = updatedUser;
+      await _storage.saveUserData(updatedUser.toJson());
+      print('✅ User data updated');
+    } catch (e) {
+      print('❌ Failed to update user: $e');
+    }
   }
 
   Future<void> updateToken(String newToken) async {
-    _token.value = newToken;
-    await _storage.saveToken(newToken);
+    try {
+      _token.value = newToken;
+      await _storage.saveToken(newToken);
+      print('✅ Token updated');
+    } catch (e) {
+      print('❌ Failed to update token: $e');
+    }
   }
 
+  // FIXED: Better navigation with validation
   void _navigateToRoleBasedHome() {
-    switch (userRole?.toLowerCase()) {
+    final role = userRole?.toLowerCase().trim();
+    print('🧭 Navigating to role-based home. Role: "$role"');
+
+    if (role == null || role.isEmpty) {
+      print('❌ Invalid role for navigation, redirecting to login');
+      Get.offAllNamed('/login');
+      return;
+    }
+
+    switch (role) {
       case 'teacher':
+        print('🧭 Navigation: /teacher');
         Get.offAllNamed('/teacher');
         break;
       case 'student':
+        print('🧭 Navigation: /student');
         Get.offAllNamed('/student');
         break;
       case 'parent':
+        print('🧭 Navigation: /parent');
         Get.offAllNamed('/parent');
         break;
       case 'admin':
+        print('🧭 Navigation: /admin');
         Get.offAllNamed('/admin');
         break;
       default:
+        print('❌ Unknown role: "$role", redirecting to login');
         Get.offAllNamed('/login');
     }
   }
 
+  // Utility methods
   bool hasRole(String role) {
     return userRole?.toLowerCase() == role.toLowerCase();
   }
@@ -108,11 +183,24 @@ class AuthService extends GetxService {
   String? get userPhone => _currentUser.value?.phone;
   int? get profileImageId => _currentUser.value?.profileImageId;
 
-  bool get isTokenExpired {
-    return false;
-  }
+  bool get isTokenExpired => false; // Implement token expiry check if needed
 
   Future<bool> refreshToken() async {
+    // Implement token refresh logic if your API supports it
     return true;
+  }
+
+  // Method for splash controller to check auth and navigate
+  void navigateBasedOnAuthState() {
+    print('🔍 Checking auth state for navigation');
+    print('📊 isLoggedIn: ${_isLoggedIn.value}, user: ${_currentUser.value?.fullName}, role: ${userRole}');
+
+    if (_isLoggedIn.value && _currentUser.value != null && userRole?.isNotEmpty == true) {
+      print('✅ Valid auth state, navigating to role-based home');
+      _navigateToRoleBasedHome();
+    } else {
+      print('❌ Invalid auth state, redirecting to login');
+      Get.offAllNamed('/login');
+    }
   }
 }

@@ -1,3 +1,4 @@
+// lib/app/data/models/user_model.dart
 class User {
   final int id;
   final String phone;
@@ -24,26 +25,47 @@ class User {
   String get fullName => '$firstName $lastName';
 
   factory User.fromJson(Map<String, dynamic> json) {
+    print('🔄 Parsing user from JSON: $json');
+
     // Handle different API response formats
     String firstName = '';
     String lastName = '';
 
     if (json.containsKey('name')) {
-      // Login response format: {id, name, phone}
-      final nameParts = (json['name'] as String).split(' ');
+      // Login response format: {id, name, phone, role}
+      final nameParts = (json['name'] as String).trim().split(' ');
       firstName = nameParts.isNotEmpty ? nameParts.first : '';
       lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+      print('👤 Parsed name: $firstName $lastName');
     } else {
       // Profile response format: {first_name, last_name}
-      firstName = json['first_name'] ?? '';
-      lastName = json['last_name'] ?? '';
+      firstName = json['first_name']?.toString().trim() ?? '';
+      lastName = json['last_name']?.toString().trim() ?? '';
     }
 
+    // Validate required fields
+    final id = json['id'];
+    if (id == null || id == 0) {
+      throw Exception('Invalid user ID: $id');
+    }
+
+    final phone = json['phone']?.toString().trim() ?? '';
+    if (phone.isEmpty) {
+      throw Exception('Phone number is required');
+    }
+
+    final role = json['role']?.toString().trim().toLowerCase() ?? '';
+    if (role.isEmpty) {
+      throw Exception('User role is required');
+    }
+
+    print('✅ User validation passed - ID: $id, Role: $role');
+
     return User(
-      id: json['id'],
-      phone: json['phone'],
-      passwordHash: json['password_hash'] ?? '',
-      role: json['role'] ?? '',
+      id: id,
+      phone: phone,
+      passwordHash: json['password_hash']?.toString() ?? '',
+      role: role,
       firstName: firstName,
       lastName: lastName,
       isActive: json['is_active'] ?? true,
@@ -65,6 +87,8 @@ class User {
       'is_active': isActive,
       'created_at': createdAt.toIso8601String(),
       'profile_image_id': profileImageId,
+      // Also include 'name' field for compatibility
+      'name': fullName,
     };
   }
 
@@ -90,5 +114,10 @@ class User {
       createdAt: createdAt ?? this.createdAt,
       profileImageId: profileImageId ?? this.profileImageId,
     );
+  }
+
+  @override
+  String toString() {
+    return 'User(id: $id, name: $fullName, phone: $phone, role: $role, active: $isActive)';
   }
 }

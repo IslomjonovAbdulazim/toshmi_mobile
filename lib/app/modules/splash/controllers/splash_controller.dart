@@ -1,3 +1,4 @@
+// lib/app/modules/splash/controllers/splash_controller.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/base/base_controller.dart';
@@ -12,6 +13,7 @@ class SplashController extends BaseController with GetSingleTickerProviderStateM
   @override
   void onInit() {
     super.onInit();
+    print('🚀 SplashController initialized');
     _initializeAnimations();
     _startSplashSequence();
   }
@@ -24,52 +26,41 @@ class SplashController extends BaseController with GetSingleTickerProviderStateM
   }
 
   Future<void> _startSplashSequence() async {
-    // Start loading animation
-    animationController.repeat();
-
-    // Wait for 3 seconds
-    await Future.delayed(const Duration(seconds: 3));
-
-    // Check authentication and navigate
-    await _checkAuthAndNavigate();
-  }
-
-  Future<void> _checkAuthAndNavigate() async {
     try {
-      if (_authService.isLoggedIn && _authService.currentUser != null) {
-        // User is logged in, navigate to role-based home
-        _navigateToRoleBasedHome();
-      } else {
-        // User not logged in, go to login
-        Get.offAllNamed(Routes.login);
-      }
+      print('⏱️ Starting splash sequence...');
+
+      // Start loading animation
+      animationController.repeat();
+
+      // Wait for splash duration
+      await Future.delayed(const Duration(seconds: 3));
+
+      // Check authentication and navigate
+      await _checkAuthAndNavigate();
     } catch (e) {
-      // Error occurred, go to login
+      print('❌ Splash sequence error: $e');
+      // On any error, go to login
       Get.offAllNamed(Routes.login);
     }
   }
 
-  void _navigateToRoleBasedHome() {
-    switch (_authService.userRole?.toLowerCase()) {
-      case 'teacher':
-        Get.offAllNamed('/teacher');
-        break;
-      case 'student':
-        Get.offAllNamed('/student');
-        break;
-      case 'parent':
-        Get.offAllNamed('/parent');
-        break;
-      case 'admin':
-        Get.offAllNamed('/admin');
-        break;
-      default:
-        Get.offAllNamed(Routes.login);
+  Future<void> _checkAuthAndNavigate() async {
+    try {
+      print('🔍 Checking authentication state...');
+
+      // Use the new AuthService method for navigation
+      _authService.navigateBasedOnAuthState();
+
+    } catch (e) {
+      print('❌ Auth check error: $e');
+      // On error, go to login
+      Get.offAllNamed(Routes.login);
     }
   }
 
   @override
   void onClose() {
+    print('🗑️ SplashController disposing...');
     animationController.dispose();
     super.onClose();
   }

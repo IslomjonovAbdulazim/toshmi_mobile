@@ -1,3 +1,4 @@
+// lib/app/data/repositories/auth_repository.dart
 import '../../../core/base/base_repository.dart';
 import '../models/user_model.dart';
 import '../models/notification_model.dart' as model;
@@ -8,13 +9,15 @@ import 'package:get/get.dart';
 class AuthRepository extends BaseRepository {
   final AuthService _authService = Get.find<AuthService>();
 
-  // Login user
+  // FIXED: Login user with proper role handling
   Future<Map<String, dynamic>> login({
     required String phone,
     required String password,
     required String role,
   }) async {
     try {
+      print('🔐 Attempting login - Phone: $phone, Role: $role');
+
       final response = await post(ApiConstants.login, {
         'phone': phone,
         'password': password,
@@ -22,19 +25,33 @@ class AuthRepository extends BaseRepository {
       });
 
       final data = response.body as Map<String, dynamic>;
-      final token = data['access_token'] as String;
-      final userData = data['user'] as Map<String, dynamic>;
-      final user = User.fromJson(userData);
+      print('📦 Login response data: $data');
 
+      final token = data['access_token'] as String;
+      final userRole = data['role'] as String; // Get role from top level
+      final userData = data['user'] as Map<String, dynamic>;
+
+      // FIXED: Add role to user data before creating User object
+      final completeUserData = {
+        ...userData,
+        'role': userRole, // Add the role to user data
+      };
+
+      final user = User.fromJson(completeUserData);
+      print('👤 Created user: ${user.fullName}, Role: ${user.role}');
+
+      // Save auth data
       await _authService.login(token: token, user: user);
+      print('✅ Auth service login completed');
 
       return data;
     } catch (e) {
+      print('❌ Login failed: $e');
       throw Exception('Login failed: $e');
     }
   }
 
-  // Change password
+  // Rest of your methods remain the same...
   Future<void> changePassword({
     required String oldPassword,
     required String newPassword,
@@ -49,7 +66,6 @@ class AuthRepository extends BaseRepository {
     }
   }
 
-  // Get user profile
   Future<User> getProfile() async {
     try {
       final response = await get(ApiConstants.profile);
@@ -63,7 +79,6 @@ class AuthRepository extends BaseRepository {
     }
   }
 
-  // Update user profile
   Future<User> updateProfile({
     required String firstName,
     required String lastName,
@@ -80,7 +95,6 @@ class AuthRepository extends BaseRepository {
     }
   }
 
-  // Get notifications
   Future<List<model.Notification>> getNotifications({
     int skip = 0,
     int limit = 50,
@@ -95,7 +109,6 @@ class AuthRepository extends BaseRepository {
     }
   }
 
-  // Mark notification as read - FIXED
   Future<void> markNotificationRead(int notificationId) async {
     try {
       await put('${ApiConstants.notificationRead}/$notificationId/read', {});
@@ -104,7 +117,6 @@ class AuthRepository extends BaseRepository {
     }
   }
 
-  // Mark all notifications as read - FIXED
   Future<void> markAllNotificationsRead() async {
     try {
       await put(ApiConstants.notificationMarkAllRead, {});
@@ -113,7 +125,6 @@ class AuthRepository extends BaseRepository {
     }
   }
 
-  // Get unread notification count - FIXED
   Future<int> getUnreadNotificationCount() async {
     try {
       final response = await get(ApiConstants.notificationUnreadCount);
@@ -124,7 +135,6 @@ class AuthRepository extends BaseRepository {
     }
   }
 
-  // Logout
   Future<void> logout() async {
     try {
       await _authService.logout();
@@ -133,17 +143,14 @@ class AuthRepository extends BaseRepository {
     }
   }
 
-  // Refresh token
   Future<bool> refreshToken() async {
     try {
-      // Implement token refresh if your API supports it
       return await _authService.refreshToken();
     } catch (e) {
       return false;
     }
   }
 
-  // Verify token validity
   Future<bool> verifyToken() async {
     try {
       await getProfile();

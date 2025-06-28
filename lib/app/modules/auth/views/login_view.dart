@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
@@ -28,30 +27,43 @@ class LoginView extends GetView<AuthController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 40),
+                const SizedBox(height: 60),
 
-                // App Logo/Title
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryBlue.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.school_rounded,
-                    size: 64,
-                    color: AppColors.primaryBlue,
+                // App Logo
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryBlue.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.school_rounded,
+                      size: 64,
+                      color: AppColors.primaryBlue,
+                    ),
                   ),
                 ),
 
                 const SizedBox(height: 32),
 
+                // App Title
                 Text(
                   'Toshmi',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppColors.primaryBlue,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                Text(
+                  'Maktab Boshqaruv Tizimi',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
 
@@ -65,18 +77,18 @@ class LoginView extends GetView<AuthController> {
                   ),
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 48),
 
                 // Error Display
                 Obx(() => controller.hasLoginError.value
                     ? Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.only(bottom: 24),
                   decoration: BoxDecoration(
                     color: AppColors.error.withOpacity(0.1),
                     border: Border.all(color: AppColors.error.withOpacity(0.3)),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
@@ -85,13 +97,14 @@ class LoginView extends GetView<AuthController> {
                         color: AppColors.error,
                         size: 20,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           controller.loginError.value,
                           style: TextStyle(
                             color: AppColors.error,
                             fontSize: 14,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
@@ -115,7 +128,7 @@ class LoginView extends GetView<AuthController> {
                           onTap: () => controller.setRole(role['value']!),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             decoration: BoxDecoration(
                               color: isSelected ? AppColors.primaryBlue : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
@@ -147,9 +160,9 @@ class LoginView extends GetView<AuthController> {
                   ),
                 )),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
-                // Phone Field
+                // Phone Number Field
                 CustomTextField(
                   label: 'Telefon raqami',
                   controller: controller.phoneController,
@@ -158,16 +171,9 @@ class LoginView extends GetView<AuthController> {
                   inputFormatters: [phoneFormatter],
                   validator: controller.validatePhone,
                   hint: '+998 (90) 123-45-67',
-                  onChanged: (value) {
-                    // Clear error when user starts typing
-                    if (controller.hasLoginError.value) {
-                      controller.hasLoginError.value = false;
-                      controller.loginError.value = '';
-                    }
-                  },
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
 
                 // Password Field
                 Obx(() => CustomTextField(
@@ -184,16 +190,9 @@ class LoginView extends GetView<AuthController> {
                     onPressed: controller.togglePasswordVisibility,
                   ),
                   validator: controller.validatePassword,
-                  onChanged: (value) {
-                    // Clear error when user starts typing
-                    if (controller.hasLoginError.value) {
-                      controller.hasLoginError.value = false;
-                      controller.loginError.value = '';
-                    }
-                  },
                 )),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
                 // Login Button
                 Obx(() => CustomButton(
@@ -204,18 +203,19 @@ class LoginView extends GetView<AuthController> {
                   backgroundColor: AppColors.primaryBlue,
                 )),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 32),
 
                 // Help Section
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             Icons.help_outline,
@@ -227,14 +227,15 @@ class LoginView extends GetView<AuthController> {
                             'Yordam kerakmi?',
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Text(
                         'Agar kirish parolingizni unutgan bo\'lsangiz, maktab ma\'muriyatiga murojaat qiling.',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                         textAlign: TextAlign.center,
@@ -243,7 +244,7 @@ class LoginView extends GetView<AuthController> {
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 40),
 
                 // Version Info
                 Text(
