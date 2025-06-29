@@ -32,7 +32,7 @@ class HomeworkRepository extends BaseRepository {
   }
 
   // Create homework (teacher only)
-  Future<Homework> createHomework({
+  Future<Map<String, dynamic>> createHomework({
     required int groupSubjectId,
     required String title,
     required String description,
@@ -50,11 +50,9 @@ class HomeworkRepository extends BaseRepository {
         'external_links': externalLinks,
       });
 
-      final data = response.body as Map<String, dynamic>;
-      final homeworkId = data['id'] as int;
-
-      // Return created homework
-      return await getHomeworkById(homeworkId);
+      // CRITICAL FIX: Backend returns {"message": "Homework created", "id": homework.id}
+      // No endpoint exists to fetch full homework by ID, so return the response data
+      return response.body as Map<String, dynamic>;
     } catch (e) {
       throw Exception('Failed to create homework: $e');
     }
@@ -93,17 +91,16 @@ class HomeworkRepository extends BaseRepository {
     }
   }
 
-  // Get homework by ID
-  Future<Homework> getHomeworkById(int homeworkId) async {
+  // CRITICAL FIX: Backend GET /teacher/homework returns simplified format
+  // Cannot create full Homework objects, only simplified data
+  Future<Map<String, dynamic>?> findHomeworkById(int homeworkId) async {
     try {
       final homeworkList = await getHomework();
-      final homeworkData = homeworkList.firstWhere(
+      return homeworkList.firstWhereOrNull(
             (h) => h['id'] == homeworkId,
-        orElse: () => throw Exception('Homework not found'),
       );
-      return Homework.fromJson(homeworkData);
     } catch (e) {
-      throw Exception('Failed to load homework: $e');
+      throw Exception('Failed to find homework: $e');
     }
   }
 

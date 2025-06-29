@@ -31,7 +31,7 @@ class ScheduleRepository extends BaseRepository {
   }
 
   // Create schedule (admin only)
-  Future<Schedule> createSchedule({
+  Future<Map<String, dynamic>> createSchedule({
     required int groupSubjectId,
     required int day, // 0-6 (Monday-Sunday)
     required TimeOfDay startTime,
@@ -47,10 +47,8 @@ class ScheduleRepository extends BaseRepository {
         'room': room,
       });
 
-      final data = response.body as Map<String, dynamic>;
-      final scheduleId = data['id'] as int;
-
-      return await getScheduleById(scheduleId);
+      // CRITICAL FIX: Return response data instead of calling non-existent endpoint
+      return response.body as Map<String, dynamic>;
     } catch (e) {
       throw Exception('Failed to create schedule: $e');
     }
@@ -87,13 +85,13 @@ class ScheduleRepository extends BaseRepository {
     }
   }
 
-  // Get schedule by ID
-  Future<Schedule> getScheduleById(int scheduleId) async {
+  // CRITICAL FIX: Backend has no individual GET endpoint, find from cached list
+  Future<Schedule?> findScheduleById(int scheduleId) async {
     try {
-      final response = await get('${ApiConstants.adminSchedule}/$scheduleId');
-      return Schedule.fromJson(response.body as Map<String, dynamic>);
+      final schedules = await getSchedule();
+      return schedules.firstWhereOrNull((s) => s.id == scheduleId);
     } catch (e) {
-      throw Exception('Failed to load schedule: $e');
+      throw Exception('Failed to find schedule: $e');
     }
   }
 
@@ -244,9 +242,9 @@ class ScheduleRepository extends BaseRepository {
     }
   }
 
-  // Utility methods
+  // CRITICAL FIX: Backend expects "HH:MM:SS" format
   String _formatTimeOfDay(TimeOfDay time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:00';
   }
 
   int _compareTimeOfDay(TimeOfDay a, TimeOfDay b) {

@@ -7,7 +7,7 @@ class Student {
   final int groupId;
   final String parentPhone;
   final int graduationYear;
-  final List<MonthlyPayment>? monthlyPayments; // Added this
+  final List<PaymentRecord>? paymentRecords; // CRITICAL FIX: Backend has payment_records, not monthly_payments
 
   Student({
     required this.id,
@@ -15,7 +15,7 @@ class Student {
     required this.groupId,
     required this.parentPhone,
     required this.graduationYear,
-    this.monthlyPayments,
+    this.paymentRecords,
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
@@ -25,9 +25,9 @@ class Student {
       groupId: json['group_id'],
       parentPhone: json['parent_phone'],
       graduationYear: json['graduation_year'],
-      monthlyPayments: json['monthly_payments'] != null
-          ? (json['monthly_payments'] as List)
-          .map((m) => MonthlyPayment.fromJson(m))
+      paymentRecords: json['payment_records'] != null
+          ? (json['payment_records'] as List)
+          .map((p) => PaymentRecord.fromJson(p))
           .toList()
           : null,
     );
@@ -40,7 +40,7 @@ class Student {
       'group_id': groupId,
       'parent_phone': parentPhone,
       'graduation_year': graduationYear,
-      'monthly_payments': monthlyPayments?.map((m) => m.toJson()).toList(),
+      'payment_records': paymentRecords?.map((p) => p.toJson()).toList(),
     };
   }
 
@@ -50,7 +50,7 @@ class Student {
     int? groupId,
     String? parentPhone,
     int? graduationYear,
-    List<MonthlyPayment>? monthlyPayments,
+    List<PaymentRecord>? paymentRecords,
   }) {
     return Student(
       id: id ?? this.id,
@@ -58,7 +58,7 @@ class Student {
       groupId: groupId ?? this.groupId,
       parentPhone: parentPhone ?? this.parentPhone,
       graduationYear: graduationYear ?? this.graduationYear,
-      monthlyPayments: monthlyPayments ?? this.monthlyPayments,
+      paymentRecords: paymentRecords ?? this.paymentRecords,
     );
   }
 }

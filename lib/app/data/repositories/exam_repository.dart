@@ -30,7 +30,7 @@ class ExamRepository extends BaseRepository {
   }
 
   // Create exam (teacher only)
-  Future<Exam> createExam({
+  Future<Map<String, dynamic>> createExam({
     required int groupSubjectId,
     required String title,
     required String description,
@@ -48,11 +48,9 @@ class ExamRepository extends BaseRepository {
         'external_links': externalLinks,
       });
 
-      final data = response.body as Map<String, dynamic>;
-      final examId = data['id'] as int;
-
-      // Return created exam
-      return await getExamById(examId);
+      // CRITICAL FIX: Backend returns {"message": "Exam created", "id": exam.id}
+      // No endpoint exists to fetch exam by ID, so return the response data
+      return response.body as Map<String, dynamic>;
     } catch (e) {
       throw Exception('Failed to create exam: $e');
     }
@@ -91,17 +89,14 @@ class ExamRepository extends BaseRepository {
     }
   }
 
-  // Get exam by ID
-  Future<Exam> getExamById(int examId) async {
+  // CRITICAL FIX: Remove getExamById - no such endpoint exists in backend
+  // Get exam by ID from cached list
+  Future<Exam?> findExamById(int examId) async {
     try {
       final exams = await getExams();
-      final exam = exams.firstWhere(
-            (e) => e.id == examId,
-        orElse: () => throw Exception('Exam not found'),
-      );
-      return exam;
+      return exams.firstWhereOrNull((e) => e.id == examId);
     } catch (e) {
-      throw Exception('Failed to load exam: $e');
+      throw Exception('Failed to find exam: $e');
     }
   }
 

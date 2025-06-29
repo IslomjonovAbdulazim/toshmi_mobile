@@ -133,37 +133,35 @@ class GroupSubject {
   }
 }
 
-// lib/app/data/models/monthly_payment_model.dart
-class MonthlyPayment {
+// lib/app/data/models/payment_record_model.dart
+// CRITICAL FIX: Backend has PaymentRecord, not MonthlyPayment
+class PaymentRecord {
   final int id;
   final int studentId;
-  final int month;
-  final int year;
-  final int paidAmount;
-  final bool isCompleted;
-  final DateTime? dueDate;
+  final int amount;
+  final DateTime paymentDate;
+  final String paymentMethod;
+  final String description;
   final DateTime createdAt;
 
-  MonthlyPayment({
+  PaymentRecord({
     required this.id,
     required this.studentId,
-    required this.month,
-    required this.year,
-    required this.paidAmount,
-    required this.isCompleted,
-    this.dueDate,
+    required this.amount,
+    required this.paymentDate,
+    required this.paymentMethod,
+    required this.description,
     required this.createdAt,
   });
 
-  factory MonthlyPayment.fromJson(Map<String, dynamic> json) {
-    return MonthlyPayment(
+  factory PaymentRecord.fromJson(Map<String, dynamic> json) {
+    return PaymentRecord(
       id: json['id'],
       studentId: json['student_id'],
-      month: json['month'],
-      year: json['year'],
-      paidAmount: json['paid_amount'] ?? 0,
-      isCompleted: json['is_completed'] ?? false,
-      dueDate: json['due_date'] != null ? DateTime.parse(json['due_date']) : null,
+      amount: json['amount'],
+      paymentDate: DateTime.parse(json['payment_date']),
+      paymentMethod: json['payment_method'] ?? 'cash',
+      description: json['description'] ?? '',
       createdAt: DateTime.parse(json['created_at']),
     );
   }
@@ -172,33 +170,30 @@ class MonthlyPayment {
     return {
       'id': id,
       'student_id': studentId,
-      'month': month,
-      'year': year,
-      'paid_amount': paidAmount,
-      'is_completed': isCompleted,
-      'due_date': dueDate?.toIso8601String().split('T')[0],
+      'amount': amount,
+      'payment_date': paymentDate.toIso8601String().split('T')[0],
+      'payment_method': paymentMethod,
+      'description': description,
       'created_at': createdAt.toIso8601String(),
     };
   }
 
-  MonthlyPayment copyWith({
+  PaymentRecord copyWith({
     int? id,
     int? studentId,
-    int? month,
-    int? year,
-    int? paidAmount,
-    bool? isCompleted,
-    DateTime? dueDate,
+    int? amount,
+    DateTime? paymentDate,
+    String? paymentMethod,
+    String? description,
     DateTime? createdAt,
   }) {
-    return MonthlyPayment(
+    return PaymentRecord(
       id: id ?? this.id,
       studentId: studentId ?? this.studentId,
-      month: month ?? this.month,
-      year: year ?? this.year,
-      paidAmount: paidAmount ?? this.paidAmount,
-      isCompleted: isCompleted ?? this.isCompleted,
-      dueDate: dueDate ?? this.dueDate,
+      amount: amount ?? this.amount,
+      paymentDate: paymentDate ?? this.paymentDate,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      description: description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
     );
   }

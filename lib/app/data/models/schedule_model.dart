@@ -40,15 +40,18 @@ class Schedule {
   }
 
   static TimeOfDay _parseTimeString(String timeString) {
+    // Backend sends "HH:MM:SS" format, need to handle seconds
     final parts = timeString.split(':');
     return TimeOfDay(
       hour: int.parse(parts[0]),
       minute: int.parse(parts[1]),
+      // Ignore seconds part (parts[2]) if present
     );
   }
 
   static String _formatTimeOfDay(TimeOfDay time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    // Backend expects "HH:MM:SS" format
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:00';
   }
 
   Schedule copyWith({

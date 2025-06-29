@@ -22,8 +22,9 @@ class ApiConstants {
   static const String adminAssignTeacher = '/admin/assign-teacher';
   static const String adminPayments = '/admin/payments';
   static const String adminMonthlyPaymentStatus = '/admin/monthly-payment-status';
+  static const String adminAssignments = '/admin/assignments'; // /{group_subject_id}
 
-  // FIXED: Teacher endpoints to match backend exactly
+  // Teacher endpoints
   static const String teacherHomework = '/teacher/homework';
   static const String teacherExams = '/teacher/exams';
   static const String teacherBulkHomeworkGrades = '/teacher/bulk-homework-grades';
@@ -43,14 +44,18 @@ class ApiConstants {
 
   // Parent endpoints
   static const String parentChildren = '/parent/children';
+  static const String parentChildHomework = '/parent/children'; // /{child_id}/homework
+  static const String parentChildGrades = '/parent/children'; // /{child_id}/grades
+  static const String parentChildAttendance = '/parent/children'; // /{child_id}/attendance
+  static const String parentChildPayments = '/parent/children'; // /{child_id}/payments
   static const String parentDashboard = '/parent/dashboard';
 
   // File endpoints
   static const String filesProfilePicture = '/files/profile-picture';
-  static const String filesHomework = '/files/homework';
-  static const String filesExam = '/files/exam';
-  static const String filesNews = '/files/news';
-  static const String files = '/files';
+  static const String filesHomework = '/files/homework'; // /{homework_id}/upload
+  static const String filesExam = '/files/exam'; // /{exam_id}/upload
+  static const String filesNews = '/files/news'; // /{news_id}/upload-image
+  static const String files = '/files'; // /{file_id}
 
   // System endpoints
   static const String health = '/health';
