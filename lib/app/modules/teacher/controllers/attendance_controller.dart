@@ -1,379 +1,68 @@
-// FIXED: Updated to match backend API structure exactly
-import 'package:flutter/material.dart';
+// lib/app/modules/teacher/controllers/attendance_controller.dart
 import 'package:get/get.dart';
-import '../../../../core/base/base_controller.dart';
+
 import '../../../data/repositories/teacher_repository.dart';
-import '../../../utils/constants/app_constants.dart';
 
-class AttendanceController extends BaseController {
-  final TeacherRepository _repository = Get.find<TeacherRepository>();
+class AttendanceController extends GetxController {
+  final TeacherRepository _teacherRepository = Get.find<TeacherRepository>();
 
-  // Current attendance session
-  final RxInt selectedGroupSubjectId = 0.obs;
-  final Rx<DateTime> selectedDate = DateTime.now().obs;
-  final RxList<dynamic> students = <dynamic>[].obs;
-  final RxMap<int, String> attendanceRecords = <int, String>{}.obs;
+  final isLoading = false.obs;
+  final attendanceData = <String, dynamic>{}.obs;
+  final groupStudents = <dynamic>[].obs;
 
-  // Attendance table data (matches backend GET /teacher/attendance-table response)
-  final RxMap<String, dynamic> attendanceTable = <String, dynamic>{}.obs;
-  final RxList<String> tableDates = <String>[].obs;
-  final RxList<dynamic> tableStudents = <dynamic>[].obs;
-
-  // Available group-subjects (teacher's assignments - would need separate endpoint)
-  final RxList<Map<String, dynamic>> groupSubjects = <Map<String, dynamic>>[].obs;
-
-  // Date range for viewing
-  final Rx<DateTime?> startDate = Rx<DateTime?>(null);
-  final Rx<DateTime?> endDate = Rx<DateTime?>(null);
-
-  // UI state
-  final RxBool isMarkingAttendance = false.obs;
-  final RxBool isLoadingStudents = false.obs;
-  final RxBool isSavingAttendance = false.obs;
-  final RxBool hasUnsavedChanges = false.obs;
-
-  // Statistics
-  final RxMap<String, int> attendanceStats = <String, int>{}.obs;
-
-  @override
-  void onInit() {
-    super.onInit();
-    _initializeDates();
-    loadGroupSubjects();
-  }
-
-  void _initializeDates() {
-    final now = DateTime.now();
-    // Set default range to current week
-    final monday = now.subtract(Duration(days: now.weekday - 1));
-    startDate.value = monday;
-    endDate.value = monday.add(const Duration(days: 6));
-  }
-
-  // Load teacher's assigned group-subjects (would need separate API endpoint)
-  Future<void> loadGroupSubjects() async {
+  Future<void> loadAttendanceTable({
+    required int groupSubjectId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
     try {
-      // TODO: This would need a proper API endpoint like GET /teacher/group-subjects
-      // For now, we'll use mock data based on the backend structure
-      groupSubjects.assignAll([
-        {
-          'id': 1,
-          'group_name': '10-A',
-          'subject_name': 'Matematika',
-          'group_subject_id': 1,
-          'group_id': 1,
-        },
-        {
-          'id': 2,
-          'group_name': '10-B',
-          'subject_name': 'Matematika',
-          'group_subject_id': 2,
-          'group_id': 2,
-        },
-      ]);
+      isLoading.value = true;
+      final data = await _teacherRepository.getAttendanceTable(
+        groupSubjectId: groupSubjectId,
+        startDate: startDate,
+        endDate: endDate,
+      );
+      attendanceData.value = data;
     } catch (e) {
-      setError('Guruhlar yuklanmadi: $e');
-    }
-  }
-
-  // Load students for selected group (matches backend GET /teacher/groups/{group_id}/students)
-  Future<void> loadStudents(int groupId) async {
-    try {
-      isLoadingStudents.value = true;
-      clearError();
-
-      final data = await _repository.getGroupStudents(groupId);
-      students.assignAll(data);
-
-      // Clear previous attendance records
-      attendanceRecords.clear();
-      hasUnsavedChanges.value = false;
-
-      print('✅ Loaded ${data.length} students for group $groupId');
-    } catch (e) {
-      setError('O\'quvchilar yuklanmadi: $e');
+      Get.snackbar('Error', 'Failed to load attendance: $e');
     } finally {
-      isLoadingStudents.value = false;
+      isLoading.value = false;
     }
   }
 
-  // Set attendance for a student
-  void setAttendance(int studentId, String status) {
-    // Validate status against backend expected values
-    const validStatuses = ['present', 'absent', 'late', 'excused'];
-    if (!validStatuses.contains(status)) {
-      showError('Noto\'g\'ri davomat holati');
-      return;
-    }
-
-    attendanceRecords[studentId] = status;
-    hasUnsavedChanges.value = true;
-    _updateAttendanceStats();
-  }
-
-  // Remove attendance for a student
-  void removeAttendance(int studentId) {
-    attendanceRecords.remove(studentId);
-    hasUnsavedChanges.value = attendanceRecords.isNotEmpty;
-    _updateAttendanceStats();
-  }
-
-  // Mark all students with same status
-  void markAllStudents(String status) {
-    for (var student in students) {
-      final studentId = student['id'] as int;
-      setAttendance(studentId, status);
-    }
-    showSuccess('Barcha o\'quvchilar $status deb belgilandi');
-  }
-
-  // Clear all attendance records
-  void clearAllAttendance() {
-    attendanceRecords.clear();
-    hasUnsavedChanges.value = false;
-    _updateAttendanceStats();
-  }
-
-  // Save attendance (matches backend POST /teacher/bulk-attendance)
-  Future<void> saveAttendance() async {
-    if (selectedGroupSubjectId.value == 0) {
-      showError('Guruh va fanni tanlang');
-      return;
-    }
-
-    if (attendanceRecords.isEmpty) {
-      showError('Kamida bitta o\'quvchining davomatini belgilang');
-      return;
-    }
-
+  Future<void> loadGroupStudents(int groupId) async {
     try {
-      isSavingAttendance.value = true;
+      isLoading.value = true;
+      final students = await _teacherRepository.getGroupStudents(groupId);
+      groupStudents.value = students;
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to load students: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
-      // Convert to backend expected format
-      final records = attendanceRecords.entries.map((entry) => {
-        'student_id': entry.key,
-        'status': entry.value,
-      }).toList();
-
-      await _repository.submitBulkAttendance(
-        groupSubjectId: selectedGroupSubjectId.value,
-        date: selectedDate.value,
+  Future<void> submitBulkAttendance({
+    required int groupSubjectId,
+    required DateTime date,
+    required List<Map<String, dynamic>> records,
+  }) async {
+    try {
+      isLoading.value = true;
+      await _teacherRepository.submitBulkAttendance(
+        groupSubjectId: groupSubjectId,
+        date: date,
         records: records,
       );
-
-      hasUnsavedChanges.value = false;
-      showSuccess('Davomat muvaffaqiyatli saqlandi');
-
-      // Clear the form
-      attendanceRecords.clear();
-      _updateAttendanceStats();
+      Get.snackbar('Success', 'Attendance recorded successfully');
     } catch (e) {
-      showError('Davomat saqlanmadi: $e');
+      Get.snackbar('Error', 'Failed to record attendance: $e');
     } finally {
-      isSavingAttendance.value = false;
+      isLoading.value = false;
     }
   }
 
-  // Load attendance table (matches backend GET /teacher/attendance-table response)
-  Future<void> loadAttendanceTable() async {
-    if (selectedGroupSubjectId.value == 0) {
-      showError('Guruh va fanni tanlang');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      clearError();
-
-      final data = await _repository.getAttendanceTable(
-        groupSubjectId: selectedGroupSubjectId.value,
-        startDate: startDate.value,
-        endDate: endDate.value,
-      );
-
-      attendanceTable.value = data;
-
-      // Process backend response structure
-      tableDates.assignAll((data['dates'] as List<dynamic>? ?? []).map((d) => d.toString()));
-      tableStudents.assignAll(data['students'] ?? []);
-
-      print('✅ Loaded attendance table - Dates: ${tableDates.length}, Students: ${tableStudents.length}');
-    } catch (e) {
-      setError('Davomat jadvali yuklanmadi: $e');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Date selection
-  void setSelectedDate(DateTime date) {
-    selectedDate.value = date;
-    // Clear attendance when date changes
-    attendanceRecords.clear();
-    hasUnsavedChanges.value = false;
-    _updateAttendanceStats();
-  }
-
-  void setDateRange(DateTime start, DateTime end) {
-    startDate.value = start;
-    endDate.value = end;
-    if (selectedGroupSubjectId.value != 0) {
-      loadAttendanceTable();
-    }
-  }
-
-  void setGroupSubject(int groupSubjectId) {
-    selectedGroupSubjectId.value = groupSubjectId;
-
-    // Find the group ID from groupSubject
-    final groupSubject = groupSubjects.firstWhere(
-          (gs) => gs['group_subject_id'] == groupSubjectId,
-      orElse: () => <String, dynamic>{},
-    );
-
-    if (groupSubject.isNotEmpty) {
-      final groupId = groupSubject['group_id'] as int;
-      loadStudents(groupId);
-    }
-  }
-
-  // Update attendance statistics
-  void _updateAttendanceStats() {
-    final stats = <String, int>{
-      'present': 0,
-      'absent': 0,
-      'late': 0,
-      'excused': 0,
-    };
-
-    for (final status in attendanceRecords.values) {
-      stats[status] = (stats[status] ?? 0) + 1;
-    }
-
-    attendanceStats.value = stats;
-  }
-
-  // Helper methods
-  String getAttendanceStatus(int studentId) {
-    return attendanceRecords[studentId] ?? '';
-  }
-
-  bool hasAttendanceRecord(int studentId) {
-    return attendanceRecords.containsKey(studentId);
-  }
-
-  Color getStatusColor(String status) {
-    switch (status) {
-      case 'present':
-        return Colors.green;
-      case 'absent':
-        return Colors.red;
-      case 'late':
-        return Colors.orange;
-      case 'excused':
-        return Colors.blue;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String getStatusText(String status) {
-    switch (status) {
-      case 'present':
-        return 'Bor';
-      case 'absent':
-        return 'Yo\'q';
-      case 'late':
-        return 'Kech';
-      case 'excused':
-        return 'Uzrli';
-      default:
-        return '';
-    }
-  }
-
-  IconData getStatusIcon(String status) {
-    switch (status) {
-      case 'present':
-        return Icons.check_circle;
-      case 'absent':
-        return Icons.cancel;
-      case 'late':
-        return Icons.access_time;
-      case 'excused':
-        return Icons.info;
-      default:
-        return Icons.help;
-    }
-  }
-
-  // Get attendance for specific student and date from table (backend response structure)
-  String getTableAttendance(int studentId, String date) {
-    final student = tableStudents.firstWhere(
-          (s) => s['student_id'] == studentId,
-      orElse: () => <String, dynamic>{},
-    );
-
-    if (student.isEmpty) return '';
-
-    final attendanceByDate = student['attendance_by_date'] as Map<String, dynamic>? ?? {};
-    return attendanceByDate[date]?.toString() ?? '';
-  }
-
-  // Get attendance summary for a student (backend response structure)
-  Map<String, dynamic> getStudentSummary(int studentId) {
-    final student = tableStudents.firstWhere(
-          (s) => s['student_id'] == studentId,
-      orElse: () => <String, dynamic>{},
-    );
-
-    return student['summary'] as Map<String, dynamic>? ?? {};
-  }
-
-  // Calculate attendance percentage for a student
-  double getAttendancePercentage(int studentId) {
-    final summary = getStudentSummary(studentId);
-    final totalDays = summary['total_days'] as int? ?? 0;
-    final presentDays = summary['present'] as int? ?? 0;
-
-    if (totalDays == 0) return 0.0;
-    return (presentDays / totalDays) * 100;
-  }
-
-  // Check if date is today
-  bool isToday(DateTime date) {
-    final now = DateTime.now();
-    return date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day;
-  }
-
-  // Check if date is in the past
-  bool isPastDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final compareDate = DateTime(date.year, date.month, date.day);
-    return compareDate.isBefore(today);
-  }
-
-  // Quick actions
-  void markTodayAttendance() {
-    if (!isToday(selectedDate.value)) {
-      setSelectedDate(DateTime.now());
-    }
-    isMarkingAttendance.value = true;
-  }
-
-  void viewAttendanceHistory() {
-    if (selectedGroupSubjectId.value != 0) {
-      loadAttendanceTable();
-    }
-  }
-
-  @override
-  Future<void> refreshData() async {
-    if (selectedGroupSubjectId.value != 0) {
-      await loadAttendanceTable();
-    }
+  Future<void> refreshAttendance(int groupSubjectId) async {
+    loadAttendanceTable(groupSubjectId: groupSubjectId);
   }
 }

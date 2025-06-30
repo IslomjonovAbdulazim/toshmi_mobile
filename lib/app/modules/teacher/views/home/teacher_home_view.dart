@@ -1,187 +1,183 @@
-// lib/app/modules/teacher/views/teacher_home_view.dart
+// lib/app/modules/teacher/views/home/teacher_home_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../utils/widgets/common/custom_app_bar.dart';
-import '../../../../utils/widgets/common/loading_widget.dart';
-import '../../../../utils/widgets/common/error_widget.dart';
-import '../../../../utils/extensions/datetime_extensions.dart';
+import 'package:intl/intl.dart';
 import '../../controllers/teacher_home_controller.dart';
+import '../shared/widgets/teacher_app_bar.dart';
+import '../shared/widgets/teacher_drawer.dart';
+import '../shared/widgets/stats_card.dart';
+import '../shared/widgets/quick_action_card.dart';
+import '../homework/homework_list_view.dart';
+import '../exams/exam_list_view.dart';
+import '../grading/grading_view.dart';
+import '../attendance/attendance_view.dart';
 
 class TeacherHomeView extends GetView<TeacherHomeController> {
   const TeacherHomeView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: CustomAppBar(
-        title: 'O\'qituvchi paneli',
+      backgroundColor: theme.colorScheme.background,
+      appBar: TeacherAppBar(
+        title: 'Teacher Dashboard',
+        showBackButton: false,
         actions: [
           IconButton(
-            onPressed: () => controller.loadDashboardData(),
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Yangilash',
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'logout') {
-                controller.logout();
-              } else if (value == 'profile') {
-                Get.toNamed('/profile');
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'profile',
-                child: Row(
-                  children: [
-                    Icon(Icons.person),
-                    SizedBox(width: 8),
-                    Text('Profil'),
-                  ],
+            onPressed: () => _showNotifications(context),
+            icon: Stack(
+              children: [
+                const Icon(Icons.notifications_outlined),
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(1),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.error,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 12,
+                      minHeight: 12,
+                    ),
+                    child: Text(
+                      '3',
+                      style: TextStyle(
+                        color: theme.colorScheme.onError,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      drawer: const TeacherDrawer(),
+      body: RefreshIndicator(
+        onRefresh: () => controller.refreshDashboard(),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildWelcomeSection(theme),
+              const SizedBox(height: 24),
+              _buildStatsSection(theme),
+              const SizedBox(height: 24),
+              _buildQuickActionsSection(theme),
+              const SizedBox(height: 24),
+              _buildUpcomingSection(theme, context),
+              const SizedBox(height: 24),
+              _buildRecentActivitySection(theme),
+              const SizedBox(height: 80), // Extra space for FAB
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showQuickCreateMenu(context),
+        icon: const Icon(Icons.add),
+        label: const Text('Create'),
+      ),
+    );
+  }
+
+  Widget _buildWelcomeSection(ThemeData theme) {
+    final now = DateTime.now();
+    final greeting = _getGreeting();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primary,
+            theme.colorScheme.primary.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            greeting,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: theme.colorScheme.onPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            DateFormat('EEEE, MMMM dd, yyyy').format(now),
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onPrimary.withOpacity(0.9),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Icon(
+                Icons.wb_sunny_outlined,
+                color: theme.colorScheme.onPrimary,
+                size: 20,
               ),
-              const PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout),
-                    SizedBox(width: 8),
-                    Text('Chiqish'),
-                  ],
+              const SizedBox(width: 8),
+              Text(
+                'Ready to make today productive?',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onPrimary.withOpacity(0.9),
                 ),
               ),
             ],
           ),
         ],
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const LoadingWidget(message: 'Ma\'lumotlar yuklanmoqda...');
-        }
-
-        if (controller.hasError.value) {
-          return CustomErrorWidget(
-            message: controller.errorMessage.value,
-            onRetry: controller.refreshData,
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: controller.refreshData,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Welcome section
-                _buildWelcomeSection(),
-                const SizedBox(height: 24),
-
-                // Quick stats cards
-                _buildQuickStatsSection(),
-                const SizedBox(height: 24),
-
-                // Main action buttons
-                _buildMainActionsSection(),
-                const SizedBox(height: 24),
-
-                // Upcoming deadlines
-                _buildUpcomingDeadlinesSection(),
-                const SizedBox(height: 24),
-
-                // Recent assignments
-                _buildRecentAssignmentsSection(),
-              ],
-            ),
-          ),
-        );
-      }),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreateDialog(),
-        icon: const Icon(Icons.add),
-        label: const Text('Yangi vazifa'),
-        backgroundColor: AppColors.teacherColor,
-      ),
     );
   }
 
-  Widget _buildWelcomeSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.teacherColor,
-            AppColors.teacherColor.withOpacity(0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Xush kelibsiz!',
-            style: Get.textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            controller.teacherName,
-            style: Get.textTheme.titleLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Bugun ${DateTime.now().formatDate}',
-            style: Get.textTheme.bodyMedium?.copyWith(
-              color: Colors.white.withOpacity(0.9),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickStatsSection() {
+  Widget _buildStatsSection(ThemeData theme) {
     return Obx(() {
-      final stats = controller.quickStats;
+      final data = controller.dashboardData;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tezkor ko\'rsatkichlar',
-            style: Get.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
+            'Overview',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
-                child: _buildStatCard(
-                  title: 'Jami vazifalar',
-                  value: stats['total_assignments'].toString(),
-                  icon: Icons.assignment,
-                  color: AppColors.primaryBlue,
+                child: StatsCard(
+                  title: 'Homework',
+                  value: '${data['total_homework'] ?? 0}',
+                  icon: Icons.assignment_outlined,
+                  iconColor: theme.colorScheme.primary,
+                  subtitle: 'Total assignments',
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildStatCard(
-                  title: 'Bu hafta',
-                  value: stats['this_week_deadlines'].toString(),
-                  icon: Icons.schedule,
-                  color: AppColors.warning,
+                child: StatsCard(
+                  title: 'Exams',
+                  value: '${data['total_exams'] ?? 0}',
+                  icon: Icons.quiz_outlined,
+                  iconColor: theme.colorScheme.secondary,
+                  subtitle: 'Total exams',
                 ),
               ),
             ],
@@ -190,20 +186,22 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
           Row(
             children: [
               Expanded(
-                child: _buildStatCard(
-                  title: 'Shoshilinch',
-                  value: stats['urgent_deadlines'].toString(),
-                  icon: Icons.priority_high,
-                  color: AppColors.error,
+                child: StatsCard(
+                  title: 'Classes',
+                  value: '4', // This would come from actual data
+                  icon: Icons.class_outlined,
+                  iconColor: theme.colorScheme.tertiary,
+                  subtitle: 'Active classes',
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildStatCard(
-                  title: 'Baholash kerak',
-                  value: stats['pending_grading'].toString(),
-                  icon: Icons.grade,
-                  color: AppColors.success,
+                child: StatsCard(
+                  title: 'Students',
+                  value: '128', // This would come from actual data
+                  icon: Icons.people_outlined,
+                  iconColor: theme.colorScheme.error,
+                  subtitle: 'Total students',
                 ),
               ),
             ],
@@ -213,90 +211,61 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
     });
   }
 
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                value,
-                style: Get.textTheme.headlineMedium?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: Get.textTheme.bodySmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMainActionsSection() {
+  Widget _buildQuickActionsSection(ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Boshqaruv',
-          style: Get.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
+          'Quick Actions',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 16),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.2,
+        Row(
           children: [
-            _buildActionCard(
-              title: 'Vazifalar',
-              icon: Icons.assignment,
-              color: AppColors.primaryBlue,
-              onTap: controller.navigateToHomework,
+            Expanded(
+              child: QuickActionCard(
+                title: 'Homework',
+                subtitle: 'Manage assignments',
+                icon: Icons.assignment_outlined,
+                iconColor: theme.colorScheme.primary,
+                onTap: () => Get.to(() => const HomeworkListView()),
+              ),
             ),
-            _buildActionCard(
-              title: 'Imtihonlar',
-              icon: Icons.quiz,
-              color: AppColors.secondaryOrange,
-              onTap: controller.navigateToExams,
+            const SizedBox(width: 12),
+            Expanded(
+              child: QuickActionCard(
+                title: 'Exams',
+                subtitle: 'Manage exams',
+                icon: Icons.quiz_outlined,
+                iconColor: theme.colorScheme.secondary,
+                onTap: () => Get.to(() => const ExamListView()),
+              ),
             ),
-            _buildActionCard(
-              title: 'Baholash',
-              icon: Icons.grade,
-              color: AppColors.success,
-              onTap: controller.navigateToGrading,
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: QuickActionCard(
+                title: 'Grading',
+                subtitle: 'Grade assignments',
+                icon: Icons.grade_outlined,
+                iconColor: theme.colorScheme.tertiary,
+                onTap: () => Get.to(() => const GradingView()),
+              ),
             ),
-            _buildActionCard(
-              title: 'Davomat',
-              icon: Icons.how_to_reg,
-              color: AppColors.teacherColor,
-              onTap: controller.navigateToAttendance,
+            const SizedBox(width: 12),
+            Expanded(
+              child: QuickActionCard(
+                title: 'Attendance',
+                subtitle: 'Take attendance',
+                icon: Icons.how_to_reg_outlined,
+                iconColor: theme.colorScheme.error,
+                onTap: () => Get.to(() => const AttendanceView()),
+              ),
             ),
           ],
         ),
@@ -304,55 +273,11 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
     );
   }
 
-  Widget _buildActionCard({
-    required String title,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: Get.textTheme.titleMedium?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUpcomingDeadlinesSection() {
+  Widget _buildUpcomingSection(ThemeData theme, BuildContext context) {
     return Obx(() {
-      final deadlines = controller.upcomingDeadlines;
-
-      if (deadlines.isEmpty) {
-        return const SizedBox.shrink();
-      }
+      final data = controller.dashboardData;
+      final upcomingHomework = data['upcoming_homework'] as List? ?? [];
+      final upcomingExams = data['upcoming_exams'] as List? ?? [];
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,217 +286,293 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Yaqin muddatlar',
-                style: Get.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+                'Upcoming',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               TextButton(
-                onPressed: () {
-                  // Navigate to full deadlines view
-                },
-                child: const Text('Barchasini ko\'rish'),
+                onPressed: () => _showAllUpcoming(context),
+                child: const Text('View All'),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: deadlines.take(3).length,
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final deadline = deadlines[index];
-              return _buildDeadlineCard(deadline);
-            },
-          ),
+          const SizedBox(height: 16),
+          if (upcomingHomework.isEmpty && upcomingExams.isEmpty)
+            _buildEmptyUpcoming(theme)
+          else
+            _buildUpcomingList(theme, upcomingHomework, upcomingExams),
         ],
       );
     });
   }
 
-  Widget _buildDeadlineCard(Map<String, dynamic> deadline) {
-    final isUrgent = deadline['is_urgent'] == true;
-    final color = isUrgent ? AppColors.error : AppColors.warning;
-    final daysUntil = deadline['days_until'] as int;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            deadline['type'] == 'homework' ? Icons.assignment : Icons.quiz,
-            color: color,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  deadline['title'],
-                  style: Get.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  '${deadline['subject']} • ${deadline['group']}',
-                  style: Get.textTheme.bodySmall?.copyWith(
-                    color: Get.theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
+  Widget _buildEmptyUpcoming(ThemeData theme) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          children: [
+            Icon(
+              Icons.event_available,
+              size: 48,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              daysUntil == 0 ? 'Bugun' : '$daysUntil kun',
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+            const SizedBox(height: 12),
+            Text(
+              'All Caught Up!',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              'No upcoming deadlines',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildRecentAssignmentsSection() {
-    return Obx(() {
-      final recentHomework = controller.recentHomework;
-      final recentExams = controller.recentExams;
+  Widget _buildUpcomingList(ThemeData theme, List upcomingHomework, List upcomingExams) {
+    final allUpcoming = [
+      ...upcomingHomework.map((h) => {...h, 'type': 'homework'}),
+      ...upcomingExams.map((e) => {...e, 'type': 'exam'}),
+    ];
 
-      if (recentHomework.isEmpty && recentExams.isEmpty) {
-        return const SizedBox.shrink();
-      }
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'So\'nggi vazifalar',
-            style: Get.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (recentHomework.isNotEmpty) ...[
-            _buildAssignmentsList('Vazifalar', recentHomework, 'homework'),
-            const SizedBox(height: 16),
-          ],
-          if (recentExams.isNotEmpty)
-            _buildAssignmentsList('Imtihonlar', recentExams, 'exam'),
-        ],
-      );
+    // Sort by date
+    allUpcoming.sort((a, b) {
+      final aDate = DateTime.parse(a['due_date'] ?? a['exam_date']);
+      final bDate = DateTime.parse(b['due_date'] ?? b['exam_date']);
+      return aDate.compareTo(bDate);
     });
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: allUpcoming.take(3).length,
+      itemBuilder: (context, index) {
+        final Map item = allUpcoming[index];
+        return _buildUpcomingItem(theme, Map<String, dynamic>.from(item));
+      },
+    );
   }
 
-  Widget _buildAssignmentsList(String title, List<dynamic> assignments, String type) {
+  Widget _buildUpcomingItem(ThemeData theme, Map<String, dynamic> item) {
+    final isHomework = item['type'] == 'homework';
+    final date = DateTime.parse(item['due_date'] ?? item['exam_date']);
+    final daysDiff = date.difference(DateTime.now()).inDays;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: isHomework
+              ? theme.colorScheme.primaryContainer
+              : theme.colorScheme.secondaryContainer,
+          child: Icon(
+            isHomework ? Icons.assignment : Icons.quiz,
+            color: isHomework
+                ? theme.colorScheme.onPrimaryContainer
+                : theme.colorScheme.onSecondaryContainer,
+          ),
+        ),
+        title: Text(item['title'] ?? 'Untitled'),
+        subtitle: Text('${item['subject']} • ${item['group']}'),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              daysDiff == 0 ? 'Today' :
+              daysDiff == 1 ? 'Tomorrow' :
+              '$daysDiff days',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: daysDiff <= 1
+                    ? theme.colorScheme.error
+                    : theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              DateFormat('MMM dd').format(date),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentActivitySection(ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title,
-          style: Get.textTheme.titleMedium?.copyWith(
+          'Recent Activity',
+          style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: assignments.take(3).length,
-          separatorBuilder: (context, index) => const SizedBox(height: 8),
-          itemBuilder: (context, index) {
-            final assignment = assignments[index];
-            return _buildAssignmentCard(assignment, type);
-          },
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _buildActivityItem(
+                  theme,
+                  icon: Icons.assignment_turned_in,
+                  title: 'Graded Math Assignment #3',
+                  subtitle: 'Grade 10A • 2 hours ago',
+                  iconColor: theme.colorScheme.primary,
+                ),
+                const Divider(),
+                _buildActivityItem(
+                  theme,
+                  icon: Icons.how_to_reg,
+                  title: 'Attendance taken for Physics',
+                  subtitle: 'Grade 11B • 5 hours ago',
+                  iconColor: theme.colorScheme.secondary,
+                ),
+                const Divider(),
+                _buildActivityItem(
+                  theme,
+                  icon: Icons.add_circle_outline,
+                  title: 'Created new homework: Calculus Problems',
+                  subtitle: 'Grade 12A • Yesterday',
+                  iconColor: theme.colorScheme.tertiary,
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildAssignmentCard(dynamic assignment, String type) {
-    final date = DateTime.parse(
-        type == 'homework' ? assignment['due_date'] : assignment['exam_date']
+  Widget _buildActivityItem(
+      ThemeData theme, {
+        required IconData icon,
+        required String title,
+        required String subtitle,
+        required Color iconColor,
+      }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              size: 20,
+              color: iconColor,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
+  }
 
-    return Card(
-      child: ListTile(
-        leading: Icon(
-          type == 'homework' ? Icons.assignment : Icons.quiz,
-          color: type == 'homework' ? AppColors.primaryBlue : AppColors.secondaryOrange,
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning!';
+    if (hour < 17) return 'Good Afternoon!';
+    return 'Good Evening!';
+  }
+
+  void _showNotifications(BuildContext context) {
+    Get.bottomSheet(
+      Container(
+        height: Get.height * 0.6,
+        decoration: BoxDecoration(
+          color: Get.theme.colorScheme.surface,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
-        title: Text(
-          assignment['title'],
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
           children: [
-            Text('${assignment['subject']} • ${assignment['group']}'),
-            Text(
-              '${type == 'homework' ? 'Muddat' : 'Sana'}: ${date.formatDate}',
-              style: TextStyle(
-                color: Get.theme.colorScheme.onSurfaceVariant,
-                fontSize: 12,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Get.theme.dividerColor.withOpacity(0.1),
+                  ),
+                ),
               ),
-            ),
-          ],
-        ),
-        trailing: PopupMenuButton<String>(
-          onSelected: (value) {
-            if (value == 'grade') {
-              if (type == 'homework') {
-                controller.navigateToGrading();
-              }
-            } else if (value == 'edit') {
-              // Navigate to edit
-            } else if (value == 'delete') {
-              // Delete assignment
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'grade',
               child: Row(
                 children: [
-                  Icon(Icons.grade),
-                  SizedBox(width: 8),
-                  Text('Baholash'),
+                  Text(
+                    'Notifications',
+                    style: Get.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Get.back(),
+                    icon: const Icon(Icons.close),
+                  ),
                 ],
               ),
             ),
-            const PopupMenuItem(
-              value: 'edit',
-              child: Row(
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
                 children: [
-                  Icon(Icons.edit),
-                  SizedBox(width: 8),
-                  Text('Tahrirlash'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete, color: Colors.red),
-                  SizedBox(width: 8),
-                  Text('O\'chirish', style: TextStyle(color: Colors.red)),
+                  _buildNotificationItem(
+                    'New homework submitted',
+                    'John Doe submitted Math Assignment #3',
+                    '2 minutes ago',
+                    Icons.assignment_turned_in,
+                  ),
+                  _buildNotificationItem(
+                    'Exam reminder',
+                    'Physics Midterm is tomorrow at 9:00 AM',
+                    '1 hour ago',
+                    Icons.schedule,
+                  ),
+                  _buildNotificationItem(
+                    'Grade request',
+                    'Parent requested grades for Sarah Wilson',
+                    '3 hours ago',
+                    Icons.grade,
+                  ),
                 ],
               ),
             ),
@@ -581,32 +582,146 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
     );
   }
 
-  void _showCreateDialog() {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Yangi vazifa yaratish'),
-        content: const Text('Qaysi turdagi vazifa yaratmoqchisiz?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Get.back();
-              controller.createHomework();
-            },
-            child: const Text('Uy vazifasi'),
+  Widget _buildNotificationItem(String title, String message, String time, IconData icon) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Get.theme.colorScheme.primaryContainer,
+          child: Icon(
+            icon,
+            color: Get.theme.colorScheme.onPrimaryContainer,
           ),
-          TextButton(
-            onPressed: () {
-              Get.back();
-              controller.createExam();
-            },
-            child: const Text('Imtihon'),
-          ),
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Bekor qilish'),
-          ),
-        ],
+        ),
+        title: Text(title),
+        subtitle: Text(message),
+        trailing: Text(
+          time,
+          style: Get.textTheme.bodySmall,
+        ),
       ),
     );
+  }
+
+  void _showQuickCreateMenu(BuildContext context) {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Get.theme.colorScheme.surface,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Create New',
+              style: Get.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildQuickCreateItem(
+                    'Homework',
+                    Icons.assignment_outlined,
+                    Get.theme.colorScheme.primary,
+                        () {
+                      Get.back();
+                      Get.to(() => const HomeworkListView());
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildQuickCreateItem(
+                    'Exam',
+                    Icons.quiz_outlined,
+                    Get.theme.colorScheme.secondary,
+                        () {
+                      Get.back();
+                      Get.to(() => const ExamListView());
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildQuickCreateItem(
+                    'Take Attendance',
+                    Icons.how_to_reg_outlined,
+                    Get.theme.colorScheme.tertiary,
+                        () {
+                      Get.back();
+                      Get.to(() => const AttendanceView());
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildQuickCreateItem(
+                    'Grade Work',
+                    Icons.grade_outlined,
+                    Get.theme.colorScheme.error,
+                        () {
+                      Get.back();
+                      Get.to(() => const GradingView());
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickCreateItem(String title, IconData icon, Color color, VoidCallback onTap) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: Get.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAllUpcoming(BuildContext context) {
+    Get.snackbar('Info', 'All upcoming view coming soon');
   }
 }
