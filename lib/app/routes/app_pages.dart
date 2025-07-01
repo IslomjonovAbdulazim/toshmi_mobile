@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:toshmi_mobile/app/modules/student/bindings/student_binding.dart';
 import 'app_routes.dart';
 import '../modules/auth/bindings/auth_binding.dart';
 import '../modules/auth/views/login_view.dart';
@@ -30,7 +31,8 @@ class AppPages {
     ),
     GetPage(
       name: Routes.student,
-      page: () => const StudentHomeView(),
+      page: () =>  StudentHomeView(),
+      binding: StudentBinding(),
     ),
     GetPage(
       name: Routes.parent,
