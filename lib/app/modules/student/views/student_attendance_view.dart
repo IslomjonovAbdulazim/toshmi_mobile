@@ -130,7 +130,7 @@ class _StudentAttendanceViewState extends State<StudentAttendanceView> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(8),
       itemCount: grouped.keys.length,
       itemBuilder: (context, index) {
         final monthKey = grouped.keys.elementAt(index);
@@ -151,11 +151,11 @@ class _StudentAttendanceViewState extends State<StudentAttendanceView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
           child: Text(
             '${monthNames[month]} $year',
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -218,7 +218,7 @@ class _StudentAttendanceViewState extends State<StudentAttendanceView> {
             style: TextStyle(
               color: statusColor,
               fontWeight: FontWeight.w600,
-              fontSize: 12,
+              fontSize: 10,
             ),
           ),
         ),
