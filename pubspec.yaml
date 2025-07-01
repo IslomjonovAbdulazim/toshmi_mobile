@@ -24,6 +24,7 @@ dependencies:
   mask_text_input_formatter: ^2.9.0
   google_fonts: ^6.2.1
   pretty_dio_logger: ^1.4.0
+  url_launcher: ^6.3.1
   shared_preferences: ^2.5.3
 
 dev_dependencies:
