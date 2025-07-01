@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 
 import 'app/data/providers/api_provider.dart';
 import 'app/data/providers/storage_provider.dart';
@@ -12,6 +13,7 @@ import 'app/services/file_service.dart';
 import 'app/services/language_service.dart';
 import 'app/services/notification_service.dart';
 import 'app/services/storage_service.dart';
+import 'app/services/theme_service.dart';
 import 'app/translations/app_translations.dart';
 import 'core/theme/app_theme.dart';
 
@@ -26,8 +28,15 @@ void main() async {
 
 Future<void> _initializeServices() async {
   try {
+    // Initialize GetStorage first
+    await GetStorage.init();
+
     await Get.putAsync(() => StorageService().init());
     Get.put(StorageProvider());
+
+    // Add these lines:
+    Get.put(LanguageService());
+    Get.put(ThemeService());
 
     await Get.putAsync(() => AuthService().init());
 
@@ -59,17 +68,16 @@ class ToshmiApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = Get.find<LanguageService>();
+    final themeService = Get.find<ThemeService>();
     return GetMaterialApp(
-      title: 'Toshmi - Maktab Boshqaruv Tizimi',
+      title: 'Toshmi Litsey',
       debugShowCheckedModeBanner: false,
-
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       translations: AppTranslations(),
-      themeMode: ThemeMode.system,
-      locale: LanguageService().locale,
-      // fallbackLocale: const Locale('uz', 'UZ'),
-
+      themeMode: themeService.theme,
+      locale: languageService.locale,
       initialRoute: AppPages.initial,
       getPages: AppPages.routes,
       defaultTransition: Transition.cupertino,
