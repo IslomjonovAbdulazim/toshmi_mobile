@@ -33,6 +33,10 @@ class ApiConstants {
   static const String teacherAttendanceTable = '/teacher/attendance-table';
   static const String teacherGroups = '/teacher/groups'; // /{group_id}/students
 
+  // NEW: Teacher group-subjects and schedule endpoints
+  static const String teacherGroupSubjects = '/teacher/group-subjects';
+  static const String teacherGroupSubjectSchedule = '/teacher/group-subjects'; // /{group_subject_id}/schedule
+
   // Student endpoints
   static const String studentHomework = '/student/homework';
   static const String studentExams = '/student/exams';

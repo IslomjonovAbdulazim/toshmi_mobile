@@ -1,19 +1,48 @@
 // lib/app/modules/teacher/controllers/homework_controller.dart
 import 'package:get/get.dart';
 import '../../../data/repositories/teacher_repository.dart';
+import '../../../data/repositories/group_subject_repository.dart';
+import '../../../data/models/group_subject_model.dart';
 
 class HomeworkController extends GetxController {
   final TeacherRepository _teacherRepository = Get.find<TeacherRepository>();
+  final GroupSubjectRepository _groupSubjectRepository = GroupSubjectRepository();
 
   final isLoading = false.obs;
   final homeworkList = <dynamic>[].obs;
+
+  // NEW: Group subjects for creating homework
+  final groupSubjects = <GroupSubject>[].obs;
+  final selectedGroupSubject = Rx<GroupSubject?>(null);
 
   @override
   void onInit() {
     super.onInit();
     loadHomework();
+    loadGroupSubjects();
   }
 
+  // NEW: Load teacher's group subjects (for homework creation)
+  Future<void> loadGroupSubjects() async {
+    try {
+      final subjects = await _groupSubjectRepository.getTeacherGroupSubjects();
+      groupSubjects.value = subjects;
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to load classes: $e');
+    }
+  }
+
+  // NEW: Select group subject for homework creation
+  void selectGroupSubject(GroupSubject groupSubject) {
+    selectedGroupSubject.value = groupSubject;
+  }
+
+  // NEW: Get display name for group subject
+  String getGroupSubjectDisplayName(GroupSubject groupSubject) {
+    return _groupSubjectRepository.getGroupSubjectDisplayName(groupSubject);
+  }
+
+  // EXISTING METHODS (keep as they are)
   Future<void> loadHomework() async {
     try {
       isLoading.value = true;
@@ -95,5 +124,10 @@ class HomeworkController extends GetxController {
     }
   }
 
-  Future<void> refreshHomework() => loadHomework();
+  Future<void> refreshHomework() async {
+    await Future.wait([
+      loadHomework(),
+      loadGroupSubjects(),
+    ]);
+  }
 }

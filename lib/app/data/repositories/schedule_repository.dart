@@ -30,60 +30,6 @@ class ScheduleRepository extends BaseRepository {
     }
   }
 
-  // Create schedule (admin only)
-  Future<Map<String, dynamic>> createSchedule({
-    required int groupSubjectId,
-    required int day, // 0-6 (Monday-Sunday)
-    required TimeOfDay startTime,
-    required TimeOfDay endTime,
-    required String room,
-  }) async {
-    try {
-      final response = await post(ApiConstants.adminSchedule, {
-        'group_subject_id': groupSubjectId,
-        'day': day,
-        'start_time': _formatTimeOfDay(startTime),
-        'end_time': _formatTimeOfDay(endTime),
-        'room': room,
-      });
-
-      // CRITICAL FIX: Return response data instead of calling non-existent endpoint
-      return response.body as Map<String, dynamic>;
-    } catch (e) {
-      throw Exception('Failed to create schedule: $e');
-    }
-  }
-
-  // Update schedule (admin only)
-  Future<void> updateSchedule({
-    required int scheduleId,
-    required int groupSubjectId,
-    required int day,
-    required TimeOfDay startTime,
-    required TimeOfDay endTime,
-    required String room,
-  }) async {
-    try {
-      await put('${ApiConstants.adminSchedule}/$scheduleId', {
-        'group_subject_id': groupSubjectId,
-        'day': day,
-        'start_time': _formatTimeOfDay(startTime),
-        'end_time': _formatTimeOfDay(endTime),
-        'room': room,
-      });
-    } catch (e) {
-      throw Exception('Failed to update schedule: $e');
-    }
-  }
-
-  // Delete schedule (admin only)
-  Future<void> deleteSchedule(int scheduleId) async {
-    try {
-      await delete('${ApiConstants.adminSchedule}/$scheduleId');
-    } catch (e) {
-      throw Exception('Failed to delete schedule: $e');
-    }
-  }
 
   // CRITICAL FIX: Backend has no individual GET endpoint, find from cached list
   Future<Schedule?> findScheduleById(int scheduleId) async {
