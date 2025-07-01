@@ -4,7 +4,14 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/widgets/common/custom_app_bar.dart';
 import '../../../data/repositories/student_repository.dart';
+import 'student_news_view.dart';
 import 'student_profile_view.dart';
+import 'student_homework_view.dart';
+import 'student_exams_view.dart';
+import 'student_grades_view.dart';
+import 'student_schedule_view.dart';
+import 'student_attendance_view.dart';
+import 'student_payments_view.dart';
 
 class StudentHomeView extends StatefulWidget {
   const StudentHomeView({super.key});
@@ -43,6 +50,11 @@ class _StudentHomeViewState extends State<StudentHomeView> {
     return Scaffold(
       appBar: CustomAppBar(
         title: 'O\'quvchi',
+        leading: IconButton(
+          onPressed: () => Get.to(() => const StudentNewsView()),
+          icon: const Icon(Icons.newspaper),
+          tooltip: 'Yangiliklar',
+        ),
         actions: [
           IconButton(
             onPressed: () => Get.to(() => const StudentProfileView()),
@@ -55,14 +67,13 @@ class _StudentHomeViewState extends State<StudentHomeView> {
         onRefresh: loadDashboard,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 100),
+          padding: const EdgeInsets.all(0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Welcome Section
               _buildWelcomeSection(context),
 
-              const SizedBox(height: 24),
 
               // Dashboard Content
               Obx(() {
@@ -75,23 +86,16 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                   );
                 }
 
-                if (dashboardData.isEmpty) {
-                  return _buildEmptyState();
-                }
-
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildQuickStats(),
-                    const SizedBox(height: 16),
-                    _buildUpcomingHomework(),
-                    const SizedBox(height: 16),
-                    _buildUpcomingExams(),
-                    const SizedBox(height: 16),
-                    _buildRecentGrades(),
+                    _buildNavigationGrid(),
+                    _buildUpcomingItems(),
                   ],
                 );
               }),
+              SizedBox(height: 100),
             ],
           ),
         ),
@@ -102,11 +106,11 @@ class _StudentHomeViewState extends State<StudentHomeView> {
   Widget _buildWelcomeSection(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppColors.studentColor.withOpacity(0.1),
                 shape: BoxShape.circle,
@@ -158,7 +162,7 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
@@ -224,236 +228,165 @@ class _StudentHomeViewState extends State<StudentHomeView> {
     );
   }
 
-  Widget _buildUpcomingHomework() {
-    final homework = dashboardData['upcoming_homework'] as List? ?? [];
-    if (homework.isEmpty) return const SizedBox.shrink();
-
+  Widget _buildNavigationGrid() {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.assignment, color: Colors.blue),
-                const SizedBox(width: 8),
-                Text(
-                  'Yaqin vazifalar',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...homework.take(3).map((hw) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Colors.blue,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          hw['title'] ?? '',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        Text(
-                          hw['subject'] ?? '',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    _formatDate(hw['due_date']),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
+            SizedBox(height: 16),
+            Text(
+              'Bo\'limlar',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
-            )).toList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUpcomingExams() {
-    final exams = dashboardData['upcoming_exams'] as List? ?? [];
-    if (exams.isEmpty) return const SizedBox.shrink();
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.quiz, color: Colors.orange),
-                const SizedBox(width: 8),
-                Text(
-                  'Yaqin imtihonlar',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...exams.take(3).map((exam) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Colors.orange,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          exam['title'] ?? '',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        Text(
-                          exam['subject'] ?? '',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    _formatDate(exam['exam_date']),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            )).toList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentGrades() {
-    final grades = dashboardData['recent_grades'] as List? ?? [];
-    if (grades.isEmpty) return const SizedBox.shrink();
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.grade, color: Colors.green),
-                const SizedBox(width: 8),
-                Text(
-                  'So\'nggi baholar',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...grades.take(3).map((grade) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getGradeColor(grade['points'], grade['max_points']).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      '${grade['points']}/${grade['max_points']}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: _getGradeColor(grade['points'], grade['max_points']),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          grade['title'] ?? '',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        Text(
-                          grade['type'] == 'homework' ? 'Vazifa' : 'Imtihon',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            )).toList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          children: [
-            Icon(
-              Icons.school_outlined,
-              size: 64,
-              color: Colors.grey[400],
             ),
             const SizedBox(height: 16),
-            Text(
-              'Ma\'lumotlar yuklanmoqda...',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              childAspectRatio: 2.5,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              children: [
+                _buildNavButton('Vazifalar', Icons.assignment, Colors.blue, () => Get.to(() => const StudentHomeworkView())),
+                _buildNavButton('Imtihonlar', Icons.quiz, Colors.orange, () => Get.to(() => const StudentExamsView())),
+                _buildNavButton('Baholar', Icons.grade, Colors.green, () => Get.to(() => const StudentGradesView())),
+                _buildNavButton('Jadval', Icons.schedule, Colors.purple, () => Get.to(() => const StudentScheduleView())),
+                _buildNavButton('Davomat', Icons.event_available, Colors.teal, () => Get.to(() => const StudentAttendanceView())),
+                _buildNavButton('To\'lovlar', Icons.payment, Colors.indigo, () => Get.to(() => const StudentPaymentsView())),
+              ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNavButton(String title, IconData icon, Color color, VoidCallback onTap) {
+    return Material(
+      color: color.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUpcomingItems() {
+    final homework = dashboardData['upcoming_homework'] as List? ?? [];
+    final exams = dashboardData['upcoming_exams'] as List? ?? [];
+
+    if (homework.isEmpty && exams.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Icon(Icons.check_circle_outline, size: 48, color: Colors.green),
+              const SizedBox(height: 8),
+              Text(
+                'Barcha vazifalar bajarilgan!',
+                style: TextStyle(color: Colors.green[700]),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Yaqin topshiriqlar',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Upcoming homework
+            ...homework.take(2).map((hw) => _buildUpcomingItem(
+              hw['title'] ?? '',
+              hw['subject'] ?? '',
+              _formatDate(hw['due_date']),
+              Icons.assignment,
+              Colors.blue,
+            )).toList(),
+
+            // Upcoming exams
+            ...exams.take(2).map((exam) => _buildUpcomingItem(
+              exam['title'] ?? '',
+              exam['subject'] ?? '',
+              _formatDate(exam['exam_date']),
+              Icons.quiz,
+              Colors.orange,
+            )).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUpcomingItem(String title, String subject, String date, IconData icon, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 16),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                Text(
+                  subject,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            date,
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          ),
+        ],
       ),
     );
   }
@@ -472,12 +405,5 @@ class _StudentHomeViewState extends State<StudentHomeView> {
     } catch (e) {
       return '';
     }
-  }
-
-  Color _getGradeColor(int points, int maxPoints) {
-    final percentage = (points / maxPoints) * 100;
-    if (percentage >= 85) return Colors.green;
-    if (percentage >= 70) return Colors.orange;
-    return Colors.red;
   }
 }
