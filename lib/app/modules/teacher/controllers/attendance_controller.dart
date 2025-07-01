@@ -9,6 +9,8 @@ class AttendanceController extends GetxController {
   final GroupSubjectRepository _groupSubjectRepository = GroupSubjectRepository();
 
   final isLoading = false.obs;
+  final isLoadingAttendance = false.obs;
+  final isLoadingStudents = false.obs;
   final attendanceData = <String, dynamic>{}.obs;
   final groupStudents = <dynamic>[].obs;
 
@@ -22,6 +24,23 @@ class AttendanceController extends GetxController {
   void onInit() {
     super.onInit();
     loadGroupSubjects();
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+    // Refresh data when view becomes ready
+    if (selectedGroupSubject.value != null) {
+      refreshAttendanceData();
+    }
+  }
+
+  // Called when returning from form view or when view becomes visible
+  void onViewResumed() {
+    print('🔄 AttendanceView resumed - refreshing data');
+    if (selectedGroupSubject.value != null) {
+      refreshAttendanceData();
+    }
   }
 
   // Load teacher's group subjects (classes they teach)
@@ -91,14 +110,14 @@ class AttendanceController extends GetxController {
     return _groupSubjectRepository.isScheduleActive(schedule);
   }
 
-  // EXISTING METHODS (keep as they are)
+  // ATTENDANCE METHODS
   Future<void> loadAttendanceTable({
     required int groupSubjectId,
     DateTime? startDate,
     DateTime? endDate,
   }) async {
     try {
-      isLoading.value = true;
+      isLoadingAttendance.value = true;
       print('🔄 Loading attendance table for group subject: $groupSubjectId');
       final data = await _teacherRepository.getAttendanceTable(
         groupSubjectId: groupSubjectId,
@@ -111,13 +130,13 @@ class AttendanceController extends GetxController {
       print('❌ Error loading attendance: $e');
       Get.snackbar('Error', 'Failed to load attendance: $e');
     } finally {
-      isLoading.value = false;
+      isLoadingAttendance.value = false;
     }
   }
 
   Future<void> loadGroupStudents(int groupId) async {
     try {
-      isLoading.value = true;
+      isLoadingStudents.value = true;
       print('🔄 Loading students for group: $groupId');
       final students = await _teacherRepository.getGroupStudents(groupId);
       groupStudents.value = students;
@@ -132,7 +151,7 @@ class AttendanceController extends GetxController {
       Get.snackbar('Error', 'Failed to load students: $e');
       groupStudents.value = [];
     } finally {
-      isLoading.value = false;
+      isLoadingStudents.value = false;
     }
   }
 
@@ -151,6 +170,9 @@ class AttendanceController extends GetxController {
       );
       print('✅ Attendance submitted successfully');
       Get.snackbar('Success', 'Attendance recorded successfully');
+
+      // Refresh attendance data after successful submission
+      await refreshAttendanceData();
     } catch (e) {
       print('❌ Error submitting attendance: $e');
       Get.snackbar('Error', 'Failed to record attendance: $e');
@@ -159,8 +181,15 @@ class AttendanceController extends GetxController {
     }
   }
 
+  // Refresh attendance data for currently selected group subject
+  Future<void> refreshAttendanceData() async {
+    if (selectedGroupSubject.value != null) {
+      await loadAttendanceTable(groupSubjectId: selectedGroupSubject.value!.id);
+    }
+  }
+
   Future<void> refreshAttendance(int groupSubjectId) async {
-    loadAttendanceTable(groupSubjectId: groupSubjectId);
+    await loadAttendanceTable(groupSubjectId: groupSubjectId);
   }
 
   // Refresh all data
@@ -168,6 +197,22 @@ class AttendanceController extends GetxController {
     await loadGroupSubjects();
     if (selectedGroupSubject.value != null) {
       await loadSchedule(selectedGroupSubject.value!);
+      await refreshAttendanceData();
+    }
+  }
+
+  // Clear data when changing group subject
+  void clearAttendanceData() {
+    attendanceData.clear();
+    groupStudents.clear();
+  }
+
+  // Select group subject and load its data
+  Future<void> selectGroupSubject(GroupSubject groupSubject) async {
+    if (selectedGroupSubject.value?.id != groupSubject.id) {
+      clearAttendanceData();
+      selectedGroupSubject.value = groupSubject;
+      await loadAttendanceTable(groupSubjectId: groupSubject.id);
     }
   }
 }

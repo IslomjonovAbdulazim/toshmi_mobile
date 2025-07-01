@@ -34,24 +34,21 @@ class HomeworkListView extends GetView<HomeworkController> {
           );
         }
 
-        return RefreshIndicator(
-          onRefresh: () => controller.refreshHomework(),
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: controller.homeworkList.length,
-            itemBuilder: (context, index) {
-              final homework = controller.homeworkList[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: HomeworkCard(
-                  homework: homework,
-                  onEdit: () => _editHomework(homework),
-                  onDelete: () => _deleteHomework(homework),
-                  onGrade: () => _gradeHomework(homework),
-                ),
-              );
-            },
-          ),
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: controller.homeworkList.length,
+          itemBuilder: (context, index) {
+            final homework = controller.homeworkList[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: HomeworkCard(
+                homework: homework,
+                onEdit: () => _editHomework(homework),
+                onDelete: () => _deleteHomework(homework),
+                onGrade: () => _gradeHomework(homework),
+              ),
+            );
+          },
         );
       }),
       floatingActionButton: FloatingActionButton.extended(

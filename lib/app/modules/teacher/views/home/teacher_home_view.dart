@@ -20,7 +20,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        title: const Text('Teacher Dashboard'),
+        title: const Text('O\'qituvchi Paneli'), // Uzbek: Teacher Dashboard
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -37,10 +37,6 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
               _buildStatsSection(theme),
               const SizedBox(height: 24),
               _buildQuickActionsSection(theme),
-              const SizedBox(height: 24),
-              _buildTodayScheduleSection(theme),
-              const SizedBox(height: 24),
-              _buildMyClassesSection(theme),
               const SizedBox(height: 80), // Extra space for FAB
             ],
           ),
@@ -49,7 +45,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showQuickCreateMenu(context),
         icon: const Icon(Icons.add),
-        label: const Text('Create'),
+        label: const Text('Yaratish'), // Uzbek: Create
       ),
     );
   }
@@ -83,7 +79,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
           ),
           const SizedBox(height: 8),
           Text(
-            DateFormat('EEEE, MMMM dd, yyyy').format(now),
+            _formatDate(now),
             style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onPrimary.withOpacity(0.9),
             ),
@@ -98,7 +94,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Ready to teach and inspire!',
+                'O\'qitish va ilhomlantirish uchun tayyormiz!', // Uzbek: Ready to teach and inspire!
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onPrimary.withOpacity(0.9),
                 ),
@@ -116,7 +112,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Overview',
+            'Umumiy ma\'lumot', // Uzbek: Overview
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -126,45 +122,21 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
             children: [
               Expanded(
                 child: StatsCard(
-                  title: 'Homework',
+                  title: 'Uy vazifalar', // Uzbek: Homework
                   value: '${controller.totalHomework.value}',
                   icon: Icons.assignment_outlined,
                   iconColor: theme.colorScheme.primary,
-                  subtitle: 'Total assignments',
+                  subtitle: 'Jami vazifalar', // Uzbek: Total assignments
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: StatsCard(
-                  title: 'Exams',
+                  title: 'Imtihonlar', // Uzbek: Exams
                   value: '${controller.totalExams.value}',
                   icon: Icons.quiz_outlined,
                   iconColor: theme.colorScheme.secondary,
-                  subtitle: 'Total exams',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: StatsCard(
-                  title: 'Classes',
-                  value: '${controller.totalClasses.value}',
-                  icon: Icons.class_outlined,
-                  iconColor: theme.colorScheme.tertiary,
-                  subtitle: 'Active classes',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: StatsCard(
-                  title: 'Today\'s Classes',
-                  value: '${controller.todaySchedules.length}',
-                  icon: Icons.schedule_outlined,
-                  iconColor: theme.colorScheme.error,
-                  subtitle: 'Classes today',
+                  subtitle: 'Jami imtihonlar', // Uzbek: Total exams
                 ),
               ),
             ],
@@ -179,7 +151,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Quick Actions',
+          'Tezkor amallar', // Uzbek: Quick Actions
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w600,
           ),
@@ -189,8 +161,8 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
           children: [
             Expanded(
               child: QuickActionCard(
-                title: 'Homework',
-                subtitle: 'Create & manage',
+                title: 'Uy vazifalar', // Uzbek: Homework
+                subtitle: 'Yaratish va boshqarish', // Uzbek: Create & manage
                 icon: Icons.assignment_outlined,
                 iconColor: theme.colorScheme.primary,
                 onTap: () => Get.to(() => const HomeworkListView()),
@@ -199,8 +171,8 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
             const SizedBox(width: 12),
             Expanded(
               child: QuickActionCard(
-                title: 'Exams',
-                subtitle: 'Create & manage',
+                title: 'Imtihonlar', // Uzbek: Exams
+                subtitle: 'Yaratish va boshqarish', // Uzbek: Create & manage
                 icon: Icons.quiz_outlined,
                 iconColor: theme.colorScheme.secondary,
                 onTap: () => Get.to(() => const ExamListView()),
@@ -213,8 +185,8 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
           children: [
             Expanded(
               child: QuickActionCard(
-                title: 'Grading',
-                subtitle: 'Grade work',
+                title: 'Baholar', // Uzbek: Grading
+                subtitle: 'Ishlarni baholash', // Uzbek: Grade work
                 icon: Icons.grade_outlined,
                 iconColor: theme.colorScheme.tertiary,
                 onTap: () => Get.to(() => const GradingView()),
@@ -223,8 +195,8 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
             const SizedBox(width: 12),
             Expanded(
               child: QuickActionCard(
-                title: 'Attendance',
-                subtitle: 'Take attendance',
+                title: 'Davomat', // Uzbek: Attendance
+                subtitle: 'Davomat olish', // Uzbek: Take attendance
                 icon: Icons.how_to_reg_outlined,
                 iconColor: theme.colorScheme.error,
                 onTap: () => Get.to(() => const AttendanceView()),
@@ -236,344 +208,24 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
     );
   }
 
-  Widget _buildTodayScheduleSection(ThemeData theme) {
-    return Obx(() {
-      if (controller.todaySchedules.isEmpty) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Today\'s Schedule',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.free_breakfast_outlined,
-                      size: 48,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'No Classes Today',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Enjoy your free day!',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      }
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Today\'s Schedule',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: controller.todaySchedules.length,
-            itemBuilder: (context, index) {
-              final schedule = controller.todaySchedules[index];
-              final isActive = controller.isScheduleActive(schedule);
-
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                color: isActive ? theme.colorScheme.primaryContainer : null,
-                child: ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isActive
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.schedule,
-                      color: isActive
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.onPrimaryContainer,
-                      size: 20,
-                    ),
-                  ),
-                  title: Text(
-                    schedule.timeRange,
-                    style: TextStyle(
-                      fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                  subtitle: Text('Room ${schedule.room}'),
-                  trailing: isActive
-                      ? Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Now',
-                      style: TextStyle(
-                        color: theme.colorScheme.onPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  )
-                      : null,
-                ),
-              );
-            },
-          ),
-        ],
-      );
-    });
-  }
-
-  Widget _buildMyClassesSection(ThemeData theme) {
-    return Obx(() {
-      if (controller.groupSubjects.isEmpty) {
-        return const SizedBox.shrink();
-      }
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'My Classes',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.2,
-            ),
-            itemCount: controller.groupSubjects.length,
-            itemBuilder: (context, index) {
-              final groupSubject = controller.groupSubjects[index];
-              return _buildClassCard(theme, groupSubject);
-            },
-          ),
-        ],
-      );
-    });
-  }
-
-  Widget _buildClassCard(ThemeData theme, groupSubject) {
-    final colors = [
-      theme.colorScheme.primary,
-      theme.colorScheme.secondary,
-      theme.colorScheme.tertiary,
-      theme.colorScheme.error,
-    ];
-    final color = colors[groupSubject.id % colors.length];
-
-    return Card(
-      child: InkWell(
-        onTap: () => _showClassOptions(groupSubject),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.subject,
-                  color: color,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                groupSubject.subjectName,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                groupSubject.groupName,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const Spacer(),
-              Text(
-                groupSubject.subjectCode,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning!';
-    if (hour < 17) return 'Good Afternoon!';
-    return 'Good Evening!';
+    if (hour < 12) return 'Xayrli tong!'; // Uzbek: Good Morning!
+    if (hour < 17) return 'Xayrli kun!'; // Uzbek: Good Afternoon!
+    return 'Xayrli kech!'; // Uzbek: Good Evening!
   }
 
-  void _showClassOptions(groupSubject) {
-    Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Get.theme.colorScheme.surface,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              controller.getGroupSubjectDisplayName(groupSubject),
-              style: Get.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildClassOptionItem(
-                    'Attendance',
-                    Icons.how_to_reg_outlined,
-                    Get.theme.colorScheme.primary,
-                        () {
-                      Get.back();
-                      Get.to(() => const AttendanceView());
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildClassOptionItem(
-                    'Homework',
-                    Icons.assignment_outlined,
-                    Get.theme.colorScheme.secondary,
-                        () {
-                      Get.back();
-                      Get.to(() => const HomeworkListView());
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildClassOptionItem(
-                    'Exams',
-                    Icons.quiz_outlined,
-                    Get.theme.colorScheme.tertiary,
-                        () {
-                      Get.back();
-                      Get.to(() => const ExamListView());
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildClassOptionItem(
-                    'Grading',
-                    Icons.grade_outlined,
-                    Get.theme.colorScheme.error,
-                        () {
-                      Get.back();
-                      Get.to(() => const GradingView());
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  String _formatDate(DateTime date) {
+    // Format in Uzbek style
+    final weekdays = [
+      '', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'
+    ];
+    final months = [
+      '', 'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun',
+      'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'
+    ];
 
-  Widget _buildClassOptionItem(String title, IconData icon, Color color, VoidCallback onTap) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: Get.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    return '${weekdays[date.weekday]}, ${date.day} ${months[date.month]}, ${date.year}';
   }
 
   void _showQuickCreateMenu(BuildContext context) {
@@ -591,7 +243,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Quick Create',
+              'Tezkor yaratish', // Uzbek: Quick Create
               style: Get.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -601,7 +253,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
               children: [
                 Expanded(
                   child: _buildQuickCreateItem(
-                    'Homework',
+                    'Uy vazifa', // Uzbek: Homework
                     Icons.assignment_outlined,
                     Get.theme.colorScheme.primary,
                         () {
@@ -613,7 +265,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildQuickCreateItem(
-                    'Exam',
+                    'Imtihon', // Uzbek: Exam
                     Icons.quiz_outlined,
                     Get.theme.colorScheme.secondary,
                         () {
@@ -629,7 +281,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
               children: [
                 Expanded(
                   child: _buildQuickCreateItem(
-                    'Take Attendance',
+                    'Davomat olish', // Uzbek: Take Attendance
                     Icons.how_to_reg_outlined,
                     Get.theme.colorScheme.tertiary,
                         () {
@@ -641,7 +293,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildQuickCreateItem(
-                    'Grade Work',
+                    'Baholash', // Uzbek: Grade Work
                     Icons.grade_outlined,
                     Get.theme.colorScheme.error,
                         () {

@@ -34,24 +34,21 @@ class ExamListView extends GetView<ExamController> {
           );
         }
 
-        return RefreshIndicator(
-          onRefresh: () => controller.refreshExams(),
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: controller.examsList.length,
-            itemBuilder: (context, index) {
-              final exam = controller.examsList[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: ExamCard(
-                  exam: exam,
-                  onEdit: () => _editExam(exam),
-                  onDelete: () => _deleteExam(exam),
-                  onGrade: () => _gradeExam(exam),
-                ),
-              );
-            },
-          ),
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: controller.examsList.length,
+          itemBuilder: (context, index) {
+            final exam = controller.examsList[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: ExamCard(
+                exam: exam,
+                onEdit: () => _editExam(exam),
+                onDelete: () => _deleteExam(exam),
+                onGrade: () => _gradeExam(exam),
+              ),
+            );
+          },
         );
       }),
       floatingActionButton: FloatingActionButton.extended(
