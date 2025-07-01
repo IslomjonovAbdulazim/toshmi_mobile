@@ -2,62 +2,43 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+
+import 'app/data/providers/api_provider.dart';
+import 'app/data/providers/storage_provider.dart';
 import 'app/routes/app_pages.dart';
-import 'app/services/language_service.dart';
-import 'app/services/storage_service.dart';
 import 'app/services/api_service.dart';
 import 'app/services/auth_service.dart';
 import 'app/services/file_service.dart';
+import 'app/services/language_service.dart';
 import 'app/services/notification_service.dart';
-import 'app/data/providers/api_provider.dart';
-import 'app/data/providers/storage_provider.dart';
+import 'app/services/storage_service.dart';
 import 'app/translations/app_translations.dart';
 import 'core/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize core services
   await _initializeServices();
-
-  // Configure system UI
   _configureSystemUI();
 
   runApp(const ToshmiApp());
 }
 
-/// Initialize all required services in the correct order
 Future<void> _initializeServices() async {
   try {
-    print('🚀 Initializing Toshmi services...');
-
-    // 1. Storage services (required first)
     await Get.putAsync(() => StorageService().init());
     Get.put(StorageProvider());
-    print('✅ Storage services initialized');
 
-    // 2. Authentication service
     await Get.putAsync(() => AuthService().init());
-    print('✅ Authentication service initialized');
 
-    // 3. API services
     Get.put(ApiService());
     Get.put(ApiProvider());
-    print('✅ API services initialized');
 
-    // 4. Utility services (lazy loaded)
     Get.put(FileService());
     Get.lazyPut(() => NotificationService());
-    print('✅ Utility services initialized');
-
-    print('🎉 All services ready');
-  } catch (e) {
-    print('❌ Service initialization error: $e');
-    // Continue startup - app will handle errors gracefully
-  }
+  } catch (e) {}
 }
 
-/// Configure system UI appearance
 void _configureSystemUI() {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -67,7 +48,6 @@ void _configureSystemUI() {
     ),
   );
 
-  // Set preferred orientations
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -80,51 +60,42 @@ class ToshmiApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      // App configuration
       title: 'Toshmi - Maktab Boshqaruv Tizimi',
       debugShowCheckedModeBanner: false,
 
-      // Theme configuration
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      translations: AppTranslations(), // Your translations class
+      translations: AppTranslations(),
       themeMode: ThemeMode.system,
       locale: LanguageService().locale,
       fallbackLocale: const Locale('uz', 'UZ'),
-      // Navigation configuration
+
       initialRoute: AppPages.initial,
       getPages: AppPages.routes,
       defaultTransition: Transition.cupertino,
       transitionDuration: const Duration(milliseconds: 300),
 
-      // Error handling
-      unknownRoute: GetPage(
-        name: '/404',
-        page: () => const NotFoundPage(),
-      ),
+      unknownRoute: GetPage(name: '/404', page: () => const NotFoundPage()),
 
-      // Text scaling and accessibility
       builder: (context, child) {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(
-            textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.2),
+            textScaleFactor: MediaQuery.of(
+              context,
+            ).textScaleFactor.clamp(0.8, 1.2),
             boldText: false,
           ),
           child: child!,
         );
       },
 
-      // Navigation logging (debug mode only)
       routingCallback: (routing) {
-        if (routing != null && kDebugMode) {
-          print('🧭 Navigation: ${routing.current}');
-        }
+        if (routing != null && kDebugMode) {}
       },
     );
   }
 }
 
-/// 404 Not Found page
 class NotFoundPage extends StatelessWidget {
   const NotFoundPage({super.key});
 
@@ -141,11 +112,7 @@ class NotFoundPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 80,
-                color: Colors.grey.shade400,
-              ),
+              Icon(Icons.error_outline, size: 80, color: Colors.grey.shade400),
               const SizedBox(height: 24),
               Text(
                 '404',
@@ -157,16 +124,16 @@ class NotFoundPage extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Sahifa topilmadi',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(color: Colors.grey.shade600),
               ),
               const SizedBox(height: 16),
               Text(
                 'Siz qidirayotgan sahifa mavjud emas yoki ko\'chirilgan',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey.shade500,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade500),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
@@ -183,7 +150,6 @@ class NotFoundPage extends StatelessWidget {
   }
 }
 
-// Extension methods for service initialization
 extension StorageServiceExtension on StorageService {
   Future<StorageService> init() async {
     await onInit();

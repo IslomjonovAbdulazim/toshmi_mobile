@@ -1,4 +1,3 @@
-// lib/app/modules/teacher/views/home/teacher_home_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -22,37 +21,36 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        title: const Text('O\'qituvchi Paneli'), // Uzbek: Teacher Dashboard
+        title: Text('teacher_dashboard'.tr),
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
             onPressed: () {
-              // Register ProfileController if not already registered
               if (!Get.isRegistered<ProfileController>()) {
                 Get.lazyPut<ProfileController>(() => ProfileController());
               }
               Get.to(() => const ProfileView());
             },
             icon: const Icon(Icons.person_outline),
-            tooltip: 'Profil',
+            tooltip: 'profile'.tr,
           ),
         ],
       ),
       body: RefreshIndicator(
         onRefresh: () => controller.refreshDashboard(),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildWelcomeSection(theme),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               _buildStatsSection(theme),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               _buildQuickActionsSection(theme),
-              const SizedBox(height: 80), // Extra space for FAB
+              const SizedBox(height: 80),
             ],
           ),
         ),
@@ -60,7 +58,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showQuickCreateMenu(context),
         icon: const Icon(Icons.add),
-        label: const Text('Yaratish'), // Uzbek: Create
+        label: Text('create'.tr),
       ),
     );
   }
@@ -114,33 +112,30 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Umumiy ma\'lumot', // Uzbek: Overview
+            'overview'.tr,
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: StatsCard(
-                  title: 'Uy vazifalar',
-                  // Uzbek: Homework
+                  title: 'homework'.tr,
                   value: '${controller.totalHomework.value}',
                   icon: Icons.assignment_outlined,
                   iconColor: theme.colorScheme.primary,
-                  subtitle: 'Jami vazifalar', // Uzbek: Total assignments
+                  subtitle: 'total_assignments'.tr,
                 ),
               ),
-              const SizedBox(width: 12),
               Expanded(
                 child: StatsCard(
-                  title: 'Imtihonlar',
-                  // Uzbek: Exams
+                  title: 'exams'.tr,
                   value: '${controller.totalExams.value}',
                   icon: Icons.quiz_outlined,
                   iconColor: theme.colorScheme.secondary,
-                  subtitle: 'Jami imtihonlar', // Uzbek: Total exams
+                  subtitle: 'total_exams'.tr,
                 ),
               ),
             ],
@@ -155,32 +150,27 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Tezkor amallar', // Uzbek: Quick Actions
+          'quick_actions'.tr,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               child: QuickActionCard(
-                title: 'Uy vazifalar',
-                // Uzbek: Homework
-                subtitle: 'Yaratish va boshqarish',
-                // Uzbek: Create & manage
+                title: 'homework'.tr,
+                subtitle: 'create_manage'.tr,
                 icon: Icons.assignment_outlined,
                 iconColor: theme.colorScheme.primary,
                 onTap: () => Get.to(() => const HomeworkListView()),
               ),
             ),
-            const SizedBox(width: 12),
             Expanded(
               child: QuickActionCard(
-                title: 'Imtihonlar',
-                // Uzbek: Exams
-                subtitle: 'Yaratish va boshqarish',
-                // Uzbek: Create & manage
+                title: 'exams'.tr,
+                subtitle: 'create_manage'.tr,
                 icon: Icons.quiz_outlined,
                 iconColor: theme.colorScheme.secondary,
                 onTap: () => Get.to(() => const ExamListView()),
@@ -188,27 +178,21 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               child: QuickActionCard(
-                title: 'Baholar',
-                // Uzbek: Grading
-                subtitle: 'Ishlarni baholash',
-                // Uzbek: Grade work
+                title: 'grading'.tr,
+                subtitle: 'grade_work'.tr,
                 icon: Icons.grade_outlined,
                 iconColor: theme.colorScheme.tertiary,
                 onTap: () => Get.to(() => const GradingView()),
               ),
             ),
-            const SizedBox(width: 12),
             Expanded(
               child: QuickActionCard(
-                title: 'Davomat',
-                // Uzbek: Attendance
-                subtitle: 'Davomat olish',
-                // Uzbek: Take attendance
+                title: 'attendance'.tr,
+                subtitle: 'take_attendance'.tr,
                 icon: Icons.how_to_reg_outlined,
                 iconColor: theme.colorScheme.error,
                 onTap: () => Get.to(() => const AttendanceView()),
@@ -222,37 +206,36 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Xayrli tong!'; // Uzbek: Good Morning!
-    if (hour < 17) return 'Xayrli kun!'; // Uzbek: Good Afternoon!
-    return 'Xayrli kech!'; // Uzbek: Good Evening!
+    if (hour < 12) return 'good_morning'.tr;
+    if (hour < 17) return 'good_afternoon'.tr;
+    return 'good_evening'.tr;
   }
 
   String _formatDate(DateTime date) {
-    // Format in Uzbek style
     final weekdays = [
       '',
-      'Dushanba',
-      'Seshanba',
-      'Chorshanba',
-      'Payshanba',
-      'Juma',
-      'Shanba',
-      'Yakshanba',
+      'monday'.tr,
+      'tuesday'.tr,
+      'wednesday'.tr,
+      'thursday'.tr,
+      'friday'.tr,
+      'saturday'.tr,
+      'sunday'.tr,
     ];
     final months = [
       '',
-      'Yanvar',
-      'Fevral',
-      'Mart',
-      'Aprel',
-      'May',
-      'Iyun',
-      'Iyul',
-      'Avgust',
-      'Sentabr',
-      'Oktabr',
-      'Noyabr',
-      'Dekabr',
+      'january'.tr,
+      'february'.tr,
+      'march'.tr,
+      'april'.tr,
+      'may'.tr,
+      'june'.tr,
+      'july'.tr,
+      'august'.tr,
+      'september'.tr,
+      'october'.tr,
+      'november'.tr,
+      'december'.tr,
     ];
 
     return '${weekdays[date.weekday]}, ${date.day} ${months[date.month]}, ${date.year}';
@@ -273,7 +256,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Tezkor yaratish', // Uzbek: Quick Create
+              'quick_create'.tr,
               style: Get.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -283,10 +266,10 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
               children: [
                 Expanded(
                   child: _buildQuickCreateItem(
-                    'Uy vazifa', // Uzbek: Homework
+                    'homework'.tr,
                     Icons.assignment_outlined,
                     Get.theme.colorScheme.primary,
-                    () {
+                        () {
                       Get.back();
                       Get.to(() => const HomeworkListView());
                     },
@@ -295,10 +278,10 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildQuickCreateItem(
-                    'Imtihon', // Uzbek: Exam
+                    'exams'.tr,
                     Icons.quiz_outlined,
                     Get.theme.colorScheme.secondary,
-                    () {
+                        () {
                       Get.back();
                       Get.to(() => const ExamListView());
                     },
@@ -311,10 +294,10 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
               children: [
                 Expanded(
                   child: _buildQuickCreateItem(
-                    'Davomat olish', // Uzbek: Take Attendance
+                    'take_attendance'.tr,
                     Icons.how_to_reg_outlined,
                     Get.theme.colorScheme.tertiary,
-                    () {
+                        () {
                       Get.back();
                       Get.to(() => const AttendanceView());
                     },
@@ -323,10 +306,10 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildQuickCreateItem(
-                    'Baholash', // Uzbek: Grade Work
+                    'grade_work'.tr,
                     Icons.grade_outlined,
                     Get.theme.colorScheme.error,
-                    () {
+                        () {
                       Get.back();
                       Get.to(() => const GradingView());
                     },
@@ -341,11 +324,11 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
   }
 
   Widget _buildQuickCreateItem(
-    String title,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
+      String title,
+      IconData icon,
+      Color color,
+      VoidCallback onTap,
+      ) {
     return Card(
       child: InkWell(
         onTap: onTap,
