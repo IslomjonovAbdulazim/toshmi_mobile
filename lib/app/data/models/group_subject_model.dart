@@ -1,5 +1,4 @@
-// New models for teacher group-subjects and schedule endpoints
-
+// lib/app/data/models/group_subject_model.dart
 class GroupSubject {
   final int id;
   final int groupId;
@@ -62,6 +61,17 @@ class GroupSubject {
       subjectCode: subjectCode ?? this.subjectCode,
     );
   }
+
+  String get displayName => '$subjectName - $groupName';
+  String get shortDisplayName => '$subjectCode $groupName';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is GroupSubject && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
 
 class TeacherSchedule {

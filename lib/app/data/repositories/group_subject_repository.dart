@@ -1,6 +1,6 @@
+// lib/app/data/repositories/group_subject_repository.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../services/storage_service.dart';
@@ -150,6 +150,15 @@ class GroupSubjectRepository {
     final endTime = _parseTimeString(schedule.endTime);
 
     return _isTimeInRange(currentTime, startTime, endTime);
+  }
+
+  /// Find group subject by ID from list
+  GroupSubject? findGroupSubjectById(List<GroupSubject> groupSubjects, int id) {
+    try {
+      return groupSubjects.firstWhere((gs) => gs.id == id);
+    } catch (e) {
+      return null;
+    }
   }
 
   // Private helper methods

@@ -1,14 +1,14 @@
 // lib/app/modules/teacher/views/home/teacher_home_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+
 import '../../controllers/teacher_home_controller.dart';
-import '../shared/widgets/stats_card.dart';
-import '../shared/widgets/quick_action_card.dart';
-import '../homework/homework_list_view.dart';
+import '../attendance/attendance_view.dart';
 import '../exams/exam_list_view.dart';
 import '../grading/grading_view.dart';
-import '../attendance/attendance_view.dart';
+import '../homework/homework_list_view.dart';
+import '../shared/widgets/quick_action_card.dart';
+import '../shared/widgets/stats_card.dart';
 
 class TeacherHomeView extends GetView<TeacherHomeController> {
   const TeacherHomeView({super.key});
@@ -70,12 +70,16 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            greeting,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: theme.colorScheme.onPrimary,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Text(
+                greeting,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
@@ -83,23 +87,6 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
             style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onPrimary.withOpacity(0.9),
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Icon(
-                Icons.school_outlined,
-                color: theme.colorScheme.onPrimary,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'O\'qitish va ilhomlantirish uchun tayyormiz!', // Uzbek: Ready to teach and inspire!
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onPrimary.withOpacity(0.9),
-                ),
-              ),
-            ],
           ),
         ],
       ),
@@ -122,7 +109,8 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
             children: [
               Expanded(
                 child: StatsCard(
-                  title: 'Uy vazifalar', // Uzbek: Homework
+                  title: 'Uy vazifalar',
+                  // Uzbek: Homework
                   value: '${controller.totalHomework.value}',
                   icon: Icons.assignment_outlined,
                   iconColor: theme.colorScheme.primary,
@@ -132,7 +120,8 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
               const SizedBox(width: 12),
               Expanded(
                 child: StatsCard(
-                  title: 'Imtihonlar', // Uzbek: Exams
+                  title: 'Imtihonlar',
+                  // Uzbek: Exams
                   value: '${controller.totalExams.value}',
                   icon: Icons.quiz_outlined,
                   iconColor: theme.colorScheme.secondary,
@@ -161,8 +150,10 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
           children: [
             Expanded(
               child: QuickActionCard(
-                title: 'Uy vazifalar', // Uzbek: Homework
-                subtitle: 'Yaratish va boshqarish', // Uzbek: Create & manage
+                title: 'Uy vazifalar',
+                // Uzbek: Homework
+                subtitle: 'Yaratish va boshqarish',
+                // Uzbek: Create & manage
                 icon: Icons.assignment_outlined,
                 iconColor: theme.colorScheme.primary,
                 onTap: () => Get.to(() => const HomeworkListView()),
@@ -171,8 +162,10 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
             const SizedBox(width: 12),
             Expanded(
               child: QuickActionCard(
-                title: 'Imtihonlar', // Uzbek: Exams
-                subtitle: 'Yaratish va boshqarish', // Uzbek: Create & manage
+                title: 'Imtihonlar',
+                // Uzbek: Exams
+                subtitle: 'Yaratish va boshqarish',
+                // Uzbek: Create & manage
                 icon: Icons.quiz_outlined,
                 iconColor: theme.colorScheme.secondary,
                 onTap: () => Get.to(() => const ExamListView()),
@@ -185,8 +178,10 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
           children: [
             Expanded(
               child: QuickActionCard(
-                title: 'Baholar', // Uzbek: Grading
-                subtitle: 'Ishlarni baholash', // Uzbek: Grade work
+                title: 'Baholar',
+                // Uzbek: Grading
+                subtitle: 'Ishlarni baholash',
+                // Uzbek: Grade work
                 icon: Icons.grade_outlined,
                 iconColor: theme.colorScheme.tertiary,
                 onTap: () => Get.to(() => const GradingView()),
@@ -195,8 +190,10 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
             const SizedBox(width: 12),
             Expanded(
               child: QuickActionCard(
-                title: 'Davomat', // Uzbek: Attendance
-                subtitle: 'Davomat olish', // Uzbek: Take attendance
+                title: 'Davomat',
+                // Uzbek: Attendance
+                subtitle: 'Davomat olish',
+                // Uzbek: Take attendance
                 icon: Icons.how_to_reg_outlined,
                 iconColor: theme.colorScheme.error,
                 onTap: () => Get.to(() => const AttendanceView()),
@@ -218,11 +215,29 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
   String _formatDate(DateTime date) {
     // Format in Uzbek style
     final weekdays = [
-      '', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'
+      '',
+      'Dushanba',
+      'Seshanba',
+      'Chorshanba',
+      'Payshanba',
+      'Juma',
+      'Shanba',
+      'Yakshanba',
     ];
     final months = [
-      '', 'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun',
-      'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'
+      '',
+      'Yanvar',
+      'Fevral',
+      'Mart',
+      'Aprel',
+      'May',
+      'Iyun',
+      'Iyul',
+      'Avgust',
+      'Sentabr',
+      'Oktabr',
+      'Noyabr',
+      'Dekabr',
     ];
 
     return '${weekdays[date.weekday]}, ${date.day} ${months[date.month]}, ${date.year}';
@@ -256,7 +271,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
                     'Uy vazifa', // Uzbek: Homework
                     Icons.assignment_outlined,
                     Get.theme.colorScheme.primary,
-                        () {
+                    () {
                       Get.back();
                       Get.to(() => const HomeworkListView());
                     },
@@ -268,7 +283,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
                     'Imtihon', // Uzbek: Exam
                     Icons.quiz_outlined,
                     Get.theme.colorScheme.secondary,
-                        () {
+                    () {
                       Get.back();
                       Get.to(() => const ExamListView());
                     },
@@ -284,7 +299,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
                     'Davomat olish', // Uzbek: Take Attendance
                     Icons.how_to_reg_outlined,
                     Get.theme.colorScheme.tertiary,
-                        () {
+                    () {
                       Get.back();
                       Get.to(() => const AttendanceView());
                     },
@@ -296,7 +311,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
                     'Baholash', // Uzbek: Grade Work
                     Icons.grade_outlined,
                     Get.theme.colorScheme.error,
-                        () {
+                    () {
                       Get.back();
                       Get.to(() => const GradingView());
                     },
@@ -310,7 +325,12 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
     );
   }
 
-  Widget _buildQuickCreateItem(String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildQuickCreateItem(
+    String title,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return Card(
       child: InkWell(
         onTap: onTap,
@@ -325,11 +345,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 24,
-                ),
+                child: Icon(icon, color: color, size: 24),
               ),
               const SizedBox(height: 8),
               Text(
