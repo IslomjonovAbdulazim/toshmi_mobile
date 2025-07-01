@@ -18,7 +18,7 @@ class ExamListView extends GetView<ExamController> {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: TeacherAppBar(
-        title: 'Imtihonlar',
+        title: 'exam_title'.tr,
         showBackButton: true,
         actions: [
           PopupMenuButton<String>(
@@ -27,10 +27,10 @@ class ExamListView extends GetView<ExamController> {
               controller.filterExams();
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'near_deadline', child: Text('Yaqin sanalar')),
-              const PopupMenuItem(value: 'old_deadline', child: Text('O\'tgan sanalar')),
-              const PopupMenuItem(value: 'graded', child: Text('Baholangan')),
-              const PopupMenuItem(value: 'not_graded', child: Text('Baholanmagan')),
+              PopupMenuItem(value: 'near_deadline', child: Text('near_dates'.tr)),
+              PopupMenuItem(value: 'old_deadline', child: Text('old_dates'.tr)),
+              PopupMenuItem(value: 'graded', child: Text('graded'.tr)),
+              PopupMenuItem(value: 'not_graded', child: Text('not_graded'.tr)),
             ],
           ),
         ],
@@ -45,7 +45,6 @@ class ExamListView extends GetView<ExamController> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Filter indicator
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Row(
@@ -65,7 +64,7 @@ class ExamListView extends GetView<ExamController> {
                     ),
                     const Spacer(),
                     Text(
-                      '${controller.filteredExamsList.length} ta',
+                      '${controller.filteredExamsList.length} ${'total_items'.tr}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -74,14 +73,13 @@ class ExamListView extends GetView<ExamController> {
                 ),
               ),
 
-              // List
               if (controller.filteredExamsList.isEmpty)
-                const Expanded(
+                Expanded(
                   child: EmptyState(
-                    title: 'Hozircha imtihon yo\'q',
-                    message: 'Birinchi imtihoningizni yaratish uchun pastdagi tugmani bosing.',
+                    title: 'no_exams_yet'.tr,
+                    message: 'create_first_exam'.tr,
                     icon: Icons.quiz_outlined,
-                    actionText: 'Imtihon yaratish',
+                    actionText: 'create_exam'.tr,
                   ),
                 )
               else
@@ -110,7 +108,7 @@ class ExamListView extends GetView<ExamController> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _createExam,
         icon: const Icon(Icons.add),
-        label: const Text('Yangi imtihon'),
+        label: Text('new_exam'.tr),
       ),
     );
   }
@@ -126,12 +124,12 @@ class ExamListView extends GetView<ExamController> {
   void _deleteExam(Map<String, dynamic> exam) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Imtihonni o\'chirish'),
-        content: Text('Haqiqatan ham "${exam['title']}" imtihonini o\'chirmoqchimisiz?'),
+        title: Text('delete_exam'.tr),
+        content: Text('${'delete_exam_confirmation'.tr}\n"${exam['title']}"'),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Bekor qilish'),
+            child: Text('cancel'.tr),
           ),
           FilledButton(
             onPressed: () {
@@ -141,7 +139,7 @@ class ExamListView extends GetView<ExamController> {
             style: FilledButton.styleFrom(
               backgroundColor: Get.theme.colorScheme.error,
             ),
-            child: const Text('O\'chirish'),
+            child: Text('delete'.tr),
           ),
         ],
       ),

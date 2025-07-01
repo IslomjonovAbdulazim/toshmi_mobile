@@ -1,6 +1,7 @@
 // lib/app/modules/teacher/views/exams/widgets/exam_card.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
 class ExamCard extends StatelessWidget {
   final Map<String, dynamic> exam;
@@ -49,7 +50,7 @@ class ExamCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          exam['title'] ?? 'Nomsiz imtihon',
+                          exam['title'] ?? 'untitled_exam'.tr,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -114,7 +115,7 @@ class ExamCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            '$daysDiff kun',
+                            '$daysDiff ${'days'.tr}',
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: _getDaysColor(daysDiff),
                               fontWeight: FontWeight.w500,
@@ -130,7 +131,6 @@ class ExamCard extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // Exam date
               Row(
                 children: [
                   Icon(
@@ -151,19 +151,18 @@ class ExamCard extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // Points and links info
               Row(
                 children: [
                   _buildInfoChip(
                     Icons.star,
-                    '${exam['max_points'] ?? 100} ball',
+                    '${exam['max_points'] ?? 100} ${'points'.tr}',
                     theme.colorScheme.primary,
                   ),
                   if (exam['external_links'] != null && (exam['external_links'] as List).isNotEmpty) ...[
                     const SizedBox(width: 8),
                     _buildInfoChip(
                       Icons.link,
-                      '${(exam['external_links'] as List).length} havola',
+                      '${(exam['external_links'] as List).length} ${'links'.tr}',
                       theme.colorScheme.secondary,
                     ),
                   ],
@@ -184,14 +183,13 @@ class ExamCard extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Action buttons
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: onEdit,
                       icon: const Icon(Icons.edit, size: 16),
-                      label: const Text('Tahrirlash'),
+                      label: Text('edit'.tr),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                       ),
@@ -202,7 +200,7 @@ class ExamCard extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: onGrade,
                       icon: const Icon(Icons.star, size: 16),
-                      label: const Text('Baholash'),
+                      label: Text('grade'.tr),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                       ),
@@ -237,7 +235,7 @@ class ExamCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        isGraded ? 'Baholangan' : 'Baholanmagan',
+        isGraded ? 'graded_status'.tr : 'not_graded_status'.tr,
         style: theme.textTheme.labelSmall?.copyWith(
           color: isGraded ? Colors.green : Colors.orange,
           fontWeight: FontWeight.w500,

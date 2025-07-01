@@ -7,20 +7,16 @@ import '../../../data/repositories/teacher_repository.dart';
 
 class ExamController extends GetxController {
   final TeacherRepository _teacherRepository = Get.find<TeacherRepository>();
-  final GroupSubjectRepository _groupSubjectRepository =
-      GroupSubjectRepository();
+  final GroupSubjectRepository _groupSubjectRepository = GroupSubjectRepository();
 
   final isLoading = false.obs;
   final examsList = <dynamic>[].obs;
 
-  // Group subjects for creating exams
   final groupSubjects = <GroupSubject>[].obs;
   final selectedGroupSubject = Rx<GroupSubject?>(null);
 
-  // External links management
   final externalLinks = <String>[].obs;
 
-  // Add these lines after existing observables
   final selectedFilter = 'near_deadline'.obs;
   final filteredExamsList = <dynamic>[].obs;
 
@@ -31,17 +27,15 @@ class ExamController extends GetxController {
     loadGroupSubjects();
   }
 
-  // Load teacher's group subjects (for exam creation)
   Future<void> loadGroupSubjects() async {
     try {
       final subjects = await _groupSubjectRepository.getTeacherGroupSubjects();
       groupSubjects.value = subjects;
     } catch (e) {
-      Get.snackbar('Xato', 'Sinflarni yuklashda xatolik: $e');
+      Get.snackbar('error'.tr, '${'error_loading_classes'.tr}: $e');
     }
   }
 
-  // Add this method
   void filterExams() {
     final now = DateTime.now();
     switch (selectedFilter.value) {
@@ -70,39 +64,35 @@ class ExamController extends GetxController {
 
   String getFilterDisplayText() {
     switch (selectedFilter.value) {
-      case 'near_deadline': return 'Yaqin sanalar';
-      case 'old_deadline': return 'O\'tgan sanalar';
-      case 'graded': return 'Baholangan';
-      case 'not_graded': return 'Baholanmagan';
+      case 'near_deadline': return 'near_dates'.tr;
+      case 'old_deadline': return 'old_dates'.tr;
+      case 'graded': return 'graded'.tr;
+      case 'not_graded': return 'not_graded'.tr;
       default: return '';
     }
   }
 
-  // Update loadExams method
   Future<void> loadExams() async {
     try {
       isLoading.value = true;
       final exams = await _teacherRepository.getExamsList();
       examsList.value = exams;
-      filterExams(); // Add this line
+      filterExams();
     } catch (e) {
-      Get.snackbar('Xato', 'Imtihonlarni yuklashda xatolik: $e');
+      Get.snackbar('error'.tr, '${'error_loading_exams'.tr}: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  // Select group subject for exam creation
   void selectGroupSubject(GroupSubject groupSubject) {
     selectedGroupSubject.value = groupSubject;
   }
 
-  // Get display name for group subject
   String getGroupSubjectDisplayName(GroupSubject groupSubject) {
     return _groupSubjectRepository.getGroupSubjectDisplayName(groupSubject);
   }
 
-  // External links management
   void addExternalLink(String link) {
     if (link.trim().isNotEmpty && !externalLinks.contains(link.trim())) {
       externalLinks.add(link.trim());
@@ -124,7 +114,6 @@ class ExamController extends GetxController {
     externalLinks.addAll(links);
   }
 
-  // Create exam
   Future<void> createExam({
     required int groupSubjectId,
     required String title,
@@ -143,16 +132,15 @@ class ExamController extends GetxController {
         maxPoints: maxPoints,
         externalLinks: externalLinks,
       );
-      Get.snackbar('Muvaffaqiyat', 'Imtihon muvaffaqiyatli yaratildi');
+      Get.snackbar('success'.tr, 'exam_created_successfully'.tr);
       loadExams();
     } catch (e) {
-      Get.snackbar('Xato', 'Imtihon yaratishda xatolik: $e');
+      Get.snackbar('error'.tr, '${'error_creating_exam'.tr}: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  // Update exam
   Future<void> updateExam({
     required int examId,
     required int groupSubjectId,
@@ -173,30 +161,28 @@ class ExamController extends GetxController {
         maxPoints: maxPoints,
         externalLinks: externalLinks,
       );
-      Get.snackbar('Muvaffaqiyat', 'Imtihon muvaffaqiyatli yangilandi');
+      Get.snackbar('success'.tr, 'exam_updated_successfully'.tr);
       loadExams();
     } catch (e) {
-      Get.snackbar('Xato', 'Imtihonni yangilashda xatolik: $e');
+      Get.snackbar('error'.tr, '${'error_updating_exam'.tr}: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  // Delete exam
   Future<void> deleteExam(int examId) async {
     try {
       isLoading.value = true;
       await _teacherRepository.deleteExam(examId);
-      Get.snackbar('Muvaffaqiyat', 'Imtihon muvaffaqiyatli o\'chirildi');
+      Get.snackbar('success'.tr, 'exam_deleted_successfully'.tr);
       loadExams();
     } catch (e) {
-      Get.snackbar('Xato', 'Imtihonni o\'chirishda xatolik: $e');
+      Get.snackbar('error'.tr, '${'error_deleting_exam'.tr}: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  // Refresh exam data
   Future<void> refreshExams() async {
     await Future.wait([loadExams(), loadGroupSubjects()]);
   }

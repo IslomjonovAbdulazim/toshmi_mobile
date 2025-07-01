@@ -68,7 +68,7 @@ class ToshmiApp extends StatelessWidget {
       translations: AppTranslations(),
       themeMode: ThemeMode.system,
       locale: LanguageService().locale,
-      fallbackLocale: const Locale('uz', 'UZ'),
+      // fallbackLocale: const Locale('uz', 'UZ'),
 
       initialRoute: AppPages.initial,
       getPages: AppPages.routes,

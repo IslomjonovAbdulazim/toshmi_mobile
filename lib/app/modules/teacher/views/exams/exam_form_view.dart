@@ -31,7 +31,6 @@ class ExamFormView extends GetView<ExamController> {
 
     final selectedTime = TimeOfDay.fromDateTime(selectedDate.value).obs;
 
-    // Initialize external links for editing
     if (isEditing && exam!['external_links'] != null) {
       controller.initializeExternalLinks(
         List<String>.from(exam!['external_links']),
@@ -40,7 +39,6 @@ class ExamFormView extends GetView<ExamController> {
       controller.clearExternalLinks();
     }
 
-    // Initialize selected group subject for editing
     if (isEditing && exam!['group_subject_id'] != null) {
       final groupSubjectId = exam!['group_subject_id'];
       final matchingSubject = controller.groupSubjects.firstWhereOrNull(
@@ -54,7 +52,7 @@ class ExamFormView extends GetView<ExamController> {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: TeacherAppBar(
-        title: isEditing ? 'Imtihonni tahrirlash' : 'Yangi imtihon',
+        title: isEditing ? 'edit_exam'.tr : 'new_exam'.tr,
         actions: [
           TextButton(
             onPressed: () => _saveExam(
@@ -64,7 +62,7 @@ class ExamFormView extends GetView<ExamController> {
               selectedDate.value,
               selectedTime.value,
             ),
-            child: const Text('Saqlash'),
+            child: Text('save'.tr),
           ),
         ],
       ),
@@ -75,15 +73,15 @@ class ExamFormView extends GetView<ExamController> {
           children: [
             _buildTextField(
               controller: titleController,
-              label: 'Sarlavha',
-              hint: 'Imtihon sarlavasini kiriting',
+              label: 'title'.tr,
+              hint: 'enter_exam_title'.tr,
               icon: Icons.quiz,
             ),
             const SizedBox(height: 16),
             _buildTextField(
               controller: descriptionController,
-              label: 'Tavsif',
-              hint: 'Imtihon tavsifini kiriting',
+              label: 'description'.tr,
+              hint: 'enter_exam_description'.tr,
               icon: Icons.description,
               maxLines: 4,
             ),
@@ -92,7 +90,7 @@ class ExamFormView extends GetView<ExamController> {
             const SizedBox(height: 16),
             _buildTextField(
               controller: maxPointsController,
-              label: 'Maksimal ball',
+              label: 'max_points'.tr,
               hint: '100',
               icon: Icons.star,
               keyboardType: TextInputType.number,
@@ -134,7 +132,7 @@ class ExamFormView extends GetView<ExamController> {
   Widget _buildGroupSubjectSelector() {
     return Obx(() => DropdownButtonFormField<int>(
       decoration: InputDecoration(
-        labelText: 'Sinf va fan',
+        labelText: 'class_and_subject'.tr,
         prefixIcon: const Icon(Icons.class_),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -156,8 +154,8 @@ class ExamFormView extends GetView<ExamController> {
           controller.selectGroupSubject(selected);
         }
       },
-      hint: const Text('Sinf va fanni tanlang'),
-      validator: (value) => value == null ? 'Sinf va fanni tanlang' : null,
+      hint: Text('select_class_subject'.tr),
+      validator: (value) => value == null ? 'select_class_subject'.tr : null,
     ));
   }
 
@@ -170,7 +168,7 @@ class ExamFormView extends GetView<ExamController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Imtihon sanasi va vaqti',
+          'exam_date_time'.tr,
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 12),
@@ -180,7 +178,7 @@ class ExamFormView extends GetView<ExamController> {
               child: Obx(() => _buildDateTimeCard(
                 context,
                 icon: Icons.calendar_today,
-                title: 'Sana',
+                title: 'date'.tr,
                 value: _formatDate(selectedDate.value),
                 onTap: () => _selectDate(context, selectedDate),
               )),
@@ -190,7 +188,7 @@ class ExamFormView extends GetView<ExamController> {
               child: Obx(() => _buildDateTimeCard(
                 context,
                 icon: Icons.access_time,
-                title: 'Vaqt',
+                title: 'time'.tr,
                 value: selectedTime.value.format(context),
                 onTap: () => _selectTime(context, selectedTime),
               )),
@@ -243,7 +241,7 @@ class ExamFormView extends GetView<ExamController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Tashqi havolalar',
+          'external_links'.tr,
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 12),
@@ -253,7 +251,7 @@ class ExamFormView extends GetView<ExamController> {
               child: TextFormField(
                 controller: linkController,
                 decoration: InputDecoration(
-                  hintText: 'Havola kiriting (https://...)',
+                  hintText: 'enter_link'.tr,
                   prefixIcon: const Icon(Icons.link),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -270,7 +268,7 @@ class ExamFormView extends GetView<ExamController> {
                   linkController.clear();
                 }
               },
-              child: const Text('Qo\'shish'),
+              child: Text('add'.tr),
             ),
           ],
         ),
@@ -286,7 +284,7 @@ class ExamFormView extends GetView<ExamController> {
           ),
           child: Center(
             child: Text(
-              'Hech qanday havola qo\'shilmagan',
+              'no_links_added'.tr,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -344,6 +342,9 @@ class ExamFormView extends GetView<ExamController> {
       initialDate: selectedDate.value,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
+      helpText: 'select_due_date'.tr,
+      confirmText: 'select'.tr,
+      cancelText: 'cancel'.tr,
     );
     if (date != null) {
       selectedDate.value = date;
@@ -354,6 +355,9 @@ class ExamFormView extends GetView<ExamController> {
     final time = await showTimePicker(
       context: context,
       initialTime: selectedTime.value,
+      helpText: 'select_due_time'.tr,
+      confirmText: 'select'.tr,
+      cancelText: 'cancel'.tr,
     );
     if (time != null) {
       selectedTime.value = time;
@@ -368,12 +372,12 @@ class ExamFormView extends GetView<ExamController> {
       TimeOfDay selectedTime,
       ) {
     if (titleController.text.trim().isEmpty) {
-      Get.snackbar('Xato', 'Iltimos sarlavha kiriting');
+      Get.snackbar('error'.tr, 'please_enter_exam_title'.tr);
       return;
     }
 
     if (controller.selectedGroupSubject.value == null) {
-      Get.snackbar('Xato', 'Iltimos sinf va fanni tanlang');
+      Get.snackbar('error'.tr, 'please_select_class_subject'.tr);
       return;
     }
 
@@ -386,7 +390,6 @@ class ExamFormView extends GetView<ExamController> {
     );
 
     if (exam != null) {
-      // Edit existing exam
       controller.updateExam(
         examId: exam!['id'],
         groupSubjectId: controller.selectedGroupSubject.value!.id,
@@ -397,7 +400,6 @@ class ExamFormView extends GetView<ExamController> {
         externalLinks: controller.externalLinks.toList(),
       );
     } else {
-      // Create new exam
       controller.createExam(
         groupSubjectId: controller.selectedGroupSubject.value!.id,
         title: titleController.text.trim(),
