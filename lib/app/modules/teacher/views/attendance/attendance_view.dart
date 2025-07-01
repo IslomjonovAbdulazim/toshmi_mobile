@@ -17,14 +17,13 @@ class AttendanceView extends GetView<AttendanceController> {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: TeacherAppBar(
-        title: 'Davomat', // Uzbek: Attendance
+        title: 'attendance_title'.tr,
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // Show group subject selection first
         if (controller.selectedGroupSubject.value == null) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -34,17 +33,16 @@ class AttendanceView extends GetView<AttendanceController> {
                 _buildGroupSubjectSelector(theme),
                 const SizedBox(height: 24),
                 EmptyState(
-                  title: 'Sinfni tanlang', // Uzbek: Select a class
-                  message: 'Davomat ko\'rish uchun sinfni tanlang.', // Uzbek: Choose a class to view attendance
+                  title: 'select_class'.tr,
+                  message: 'choose_class'.tr,
                   icon: Icons.class_outlined,
-                  actionText: 'Davomat olish', // Uzbek: Take attendance
+                  actionText: 'take_attendance'.tr,
                 ),
               ],
             ),
           );
         }
 
-        // Show attendance data directly (no time selection needed)
         if (controller.attendanceData.isEmpty) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -54,10 +52,10 @@ class AttendanceView extends GetView<AttendanceController> {
                 _buildGroupSubjectSelector(theme),
                 const SizedBox(height: 24),
                 EmptyState(
-                  title: 'Davomat ma\'lumoti yo\'q', // Uzbek: No attendance data
-                  message: 'Bu sinf uchun davomat yozuvlari topilmadi.', // Uzbek: No attendance records found for this class
+                  title: 'no_attendance_data'.tr,
+                  message: 'no_attendance_records'.tr,
                   icon: Icons.how_to_reg_outlined,
-                  actionText: 'Davomat olish', // Uzbek: Take attendance
+                  actionText: 'take_attendance'.tr,
                 ),
               ],
             ),
@@ -84,7 +82,7 @@ class AttendanceView extends GetView<AttendanceController> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _takeAttendance,
         icon: const Icon(Icons.add_task),
-        label: const Text('Davomat olish'), // Uzbek: Take attendance
+        label: Text('take_attendance'.tr),
       ),
     );
   }
@@ -97,7 +95,7 @@ class AttendanceView extends GetView<AttendanceController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Sinfni tanlang', // Uzbek: Select class
+              'select_class'.tr,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -111,7 +109,7 @@ class AttendanceView extends GetView<AttendanceController> {
                     border: Border.all(color: theme.colorScheme.outline),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text('Hech qanday sinf tayinlanmagan'), // Uzbek: No classes assigned
+                  child: Text('no_classes_assigned'.tr),
                 );
               }
 
@@ -134,14 +132,13 @@ class AttendanceView extends GetView<AttendanceController> {
                   final selectedGroupSubject = controller.groupSubjects
                       .firstWhereOrNull((gs) => gs.id == value);
                   if (selectedGroupSubject != null) {
-                    // Directly load attendance without schedule selection
                     controller.selectedGroupSubject.value = selectedGroupSubject;
                     controller.loadAttendanceTable(
                       groupSubjectId: selectedGroupSubject.id,
                     );
                   }
                 },
-                hint: const Text('Sinfni tanlang'), // Uzbek: Choose a class
+                hint: Text('choose_class'.tr),
               );
             }),
           ],
@@ -168,7 +165,7 @@ class AttendanceView extends GetView<AttendanceController> {
           children: [
             Expanded(
               child: StatsCard(
-                title: 'Jami kunlar', // Uzbek: Total days
+                title: 'total_days'.tr,
                 value: '${dateRange['total_dates'] ?? 0}',
                 icon: Icons.calendar_today,
                 iconColor: theme.colorScheme.primary,
@@ -177,7 +174,7 @@ class AttendanceView extends GetView<AttendanceController> {
             const SizedBox(width: 12),
             Expanded(
               child: StatsCard(
-                title: 'O\'quvchilar', // Uzbek: Students
+                title: 'students'.tr,
                 value: '${(controller.attendanceData['students'] as List?)?.length ?? 0}',
                 icon: Icons.people,
                 iconColor: theme.colorScheme.secondary,
@@ -197,7 +194,7 @@ class AttendanceView extends GetView<AttendanceController> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Davomat yozuvlari', // Uzbek: Attendance records
+              'attendance_records'.tr,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -205,7 +202,7 @@ class AttendanceView extends GetView<AttendanceController> {
             TextButton.icon(
               onPressed: _exportAttendance,
               icon: const Icon(Icons.download),
-              label: const Text('Eksport'), // Uzbek: Export
+              label: Text('export'.tr),
             ),
           ],
         ),
@@ -233,7 +230,7 @@ class AttendanceView extends GetView<AttendanceController> {
               ),
               const SizedBox(height: 16),
               Text(
-                'O\'quvchilar topilmadi', // Uzbek: No students found
+                'no_students_found'.tr,
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -244,13 +241,12 @@ class AttendanceView extends GetView<AttendanceController> {
       );
     }
 
-    // Sort dates with latest first (reverse chronological order)
     final sortedDates = List<String>.from(dates.map((d) => d.toString()));
     sortedDates.sort((a, b) {
       try {
         final dateA = DateTime.parse(a);
         final dateB = DateTime.parse(b);
-        return dateB.compareTo(dateA); // Newest first
+        return dateB.compareTo(dateA);
       } catch (e) {
         return 0;
       }
@@ -264,13 +260,11 @@ class AttendanceView extends GetView<AttendanceController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // THE KEY: Single horizontal scroll containing EVERYTHING
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header row
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                   decoration: BoxDecoration(
@@ -282,18 +276,16 @@ class AttendanceView extends GetView<AttendanceController> {
                   ),
                   child: Row(
                     children: [
-                      // Fixed student header
                       SizedBox(
                         width: 150,
                         child: Text(
-                          'O\'quvchi', // Uzbek: Student
+                          'student'.tr,
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
-                      // Date headers - all in the same scroll container
                       ...sortedDates.map((date) => Container(
                         width: 70,
                         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -309,7 +301,6 @@ class AttendanceView extends GetView<AttendanceController> {
                     ],
                   ),
                 ),
-                // Student rows - all in the same scroll container
                 ...students.asMap().entries.map((entry) {
                   final index = entry.key;
                   final student = entry.value;
@@ -325,14 +316,13 @@ class AttendanceView extends GetView<AttendanceController> {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Row(
                       children: [
-                        // Student info column - same width as header
                         SizedBox(
                           width: 150,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                student['name'] ?? 'Noma\'lum', // Uzbek: Unknown
+                                student['name'] ?? 'unknown'.tr,
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   fontWeight: FontWeight.w500,
                                   color: theme.colorScheme.onSurface,
@@ -345,7 +335,6 @@ class AttendanceView extends GetView<AttendanceController> {
                             ],
                           ),
                         ),
-                        // Attendance status - same width and order as date headers
                         ...sortedDates.map((date) => Container(
                           width: 70,
                           padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -365,105 +354,102 @@ class AttendanceView extends GetView<AttendanceController> {
     );
   }
 
+  Widget _buildEmojiSummary(Map<String, dynamic> summary) {
+    final present = summary['present'] ?? 0;
+    final absent = summary['absent'] ?? 0;
+    final late = summary['late'] ?? 0;
 
-}
-
-
-Widget _buildEmojiSummary(Map<String, dynamic> summary) {
-  final present = summary['present'] ?? 0;
-  final absent = summary['absent'] ?? 0;
-  final late = summary['late'] ?? 0;
-
-  return Row(
-    children: [
-      Text('✅$present', style: const TextStyle(fontSize: 10, color: Colors.green)),
-      const SizedBox(width: 3),
-      Text('❌$absent', style: const TextStyle(fontSize: 10, color: Colors.red)),
-      const SizedBox(width: 3),
-      Text('⏰$late', style: const TextStyle(fontSize: 10, color: Colors.orange)),
-    ],
-  );
-}
-
-Widget _getStatusIcon(ThemeData theme, String status) {
-  switch (status) {
-    case 'present':
-      return Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Icon(
-          Icons.check_circle,
-          size: 16,
-          color: theme.colorScheme.primary,
-        ),
-      );
-    case 'absent':
-      return Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.error.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Icon(
-          Icons.cancel,
-          size: 16,
-          color: theme.colorScheme.error,
-        ),
-      );
-    case 'late':
-      return Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.tertiary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Icon(
-          Icons.schedule,
-          size: 16,
-          color: theme.colorScheme.tertiary,
-        ),
-      );
-    case 'excused':
-      return Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.secondary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Icon(
-          Icons.event_busy,
-          size: 16,
-          color: theme.colorScheme.secondary,
-        ),
-      );
-    default:
-      return Container(
-        padding: const EdgeInsets.all(4),
-        child: Icon(
-          Icons.help_outline,
-          size: 16,
-          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.3),
-        ),
-      );
+    return Row(
+      children: [
+        Text('✅$present', style: const TextStyle(fontSize: 10, color: Colors.green)),
+        const SizedBox(width: 3),
+        Text('❌$absent', style: const TextStyle(fontSize: 10, color: Colors.red)),
+        const SizedBox(width: 3),
+        Text('⏰$late', style: const TextStyle(fontSize: 10, color: Colors.orange)),
+      ],
+    );
   }
-}
 
-String _formatDateHeader(String date) {
-  try {
-    final dateTime = DateTime.parse(date);
-    return '${dateTime.day}/${dateTime.month}';
-  } catch (e) {
-    return date;
+  Widget _getStatusIcon(ThemeData theme, String status) {
+    switch (status) {
+      case 'present':
+        return Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(
+            Icons.check_circle,
+            size: 16,
+            color: theme.colorScheme.primary,
+          ),
+        );
+      case 'absent':
+        return Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.error.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(
+            Icons.cancel,
+            size: 16,
+            color: theme.colorScheme.error,
+          ),
+        );
+      case 'late':
+        return Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.tertiary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(
+            Icons.schedule,
+            size: 16,
+            color: theme.colorScheme.tertiary,
+          ),
+        );
+      case 'excused':
+        return Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.secondary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(
+            Icons.event_busy,
+            size: 16,
+            color: theme.colorScheme.secondary,
+          ),
+        );
+      default:
+        return Container(
+          padding: const EdgeInsets.all(4),
+          child: Icon(
+            Icons.help_outline,
+            size: 16,
+            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.3),
+          ),
+        );
+    }
   }
-}
 
-void _takeAttendance() {
-  Get.to(() => const AttendanceFormView());
-}
+  String _formatDateHeader(String date) {
+    try {
+      final dateTime = DateTime.parse(date);
+      return '${dateTime.day}/${dateTime.month}';
+    } catch (e) {
+      return date;
+    }
+  }
 
-void _exportAttendance() {
-  Get.snackbar('Ma\'lumot', 'Eksport funksiyasi tez orada'); // Uzbek: Export feature coming soon
+  void _takeAttendance() {
+    Get.to(() => const AttendanceFormView());
+  }
+
+  void _exportAttendance() {
+    Get.snackbar('info'.tr, 'export_coming_soon'.tr);
+  }
 }

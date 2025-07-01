@@ -1,5 +1,6 @@
 // lib/app/modules/teacher/views/attendance/widgets/attendance_table.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'student_attendance_row.dart';
 
 class AttendanceTable extends StatelessWidget {
@@ -34,7 +35,7 @@ class AttendanceTable extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'No Students Found',
+                'no_students_found'.tr,
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -77,7 +78,7 @@ class AttendanceTable extends StatelessWidget {
           Expanded(
             flex: 2,
             child: Text(
-              'Student',
+              'student'.tr,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: theme.colorScheme.onSurfaceVariant,
@@ -98,7 +99,7 @@ class AttendanceTable extends StatelessWidget {
           if (dates.length > 7)
             Expanded(
               child: Text(
-                'Summary',
+                'summary'.tr,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w500,

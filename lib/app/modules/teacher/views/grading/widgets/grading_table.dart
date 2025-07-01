@@ -20,7 +20,7 @@ class GradingTable extends GetView<GradingController> {
       if (gradingData.isEmpty) {
         return Center(
           child: Text(
-            'Ma\'lumot topilmadi',
+            'no_data_found'.tr,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -34,7 +34,6 @@ class GradingTable extends GetView<GradingController> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Assignment info
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -56,7 +55,7 @@ class GradingTable extends GetView<GradingController> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Maksimal ball: ${assignment['max_points']}',
+                  '${'max_points_label'.tr} ${assignment['max_points']}',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -66,16 +65,14 @@ class GradingTable extends GetView<GradingController> {
           ),
           const SizedBox(height: 16),
 
-          // Students list
           Text(
-            'O\'quvchilar (${students.length})',
+            '${'students_count'.tr}${students.length})',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 12),
 
-          // Students grading cards
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -98,7 +95,6 @@ class GradingTable extends GetView<GradingController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Student header
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -135,7 +131,7 @@ class GradingTable extends GetView<GradingController> {
                                 ),
                                 if (currentGrade?['points'] != null)
                                   Text(
-                                    'Joriy ball: ${currentGrade!['points']}/${assignment['max_points']}',
+                                    '${'current_grade'.tr} ${currentGrade!['points']}/${assignment['max_points']}',
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: theme.colorScheme.primary,
                                       fontWeight: FontWeight.w500,
@@ -166,7 +162,6 @@ class GradingTable extends GetView<GradingController> {
                       ),
                     ),
 
-                    // Grade input
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: GradeInputCell(

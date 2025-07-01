@@ -16,14 +16,14 @@ class AttendanceFormView extends GetView<AttendanceController> {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: TeacherAppBar(
-        title: 'Davomat olish', // Uzbek: Take attendance
+        title: 'take_attendance'.tr,
         actions: [
           TextButton(
             onPressed: () => _saveAttendance(
               selectedDate.value,
               attendanceMap,
             ),
-            child: const Text('Saqlash'), // Uzbek: Save
+            child: Text('save'.tr),
           ),
         ],
       ),
@@ -38,11 +38,10 @@ class AttendanceFormView extends GetView<AttendanceController> {
             const SizedBox(height: 24),
             Obx(() {
               if (controller.selectedGroupSubject.value == null) {
-                return _buildEmptyState(theme, 'Davom etish uchun sinfni tanlang'); // Uzbek: Select a class to continue
+                return _buildEmptyState(theme, 'select_class_to_continue'.tr);
               }
 
               if (controller.groupStudents.isEmpty && !controller.isLoading.value) {
-                // Load students when we have group subject selected
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (controller.selectedGroupSubject.value != null) {
                     controller.loadGroupStudents(controller.selectedGroupSubject.value!.groupId);
@@ -52,7 +51,7 @@ class AttendanceFormView extends GetView<AttendanceController> {
               }
 
               if (controller.groupStudents.isEmpty) {
-                return _buildEmptyState(theme, 'Bu sinfda o\'quvchilar topilmadi'); // Uzbek: No students found in this class
+                return _buildEmptyState(theme, 'no_students_in_class'.tr);
               }
 
               return _buildStudentsList(theme, attendanceMap);
@@ -71,7 +70,7 @@ class AttendanceFormView extends GetView<AttendanceController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Sana', // Uzbek: Date
+              'date'.tr,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -119,7 +118,7 @@ class AttendanceFormView extends GetView<AttendanceController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Sinf', // Uzbek: Class
+              'class'.tr,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -133,7 +132,7 @@ class AttendanceFormView extends GetView<AttendanceController> {
                     border: Border.all(color: theme.colorScheme.outline),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text('Hech qanday sinf tayinlanmagan'), // Uzbek: No classes assigned
+                  child: Text('no_classes_assigned'.tr),
                 );
               }
 
@@ -156,11 +155,10 @@ class AttendanceFormView extends GetView<AttendanceController> {
                   final selectedGroupSubject = controller.groupSubjects
                       .firstWhereOrNull((gs) => gs.id == value);
                   if (selectedGroupSubject != null) {
-                    // Set selected group subject directly (no schedule needed)
                     controller.selectedGroupSubject.value = selectedGroupSubject;
                   }
                 },
-                hint: const Text('Sinfni tanlang'), // Uzbek: Select a class
+                hint: Text('select_class'.tr),
               );
             }),
           ],
@@ -195,7 +193,6 @@ class AttendanceFormView extends GetView<AttendanceController> {
   }
 
   Widget _buildStudentsList(ThemeData theme, RxMap<int, String> attendanceMap) {
-    // Initialize attendance map with default 'present' status
     for (final student in controller.groupStudents) {
       final studentId = student['id'] as int;
       if (!attendanceMap.containsKey(studentId)) {
@@ -213,7 +210,7 @@ class AttendanceFormView extends GetView<AttendanceController> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'O\'quvchilar (${controller.groupStudents.length})', // Uzbek: Students
+                  '${'students'.tr} (${controller.groupStudents.length})',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -222,11 +219,11 @@ class AttendanceFormView extends GetView<AttendanceController> {
                   children: [
                     TextButton(
                       onPressed: () => _markAllPresent(attendanceMap),
-                      child: const Text('Hammasi keldi'), // Uzbek: All present
+                      child: Text('all_present'.tr),
                     ),
                     TextButton(
                       onPressed: () => _markAllAbsent(attendanceMap),
-                      child: const Text('Hammasi yo\'q'), // Uzbek: All absent
+                      child: Text('all_absent'.tr),
                     ),
                   ],
                 ),
@@ -246,14 +243,14 @@ class AttendanceFormView extends GetView<AttendanceController> {
                 leading: CircleAvatar(
                   backgroundColor: theme.colorScheme.primaryContainer,
                   child: Text(
-                    (student['name'] as String?)?.substring(0, 1).toUpperCase() ?? 'O', // Uzbek: O for O'quvchi
+                    (student['name'] as String?)?.substring(0, 1).toUpperCase() ?? 'O',
                     style: TextStyle(
                       color: theme.colorScheme.onPrimaryContainer,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-                title: Text(student['name'] ?? 'Noma\'lum'), // Uzbek: Unknown
+                title: Text(student['name'] ?? 'unknown'.tr),
                 subtitle: Text(student['phone'] ?? ''),
                 trailing: Obx(() => _buildStatusSelector(
                   theme,
@@ -284,7 +281,7 @@ class AttendanceFormView extends GetView<AttendanceController> {
             children: [
               Icon(Icons.check_circle, color: theme.colorScheme.primary, size: 16),
               const SizedBox(width: 4),
-              const Text('Keldi'), // Uzbek: Present
+              Text('present'.tr),
             ],
           ),
         ),
@@ -295,7 +292,7 @@ class AttendanceFormView extends GetView<AttendanceController> {
             children: [
               Icon(Icons.cancel, color: theme.colorScheme.error, size: 16),
               const SizedBox(width: 4),
-              const Text('Yo\'q'), // Uzbek: Absent
+              Text('absent'.tr),
             ],
           ),
         ),
@@ -306,7 +303,7 @@ class AttendanceFormView extends GetView<AttendanceController> {
             children: [
               Icon(Icons.schedule, color: theme.colorScheme.tertiary, size: 16),
               const SizedBox(width: 4),
-              const Text('Kech keldi'), // Uzbek: Late
+              Text('late'.tr),
             ],
           ),
         ),
@@ -317,7 +314,7 @@ class AttendanceFormView extends GetView<AttendanceController> {
             children: [
               Icon(Icons.event_busy, color: theme.colorScheme.secondary, size: 16),
               const SizedBox(width: 4),
-              const Text('Sababli'), // Uzbek: Excused
+              Text('excused'.tr),
             ],
           ),
         ),
@@ -338,9 +335,9 @@ class AttendanceFormView extends GetView<AttendanceController> {
       initialDate: selectedDate.value,
       firstDate: DateTime.now().subtract(const Duration(days: 30)),
       lastDate: DateTime.now(),
-      helpText: 'Sanani tanlang', // Uzbek: Select date
-      cancelText: 'Bekor qilish', // Uzbek: Cancel
-      confirmText: 'Tasdiqlash', // Uzbek: Confirm
+      helpText: 'select_date'.tr,
+      cancelText: 'cancel'.tr,
+      confirmText: 'confirm'.tr,
     );
     if (date != null) {
       selectedDate.value = date;
@@ -364,12 +361,12 @@ class AttendanceFormView extends GetView<AttendanceController> {
       Map<int, String> attendanceMap,
       ) {
     if (controller.selectedGroupSubject.value == null) {
-      Get.snackbar('Xato', 'Iltimos sinfni tanlang'); // Uzbek: Error, Please select a class
+      Get.snackbar('error'.tr, 'please_select_class'.tr);
       return;
     }
 
     if (attendanceMap.isEmpty) {
-      Get.snackbar('Xato', 'Saqlash uchun davomat ma\'lumoti yo\'q'); // Uzbek: Error, No attendance data to save
+      Get.snackbar('error'.tr, 'no_attendance_data_to_save'.tr);
       return;
     }
 

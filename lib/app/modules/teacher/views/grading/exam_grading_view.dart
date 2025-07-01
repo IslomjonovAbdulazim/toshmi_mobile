@@ -17,7 +17,6 @@ class ExamGradingView extends GetView<GradingController> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Load grading data when view is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.clearData();
       controller.loadExamGradingTable(exam['id']);
@@ -26,7 +25,7 @@ class ExamGradingView extends GetView<GradingController> {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: TeacherAppBar(
-        title: 'Imtihonni baholash',
+        title: 'grade_exam'.tr,
         actions: [
           Obx(() => TextButton(
             onPressed: controller.isSaving.value
@@ -38,7 +37,7 @@ class ExamGradingView extends GetView<GradingController> {
               height: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-                : const Text('Saqlash'),
+                : Text('save_grades'.tr),
           )),
         ],
       ),

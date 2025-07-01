@@ -1,5 +1,6 @@
 // lib/app/modules/teacher/views/attendance/widgets/student_attendance_row.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class StudentAttendanceRow extends StatelessWidget {
   final Map<String, dynamic> student;
@@ -31,7 +32,7 @@ class StudentAttendanceRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  student['name'] ?? 'Unknown',
+                  student['name'] ?? 'unknown'.tr,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: theme.colorScheme.onSurface,
@@ -92,7 +93,7 @@ class StudentAttendanceRow extends StatelessWidget {
               children: [
                 Icon(Icons.check_circle, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
-                const Text('Present'),
+                Text('present'.tr),
               ],
             ),
           ),
@@ -102,7 +103,7 @@ class StudentAttendanceRow extends StatelessWidget {
               children: [
                 Icon(Icons.cancel, color: theme.colorScheme.error),
                 const SizedBox(width: 8),
-                const Text('Absent'),
+                Text('absent'.tr),
               ],
             ),
           ),
@@ -112,7 +113,7 @@ class StudentAttendanceRow extends StatelessWidget {
               children: [
                 Icon(Icons.schedule, color: theme.colorScheme.tertiary),
                 const SizedBox(width: 8),
-                const Text('Late'),
+                Text('late'.tr),
               ],
             ),
           ),
@@ -122,7 +123,7 @@ class StudentAttendanceRow extends StatelessWidget {
               children: [
                 Icon(Icons.event_busy, color: theme.colorScheme.secondary),
                 const SizedBox(width: 8),
-                const Text('Excused'),
+                Text('excused'.tr),
               ],
             ),
           ),

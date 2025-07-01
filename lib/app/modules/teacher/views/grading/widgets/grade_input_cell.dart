@@ -1,6 +1,6 @@
-// lib/app/modules/teacher/views/grading/widgets/grade_input_cell.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 class GradeInputCell extends StatefulWidget {
   final int? initialPoints;
@@ -82,7 +82,6 @@ class _GradeInputCellState extends State<GradeInputCell> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Points input
           Row(
             children: [
               Expanded(
@@ -93,9 +92,9 @@ class _GradeInputCellState extends State<GradeInputCell> {
                     FilteringTextInputFormatter.digitsOnly,
                   ],
                   decoration: InputDecoration(
-                    labelText: 'Ball',
+                    labelText: 'grade_points'.tr,
                     hintText: '0-${widget.maxPoints}',
-                    errorText: _hasError ? 'Noto\'g\'ri ball' : null,
+                    errorText: _hasError ? 'invalid_points'.tr : null,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -117,13 +116,12 @@ class _GradeInputCellState extends State<GradeInputCell> {
             ],
           ),
           const SizedBox(height: 8),
-          // Comment input
           TextFormField(
             controller: _commentController,
             maxLines: 2,
             decoration: InputDecoration(
-              labelText: 'Izoh (ixtiyoriy)',
-              hintText: 'Izoh kiriting...',
+              labelText: 'comment_optional'.tr,
+              hintText: 'enter_comment'.tr,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),

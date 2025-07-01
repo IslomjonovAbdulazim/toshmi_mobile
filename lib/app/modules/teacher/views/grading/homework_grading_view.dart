@@ -1,3 +1,4 @@
+
 // lib/app/modules/teacher/views/grading/homework_grading_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -17,7 +18,6 @@ class HomeworkGradingView extends GetView<GradingController> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Load grading data when view is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.clearData();
       controller.loadHomeworkGradingTable(homework['id']);
@@ -26,7 +26,7 @@ class HomeworkGradingView extends GetView<GradingController> {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: TeacherAppBar(
-        title: 'Uy vazifasini baholash',
+        title: 'grade_homework'.tr,
         actions: [
           Obx(() => TextButton(
             onPressed: controller.isSaving.value
@@ -38,7 +38,7 @@ class HomeworkGradingView extends GetView<GradingController> {
               height: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-                : const Text('Saqlash'),
+                : Text('save_grades'.tr),
           )),
         ],
       ),

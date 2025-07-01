@@ -18,8 +18,8 @@ class GradingView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
-      appBar: const TeacherAppBar(
-        title: 'Baholash',
+      appBar: TeacherAppBar(
+        title: 'grading_title'.tr,
         showBackButton: true,
       ),
       body: SingleChildScrollView(
@@ -28,7 +28,7 @@ class GradingView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Nimani baholamoqchisiz?',
+              'what_to_grade'.tr,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -38,8 +38,8 @@ class GradingView extends StatelessWidget {
               children: [
                 Expanded(
                   child: QuickActionCard(
-                    title: 'Uy vazifalarini baholash',
-                    subtitle: 'Topshirilgan uy vazifalarini baholang',
+                    title: 'grade_homework_assignments'.tr,
+                    subtitle: 'grade_submitted_homework'.tr,
                     icon: Icons.assignment_outlined,
                     iconColor: theme.colorScheme.primary,
                     onTap: () => _showHomeworkList(context),
@@ -48,8 +48,8 @@ class GradingView extends StatelessWidget {
                 const SizedBox(width: 16),
                 Expanded(
                   child: QuickActionCard(
-                    title: 'Imtihonlarni baholash',
-                    subtitle: 'Imtihon natijalarini baholang',
+                    title: 'grade_exams'.tr,
+                    subtitle: 'grade_exam_results'.tr,
                     icon: Icons.quiz_outlined,
                     iconColor: theme.colorScheme.secondary,
                     onTap: () => _showExamList(context),
@@ -70,7 +70,7 @@ class GradingView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'So\'ngi baholashlar',
+          'recent_grading'.tr,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),
@@ -88,14 +88,14 @@ class GradingView extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'So\'ngi baholashlar yo\'q',
+                  'no_recent_grading'.tr,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'So\'nggi baholash faoliyatingiz shu yerda ko\'rsatiladi',
+                  'recent_grading_activity'.tr,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -139,7 +139,7 @@ class GradingView extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    'Baholanadigan uy vazifasi',
+                    'homework_to_grade'.tr,
                     style: Get.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -155,9 +155,9 @@ class GradingView extends StatelessWidget {
             Expanded(
               child: Obx(() {
                 if (homeworkController.homeworkList.isEmpty) {
-                  return const EmptyState(
-                    title: 'Uy vazifalari yo\'q',
-                    message: 'Baholash uchun uy vazifalari yarating',
+                  return EmptyState(
+                    title: 'no_homework_to_grade'.tr,
+                    message: 'create_homework_for_grading'.tr,
                     icon: Icons.assignment_outlined,
                   );
                 }
@@ -177,7 +177,7 @@ class GradingView extends StatelessWidget {
                             color: Get.theme.colorScheme.onPrimaryContainer,
                           ),
                         ),
-                        title: Text(homework['title'] ?? 'Nomsiz'),
+                        title: Text(homework['title'] ?? 'untitled'.tr),
                         subtitle: Text('${homework['subject']} • ${homework['group']}'),
                         trailing: const Icon(Icons.arrow_forward_ios),
                         onTap: () {
@@ -226,7 +226,7 @@ class GradingView extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    'Baholanadigan imtihon',
+                    'exam_to_grade'.tr,
                     style: Get.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -242,9 +242,9 @@ class GradingView extends StatelessWidget {
             Expanded(
               child: Obx(() {
                 if (examController.examsList.isEmpty) {
-                  return const EmptyState(
-                    title: 'Imtihonlar yo\'q',
-                    message: 'Baholash uchun imtihonlar yarating',
+                  return EmptyState(
+                    title: 'no_exams_to_grade'.tr,
+                    message: 'create_exams_for_grading'.tr,
                     icon: Icons.quiz_outlined,
                   );
                 }
@@ -264,7 +264,7 @@ class GradingView extends StatelessWidget {
                             color: Get.theme.colorScheme.onSecondaryContainer,
                           ),
                         ),
-                        title: Text(exam['title'] ?? 'Nomsiz'),
+                        title: Text(exam['title'] ?? 'untitled'.tr),
                         subtitle: Text('${exam['subject']} • ${exam['group']}'),
                         trailing: const Icon(Icons.arrow_forward_ios),
                         onTap: () {
