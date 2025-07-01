@@ -36,24 +36,31 @@ class _StudentExamsViewState extends State<StudentExamsView> {
   }
 
   List<dynamic> get filteredExams {
-    if (selectedFilter.value == 'all') return exams;
+    List filtered = exams;
 
-    final now = DateTime.now();
-    return exams.where((exam) {
-      final examDate = DateTime.parse(exam['exam_date']);
-      final hasGrade = exam['grade'] != null;
+    if (selectedFilter.value != 'all') {
+      filtered = exams.where((exam) {
+        final hasGrade = exam['grade'] != null && exam['grade']['points'] != null;
 
-      switch (selectedFilter.value) {
-        case 'upcoming':
-          return examDate.isAfter(now);
-        case 'completed':
-          return hasGrade;
-        case 'past':
-          return examDate.isBefore(now) && !hasGrade;
-        default:
-          return true;
-      }
-    }).toList();
+        switch (selectedFilter.value) {
+          case 'not_graded':
+            return !hasGrade;
+          case 'graded':
+            return hasGrade;
+          default:
+            return true;
+        }
+      }).toList();
+    }
+
+    // Sort by exam_date - newest first
+    filtered.sort((a, b) {
+      final dateA = DateTime.parse(a['exam_date']);
+      final dateB = DateTime.parse(b['exam_date']);
+      return dateB.compareTo(dateA);
+    });
+
+    return filtered;
   }
 
   @override
@@ -94,30 +101,68 @@ class _StudentExamsViewState extends State<StudentExamsView> {
 
   Widget _buildFilterTabs() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      child: Obx(() => SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            _buildFilterChip('Barchasi', 'all'),
-            const SizedBox(width: 8),
-            _buildFilterChip('Kelayotgan', 'upcoming'),
-            const SizedBox(width: 8),
-            _buildFilterChip('Topshirilgan', 'completed'),
-            const SizedBox(width: 8),
-            _buildFilterChip('O\'tgan', 'past'),
-          ],
-        ),
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
+      ),
+      child: Obx(() => Row(
+        children: [
+          _buildFilterChip('Barchasi', 'all'),
+          _buildFilterChip('Baholanmagan', 'not_graded'),
+          _buildFilterChip('Baholangan', 'graded'),
+        ],
       )),
     );
   }
 
   Widget _buildFilterChip(String label, String value) {
     final isSelected = selectedFilter.value == value;
-    return FilterChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) => selectedFilter.value = value,
+    Color chipColor;
+    switch (value) {
+      case 'upcoming':
+        chipColor = Colors.orange;
+        break;
+      case 'completed':
+        chipColor = Colors.green;
+        break;
+      case 'past':
+        chipColor = Colors.grey;
+        break;
+      default:
+        chipColor = Colors.blue;
+    }
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => selectedFilter.value = value,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.all(4),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? chipColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: isSelected ? [
+              BoxShadow(
+                color: chipColor.withOpacity(0.3),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ] : null,
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -125,9 +170,11 @@ class _StudentExamsViewState extends State<StudentExamsView> {
     final examDate = DateTime.parse(exam['exam_date']);
     final hasGrade = exam['grade'] != null;
     final isPast = examDate.isBefore(DateTime.now());
+    final externalLinks = exam['external_links'] as List? ?? [];
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -150,6 +197,7 @@ class _StudentExamsViewState extends State<StudentExamsView> {
                     decoration: BoxDecoration(
                       color: Colors.green.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.green.withOpacity(0.3)),
                     ),
                     child: Text(
                       '${exam['grade']['points']}/${exam['max_points']}',
@@ -165,12 +213,14 @@ class _StudentExamsViewState extends State<StudentExamsView> {
                     decoration: BoxDecoration(
                       color: Colors.grey.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.withOpacity(0.3)),
                     ),
                     child: const Text(
-                      'Kutilmoqda',
+                      'Baholanmagan',
                       style: TextStyle(
                         color: Colors.grey,
                         fontWeight: FontWeight.bold,
+                        fontSize: 12,
                       ),
                     ),
                   )
@@ -180,6 +230,7 @@ class _StudentExamsViewState extends State<StudentExamsView> {
                     decoration: BoxDecoration(
                       color: Colors.orange.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange.withOpacity(0.3)),
                     ),
                     child: const Text(
                       'Kelayotgan',
@@ -206,6 +257,52 @@ class _StudentExamsViewState extends State<StudentExamsView> {
                 style: TextStyle(color: Colors.grey[600]),
               ),
             ],
+            if (externalLinks.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Theme.of(context).colorScheme.outline),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.link, size: 16, color: Colors.orange[700]),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Tayyorgarlik materiallar:',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.orange[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ...externalLinks.map((link) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: GestureDetector(
+                        onTap: () => _launchURL(link),
+                        child: Text(
+                          link,
+                          style: TextStyle(
+                            color: Colors.orange[700],
+                            decoration: TextDecoration.underline,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    )).toList(),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             Row(
               children: [
@@ -229,6 +326,11 @@ class _StudentExamsViewState extends State<StudentExamsView> {
         ),
       ),
     );
+  }
+
+  void _launchURL(String url) async {
+    // You can implement URL launching here
+    Get.snackbar('Havola', 'Havola ochilmoqda: $url');
   }
 
   Widget _buildEmptyState() {
