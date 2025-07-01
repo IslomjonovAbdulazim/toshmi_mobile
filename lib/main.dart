@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'app/routes/app_pages.dart';
+import 'app/services/language_service.dart';
 import 'app/services/storage_service.dart';
 import 'app/services/api_service.dart';
 import 'app/services/auth_service.dart';
@@ -10,6 +11,7 @@ import 'app/services/file_service.dart';
 import 'app/services/notification_service.dart';
 import 'app/data/providers/api_provider.dart';
 import 'app/data/providers/storage_provider.dart';
+import 'app/translations/app_translations.dart';
 import 'core/theme/app_theme.dart';
 
 void main() async {
@@ -85,8 +87,10 @@ class ToshmiApp extends StatelessWidget {
       // Theme configuration
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
+      translations: AppTranslations(), // Your translations class
       themeMode: ThemeMode.system,
-
+      locale: LanguageService().locale,
+      fallbackLocale: const Locale('uz', 'UZ'),
       // Navigation configuration
       initialRoute: AppPages.initial,
       getPages: AppPages.routes,
@@ -109,10 +113,6 @@ class ToshmiApp extends StatelessWidget {
           child: child!,
         );
       },
-
-      // Localization
-      locale: const Locale('uz', 'UZ'),
-      fallbackLocale: const Locale('en', 'US'),
 
       // Navigation logging (debug mode only)
       routingCallback: (routing) {

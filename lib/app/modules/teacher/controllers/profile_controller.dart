@@ -1,7 +1,7 @@
-// Replace the entire ProfileController with this:
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/language_service.dart';
 import '../../../services/theme_service.dart';
 import '../../../data/repositories/teacher_repository.dart';
 
@@ -9,6 +9,13 @@ class ProfileController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
   final ThemeService _themeService = ThemeService();
   final TeacherRepository _teacherRepository = Get.find<TeacherRepository>();
+  final LanguageService _languageService = LanguageService();
+  final currentLocale = const Locale('uz', 'UZ').obs;
+
+  void changeLanguage(Locale locale) {
+    currentLocale.value = locale;
+    _languageService.changeLanguage(locale);
+  }
 
   final isLoading = false.obs;
   final currentThemeMode = ThemeMode.system.obs;
@@ -24,6 +31,7 @@ class ProfileController extends GetxController {
     currentPasswordController = TextEditingController();
     newPasswordController = TextEditingController();
     confirmPasswordController = TextEditingController();
+    currentLocale.value = _languageService.locale;
   }
 
   @override
@@ -39,22 +47,22 @@ class ProfileController extends GetxController {
     _themeService.changeThemeMode(themeMode);
   }
 
-  String get currentUserName => _authService.currentUser?.fullName ?? 'Foydalanuvchi';
+  String get currentUserName => _authService.currentUser?.fullName ?? 'user'.tr;
   String get currentUserRole => _authService.userRole ?? '';
 
   Future<void> changePassword() async {
     if (currentPasswordController.text.isEmpty) {
-      Get.snackbar('Xato', 'Joriy parolni kiriting');
+      Get.snackbar('error'.tr, 'error_current_password_required'.tr);
       return;
     }
 
     if (newPasswordController.text.length < 6) {
-      Get.snackbar('Xato', 'Yangi parol kamida 6 ta belgidan iborat bo\'lishi kerak');
+      Get.snackbar('error'.tr, 'error_password_min_length'.tr);
       return;
     }
 
     if (newPasswordController.text != confirmPasswordController.text) {
-      Get.snackbar('Xato', 'Yangi parollar mos kelmaydi');
+      Get.snackbar('error'.tr, 'error_passwords_mismatch'.tr);
       return;
     }
 
@@ -70,13 +78,13 @@ class ProfileController extends GetxController {
       confirmPasswordController.clear();
 
       Get.snackbar(
-        'Muvaffaqiyat',
-        'Parol muvaffaqiyatli o\'zgartirildi',
+        'success'.tr,
+        'success_password_changed'.tr,
         snackPosition: SnackPosition.TOP,
         duration: const Duration(seconds: 2),
       );
     } catch (e) {
-      Get.snackbar('Xato', 'Parolni o\'zgartirishda xatolik: $e');
+      Get.snackbar('error'.tr, '${'error_password_change'.tr}: $e');
     } finally {
       isLoading.value = false;
     }
@@ -87,7 +95,7 @@ class ProfileController extends GetxController {
       await _authService.logout();
       Get.offAllNamed('/login');
     } catch (e) {
-      Get.snackbar('Xato', 'Chiqishda xatolik: $e');
+      Get.snackbar('error'.tr, '${'error_logout'.tr}: $e');
     }
   }
 }

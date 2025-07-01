@@ -1,4 +1,3 @@
-// lib/app/modules/teacher/views/profile/widgets/theme_selector.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../../services/theme_service.dart';
@@ -26,7 +25,7 @@ class ThemeSelector extends GetView<ProfileController> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Mavzu',
+                  'theme'.tr,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),

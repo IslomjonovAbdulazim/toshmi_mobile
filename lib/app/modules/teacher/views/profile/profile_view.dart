@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/profile_controller.dart';
 import '../shared/widgets/teacher_app_bar.dart';
+import 'widgets/language_selector.dart';
 import 'widgets/theme_selector.dart';
 
 class ProfileView extends GetView<ProfileController> {
@@ -14,8 +15,8 @@ class ProfileView extends GetView<ProfileController> {
 
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
-      appBar: const TeacherAppBar(
-        title: 'Profil',
+      appBar: TeacherAppBar(
+        title: 'profile'.tr,
         showBackButton: true,
       ),
       body: SingleChildScrollView(
@@ -26,6 +27,8 @@ class ProfileView extends GetView<ProfileController> {
             _buildProfileHeader(theme),
             const SizedBox(height: 24),
             ThemeSelector(),
+            const SizedBox(height: 24),
+            const LanguageSelector(),
             const SizedBox(height: 24),
             _buildPasswordForm(theme),
             const SizedBox(height: 24),
@@ -73,7 +76,7 @@ class ProfileView extends GetView<ProfileController> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      'O\'qituvchi',
+                      'teacher'.tr,
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.w500,
@@ -104,7 +107,7 @@ class ProfileView extends GetView<ProfileController> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Parolni o\'zgartirish',
+                  'change_password'.tr,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -116,7 +119,7 @@ class ProfileView extends GetView<ProfileController> {
               controller: controller.currentPasswordController,
               obscureText: true,
               decoration: InputDecoration(
-                labelText: 'Joriy parol',
+                labelText: 'current_password'.tr,
                 prefixIcon: const Icon(Icons.lock),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -129,7 +132,7 @@ class ProfileView extends GetView<ProfileController> {
               controller: controller.newPasswordController,
               obscureText: true,
               decoration: InputDecoration(
-                labelText: 'Yangi parol',
+                labelText: 'new_password'.tr,
                 prefixIcon: const Icon(Icons.lock_open),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -142,7 +145,7 @@ class ProfileView extends GetView<ProfileController> {
               controller: controller.confirmPasswordController,
               obscureText: true,
               decoration: InputDecoration(
-                labelText: 'Yangi parolni tasdiqlang',
+                labelText: 'confirm_password'.tr,
                 prefixIcon: const Icon(Icons.lock_open),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -164,7 +167,7 @@ class ProfileView extends GetView<ProfileController> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
                     : const Icon(Icons.key),
-                label: const Text('Parolni o\'zgartirish'),
+                label: Text('change_password'.tr),
               )),
             ),
           ],
@@ -182,7 +185,7 @@ class ProfileView extends GetView<ProfileController> {
           child: OutlinedButton.icon(
             onPressed: () => _showLogoutDialog(),
             icon: const Icon(Icons.logout),
-            label: const Text('Chiqish'),
+            label: Text('logout'.tr),
             style: OutlinedButton.styleFrom(
               foregroundColor: theme.colorScheme.error,
               side: BorderSide(color: theme.colorScheme.error),
@@ -197,12 +200,12 @@ class ProfileView extends GetView<ProfileController> {
   void _showLogoutDialog() {
     Get.dialog(
       AlertDialog(
-        title: const Text('Chiqish'),
-        content: const Text('Haqiqatan ham tizimdan chiqmoqchimisiz?'),
+        title:  Text('logout'.tr),
+        content:  Text('logout_confirmation'.tr),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Bekor qilish'),
+            child:  Text('cancel'.tr),
           ),
           FilledButton(
             onPressed: () {
@@ -212,7 +215,7 @@ class ProfileView extends GetView<ProfileController> {
             style: FilledButton.styleFrom(
               backgroundColor: Get.theme.colorScheme.error,
             ),
-            child: const Text('Chiqish'),
+            child: Text('logout'.tr),
           ),
         ],
       ),

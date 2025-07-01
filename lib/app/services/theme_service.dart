@@ -47,11 +47,11 @@ class ThemeService {
   String getThemeModeText(ThemeMode themeMode) {
     switch (themeMode) {
       case ThemeMode.system:
-        return 'Tizim';
+        return 'system'.tr;
       case ThemeMode.light:
-        return 'Yorug\'';
+        return 'light'.tr;
       case ThemeMode.dark:
-        return 'Qorong\'u';
+        return 'dark'.tr;
     }
   }
 
@@ -60,9 +60,9 @@ class ThemeService {
       case ThemeMode.system:
         return Icons.brightness_auto;
       case ThemeMode.light:
-        return Icons.brightness_7;
+        return Icons.brightness_high;
       case ThemeMode.dark:
-        return Icons.brightness_4;
+        return Icons.brightness_2;
     }
   }
 }
