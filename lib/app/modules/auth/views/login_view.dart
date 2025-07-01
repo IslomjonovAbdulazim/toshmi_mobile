@@ -29,7 +29,6 @@ class LoginView extends GetView<AuthController> {
               children: [
                 const SizedBox(height: 60),
 
-                // App Logo
                 Center(
                   child: Container(
                     padding: const EdgeInsets.all(24),
@@ -47,9 +46,8 @@ class LoginView extends GetView<AuthController> {
 
                 const SizedBox(height: 32),
 
-                // App Title
                 Text(
-                  'Toshmi',
+                  'app_name'.tr,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.bold,
@@ -60,7 +58,7 @@ class LoginView extends GetView<AuthController> {
                 const SizedBox(height: 8),
 
                 Text(
-                  'Maktab Boshqaruv Tizimi',
+                  'app_subtitle'.tr,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -70,7 +68,7 @@ class LoginView extends GetView<AuthController> {
                 const SizedBox(height: 8),
 
                 Text(
-                  'Hisobingizga kiring',
+                  'login_subtitle'.tr,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -79,7 +77,6 @@ class LoginView extends GetView<AuthController> {
 
                 const SizedBox(height: 48),
 
-                // Error Display
                 Obx(() => controller.hasLoginError.value
                     ? Container(
                   width: double.infinity,
@@ -113,7 +110,6 @@ class LoginView extends GetView<AuthController> {
                 )
                     : const SizedBox.shrink()),
 
-                // Role Selection
                 Obx(() => Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
@@ -143,7 +139,7 @@ class LoginView extends GetView<AuthController> {
                                   : null,
                             ),
                             child: Text(
-                              role['label']!,
+                              role['label']!.tr,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: isSelected
@@ -162,9 +158,8 @@ class LoginView extends GetView<AuthController> {
 
                 const SizedBox(height: 32),
 
-                // Phone Number Field
                 CustomTextField(
-                  label: 'Telefon raqami',
+                  label: 'phone_number'.tr,
                   controller: controller.phoneController,
                   keyboardType: TextInputType.phone,
                   prefixIcon: const Icon(Icons.phone),
@@ -175,9 +170,8 @@ class LoginView extends GetView<AuthController> {
 
                 const SizedBox(height: 20),
 
-                // Password Field
                 Obx(() => CustomTextField(
-                  label: 'Parol',
+                  label: 'password'.tr,
                   controller: controller.passwordController,
                   obscureText: !controller.isPasswordVisible.value,
                   prefixIcon: const Icon(Icons.lock),
@@ -194,9 +188,8 @@ class LoginView extends GetView<AuthController> {
 
                 const SizedBox(height: 32),
 
-                // Login Button
                 Obx(() => CustomButton(
-                  text: 'Kirish',
+                  text: 'login'.tr,
                   onPressed: controller.isLoginLoading.value ? null : controller.login,
                   isLoading: controller.isLoginLoading.value,
                   height: 56,
@@ -205,7 +198,6 @@ class LoginView extends GetView<AuthController> {
 
                 const SizedBox(height: 32),
 
-                // Help Section
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -224,7 +216,7 @@ class LoginView extends GetView<AuthController> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Yordam kerakmi?',
+                            'need_help'.tr,
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w600,
@@ -234,7 +226,7 @@ class LoginView extends GetView<AuthController> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Agar kirish parolingizni unutgan bo\'lsangiz, maktab ma\'muriyatiga murojaat qiling.',
+                        'help_text'.tr,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -246,9 +238,8 @@ class LoginView extends GetView<AuthController> {
 
                 const SizedBox(height: 40),
 
-                // Version Info
                 Text(
-                  'Versiya 1.0.0',
+                  'version'.tr,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,

@@ -1,5 +1,5 @@
-// ===== uz_UZ.dart =====
-const Map<String, String> uzUZ = {
+// ===== student.dart =====
+const Map<String, String> teacherUz = {
   // Profile
   'profile': 'Profil',
   'teacher': 'O\'qituvchi',
@@ -259,8 +259,8 @@ const Map<String, String> uzUZ = {
   'save_grades': 'Saqlash',
 };
 
-// ===== ru_RU.dart =====
-const Map<String, String> ruRU = {
+// ===== auth.dart =====
+const Map<String, String> teacherRu = {
   // Profile
   'profile': 'Профиль',
   'teacher': 'Учитель',
@@ -520,8 +520,8 @@ const Map<String, String> ruRU = {
   'save_grades': 'Сохранить',
 };
 
-// ===== en_US.dart =====
-const Map<String, String> enUS = {
+// ===== teacher.dart =====
+const Map<String, String> teacherUs = {
   // Profile
   'profile': 'Profile',
   'teacher': 'Teacher',
