@@ -1,5 +1,6 @@
 // lib/app/modules/teacher/bindings/teacher_binding.dart
 import 'package:get/get.dart';
+import '../controllers/profile_controller.dart';
 import '../controllers/teacher_home_controller.dart';
 import '../controllers/homework_controller.dart';
 import '../controllers/exam_controller.dart';
@@ -21,5 +22,6 @@ class TeacherBinding extends Bindings {
     Get.lazyPut<ExamController>(() => ExamController(), fenix: true);
     Get.lazyPut<GradingController>(() => GradingController(), fenix: true);
     Get.lazyPut<AttendanceController>(() => AttendanceController(), fenix: true);
+    Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
   }
 }

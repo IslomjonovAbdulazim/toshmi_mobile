@@ -23,6 +23,7 @@ class ExamFormView extends GetView<ExamController> {
     final maxPointsController = TextEditingController(
       text: isEditing ? exam!['max_points'].toString() : '100',
     );
+    final linkController = TextEditingController();
 
     final selectedDate = (isEditing
         ? DateTime.parse(exam!['exam_date'])
@@ -30,10 +31,30 @@ class ExamFormView extends GetView<ExamController> {
 
     final selectedTime = TimeOfDay.fromDateTime(selectedDate.value).obs;
 
+    // Initialize external links for editing
+    if (isEditing && exam!['external_links'] != null) {
+      controller.initializeExternalLinks(
+        List<String>.from(exam!['external_links']),
+      );
+    } else {
+      controller.clearExternalLinks();
+    }
+
+    // Initialize selected group subject for editing
+    if (isEditing && exam!['group_subject_id'] != null) {
+      final groupSubjectId = exam!['group_subject_id'];
+      final matchingSubject = controller.groupSubjects.firstWhereOrNull(
+            (gs) => gs.id == groupSubjectId,
+      );
+      if (matchingSubject != null) {
+        controller.selectGroupSubject(matchingSubject);
+      }
+    }
+
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: TeacherAppBar(
-        title: isEditing ? 'Edit Exam' : 'New Exam',
+        title: isEditing ? 'Imtihonni tahrirlash' : 'Yangi imtihon',
         actions: [
           TextButton(
             onPressed: () => _saveExam(
@@ -43,7 +64,7 @@ class ExamFormView extends GetView<ExamController> {
               selectedDate.value,
               selectedTime.value,
             ),
-            child: const Text('Save'),
+            child: const Text('Saqlash'),
           ),
         ],
       ),
@@ -54,70 +75,32 @@ class ExamFormView extends GetView<ExamController> {
           children: [
             _buildTextField(
               controller: titleController,
-              label: 'Title',
-              hint: 'Enter exam title',
+              label: 'Sarlavha',
+              hint: 'Imtihon sarlavasini kiriting',
               icon: Icons.quiz,
             ),
             const SizedBox(height: 16),
             _buildTextField(
               controller: descriptionController,
-              label: 'Description',
-              hint: 'Enter exam description',
+              label: 'Tavsif',
+              hint: 'Imtihon tavsifini kiriting',
               icon: Icons.description,
               maxLines: 4,
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(
-                    controller: maxPointsController,
-                    label: 'Max Points',
-                    hint: '100',
-                    icon: Icons.star,
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildGroupSubjectSelector(),
-                ),
-              ],
+            _buildGroupSubjectSelector(),
+            const SizedBox(height: 16),
+            _buildTextField(
+              controller: maxPointsController,
+              label: 'Maksimal ball',
+              hint: '100',
+              icon: Icons.star,
+              keyboardType: TextInputType.number,
             ),
-            const SizedBox(height: 24),
-            Text(
-              'Exam Date & Time',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Obx(() => _buildDateTimeCard(
-                    context,
-                    icon: Icons.calendar_today,
-                    title: 'Date',
-                    value: _formatDate(selectedDate.value),
-                    onTap: () => _selectDate(context, selectedDate),
-                  )),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Obx(() => _buildDateTimeCard(
-                    context,
-                    icon: Icons.access_time,
-                    title: 'Time',
-                    value: selectedTime.value.format(context),
-                    onTap: () => _selectTime(context, selectedTime),
-                  )),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildExamDetailsCard(theme),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
+            _buildDateTimeSection(context, selectedDate, selectedTime),
+            const SizedBox(height: 16),
+            _buildExternalLinksSection(linkController, context),
           ],
         ),
       ),
@@ -149,22 +132,72 @@ class ExamFormView extends GetView<ExamController> {
   }
 
   Widget _buildGroupSubjectSelector() {
-    // This would connect to actual group-subject data
-    return DropdownButtonFormField<int>(
+    return Obx(() => DropdownButtonFormField<int>(
       decoration: InputDecoration(
-        labelText: 'Class',
+        labelText: 'Sinf va fan',
         prefixIcon: const Icon(Icons.class_),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         filled: true,
       ),
-      items: const [
-        DropdownMenuItem(value: 1, child: Text('Math - Grade 10A')),
-        DropdownMenuItem(value: 2, child: Text('Physics - Grade 11B')),
+      value: controller.selectedGroupSubject.value?.id,
+      items: controller.groupSubjects.map((groupSubject) {
+        return DropdownMenuItem<int>(
+          value: groupSubject.id,
+          child: Text(controller.getGroupSubjectDisplayName(groupSubject)),
+        );
+      }).toList(),
+      onChanged: (value) {
+        final selected = controller.groupSubjects.firstWhereOrNull(
+              (gs) => gs.id == value,
+        );
+        if (selected != null) {
+          controller.selectGroupSubject(selected);
+        }
+      },
+      hint: const Text('Sinf va fanni tanlang'),
+      validator: (value) => value == null ? 'Sinf va fanni tanlang' : null,
+    ));
+  }
+
+  Widget _buildDateTimeSection(
+      BuildContext context,
+      Rx<DateTime> selectedDate,
+      Rx<TimeOfDay> selectedTime,
+      ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Imtihon sanasi va vaqti',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Obx(() => _buildDateTimeCard(
+                context,
+                icon: Icons.calendar_today,
+                title: 'Sana',
+                value: _formatDate(selectedDate.value),
+                onTap: () => _selectDate(context, selectedDate),
+              )),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => _buildDateTimeCard(
+                context,
+                icon: Icons.access_time,
+                title: 'Vaqt',
+                value: selectedTime.value.format(context),
+                onTap: () => _selectTime(context, selectedTime),
+              )),
+            ),
+          ],
+        ),
       ],
-      onChanged: (value) {},
-      hint: const Text('Select class'),
     );
   }
 
@@ -205,85 +238,104 @@ class ExamFormView extends GetView<ExamController> {
     );
   }
 
-  Widget _buildExamDetailsCard(ThemeData theme) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Exam Details',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildInfoItem(
-                    icon: Icons.timer_outlined,
-                    title: 'Duration',
-                    value: '2 hours',
-                    theme: theme,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildInfoItem(
-                    icon: Icons.location_on_outlined,
-                    title: 'Room',
-                    value: 'A-101',
-                    theme: theme,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoItem({
-    required IconData icon,
-    required String title,
-    required String value,
-    required ThemeData theme,
-  }) {
+  Widget _buildExternalLinksSection(TextEditingController linkController, BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          'Tashqi havolalar',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 12),
         Row(
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              title,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+            Expanded(
+              child: TextFormField(
+                controller: linkController,
+                decoration: InputDecoration(
+                  hintText: 'Havola kiriting (https://...)',
+                  prefixIcon: const Icon(Icons.link),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                ),
               ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton(
+              onPressed: () {
+                if (linkController.text.trim().isNotEmpty) {
+                  controller.addExternalLink(linkController.text.trim());
+                  linkController.clear();
+                }
+              },
+              child: const Text('Qo\'shish'),
             ),
           ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w500,
+        const SizedBox(height: 12),
+        Obx(() => controller.externalLinks.isEmpty
+            ? Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Theme.of(context).dividerColor,
+            ),
+            borderRadius: BorderRadius.circular(12),
           ),
-        ),
+          child: Center(
+            child: Text(
+              'Hech qanday havola qo\'shilmagan',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        )
+            : Column(
+          children: controller.externalLinks
+              .asMap()
+              .entries
+              .map((entry) => _buildLinkItem(entry.key, entry.value, context))
+              .toList(),
+        )),
       ],
     );
   }
 
+  Widget _buildLinkItem(int index, String link, BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.link, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              link,
+              style: Theme.of(context).textTheme.bodySmall,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 16),
+            onPressed: () => controller.removeExternalLink(index),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+    return '${date.day}.${date.month.toString().padLeft(2, '0')}.${date.year}';
   }
 
   Future<void> _selectDate(BuildContext context, Rx<DateTime> selectedDate) async {
@@ -316,7 +368,12 @@ class ExamFormView extends GetView<ExamController> {
       TimeOfDay selectedTime,
       ) {
     if (titleController.text.trim().isEmpty) {
-      Get.snackbar('Error', 'Please enter a title');
+      Get.snackbar('Xato', 'Iltimos sarlavha kiriting');
+      return;
+    }
+
+    if (controller.selectedGroupSubject.value == null) {
+      Get.snackbar('Xato', 'Iltimos sinf va fanni tanlang');
       return;
     }
 
@@ -332,20 +389,22 @@ class ExamFormView extends GetView<ExamController> {
       // Edit existing exam
       controller.updateExam(
         examId: exam!['id'],
-        groupSubjectId: 1, // This should come from the selector
+        groupSubjectId: controller.selectedGroupSubject.value!.id,
         title: titleController.text.trim(),
         description: descriptionController.text.trim(),
         examDate: examDateTime,
         maxPoints: int.tryParse(maxPointsController.text) ?? 100,
+        externalLinks: controller.externalLinks.toList(),
       );
     } else {
       // Create new exam
       controller.createExam(
-        groupSubjectId: 1, // This should come from the selector
+        groupSubjectId: controller.selectedGroupSubject.value!.id,
         title: titleController.text.trim(),
         description: descriptionController.text.trim(),
         examDate: examDateTime,
         maxPoints: int.tryParse(maxPointsController.text) ?? 100,
+        externalLinks: controller.externalLinks.toList(),
       );
     }
 

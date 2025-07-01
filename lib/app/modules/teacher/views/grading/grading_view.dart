@@ -1,12 +1,13 @@
 // lib/app/modules/teacher/views/grading/grading_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../controllers/grading_controller.dart';
 import '../../controllers/homework_controller.dart';
 import '../../controllers/exam_controller.dart';
 import '../shared/widgets/teacher_app_bar.dart';
 import '../shared/widgets/empty_state.dart';
 import '../shared/widgets/quick_action_card.dart';
+import 'homework_grading_view.dart';
+import 'exam_grading_view.dart';
 
 class GradingView extends StatelessWidget {
   const GradingView({super.key});
@@ -18,7 +19,7 @@ class GradingView extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: const TeacherAppBar(
-        title: 'Grading',
+        title: 'Baholash',
         showBackButton: true,
       ),
       body: SingleChildScrollView(
@@ -27,7 +28,7 @@ class GradingView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'What would you like to grade?',
+              'Nimani baholamoqchisiz?',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -37,8 +38,8 @@ class GradingView extends StatelessWidget {
               children: [
                 Expanded(
                   child: QuickActionCard(
-                    title: 'Grade Homework',
-                    subtitle: 'Grade homework assignments',
+                    title: 'Uy vazifalarini baholash',
+                    subtitle: 'Topshirilgan uy vazifalarini baholang',
                     icon: Icons.assignment_outlined,
                     iconColor: theme.colorScheme.primary,
                     onTap: () => _showHomeworkList(context),
@@ -47,8 +48,8 @@ class GradingView extends StatelessWidget {
                 const SizedBox(width: 16),
                 Expanded(
                   child: QuickActionCard(
-                    title: 'Grade Exams',
-                    subtitle: 'Grade exam papers',
+                    title: 'Imtihonlarni baholash',
+                    subtitle: 'Imtihon natijalarini baholang',
                     icon: Icons.quiz_outlined,
                     iconColor: theme.colorScheme.secondary,
                     onTap: () => _showExamList(context),
@@ -69,7 +70,7 @@ class GradingView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Recent Grading',
+          'So\'ngi baholashlar',
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),
@@ -87,14 +88,14 @@ class GradingView extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'No Recent Grading',
+                  'So\'ngi baholashlar yo\'q',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Your recent grading activity will appear here',
+                  'So\'nggi baholash faoliyatingiz shu yerda ko\'rsatiladi',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -109,7 +110,6 @@ class GradingView extends StatelessWidget {
   }
 
   void _showHomeworkList(BuildContext context) {
-    // Ensure controller is available
     if (!Get.isRegistered<HomeworkController>()) {
       Get.lazyPut<HomeworkController>(() => HomeworkController());
     }
@@ -139,7 +139,7 @@ class GradingView extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    'Select Homework to Grade',
+                    'Baholanadigan uy vazifasi',
                     style: Get.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -156,8 +156,8 @@ class GradingView extends StatelessWidget {
               child: Obx(() {
                 if (homeworkController.homeworkList.isEmpty) {
                   return const EmptyState(
-                    title: 'No Homework',
-                    message: 'Create homework assignments to grade them',
+                    title: 'Uy vazifalari yo\'q',
+                    message: 'Baholash uchun uy vazifalari yarating',
                     icon: Icons.assignment_outlined,
                   );
                 }
@@ -177,12 +177,12 @@ class GradingView extends StatelessWidget {
                             color: Get.theme.colorScheme.onPrimaryContainer,
                           ),
                         ),
-                        title: Text(homework['title'] ?? 'Untitled'),
+                        title: Text(homework['title'] ?? 'Nomsiz'),
                         subtitle: Text('${homework['subject']} • ${homework['group']}'),
                         trailing: const Icon(Icons.arrow_forward_ios),
                         onTap: () {
                           Get.back();
-                          Get.snackbar('Info', 'Grade homework feature coming soon');
+                          Get.to(() => HomeworkGradingView(homework: homework));
                         },
                       ),
                     );
@@ -197,7 +197,6 @@ class GradingView extends StatelessWidget {
   }
 
   void _showExamList(BuildContext context) {
-    // Ensure controller is available
     if (!Get.isRegistered<ExamController>()) {
       Get.lazyPut<ExamController>(() => ExamController());
     }
@@ -227,7 +226,7 @@ class GradingView extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    'Select Exam to Grade',
+                    'Baholanadigan imtihon',
                     style: Get.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -244,8 +243,8 @@ class GradingView extends StatelessWidget {
               child: Obx(() {
                 if (examController.examsList.isEmpty) {
                   return const EmptyState(
-                    title: 'No Exams',
-                    message: 'Create exams to grade them',
+                    title: 'Imtihonlar yo\'q',
+                    message: 'Baholash uchun imtihonlar yarating',
                     icon: Icons.quiz_outlined,
                   );
                 }
@@ -265,12 +264,12 @@ class GradingView extends StatelessWidget {
                             color: Get.theme.colorScheme.onSecondaryContainer,
                           ),
                         ),
-                        title: Text(exam['title'] ?? 'Untitled'),
+                        title: Text(exam['title'] ?? 'Nomsiz'),
                         subtitle: Text('${exam['subject']} • ${exam['group']}'),
                         trailing: const Icon(Icons.arrow_forward_ios),
                         onTap: () {
                           Get.back();
-                          Get.snackbar('Info', 'Grade exam feature coming soon');
+                          Get.to(() => ExamGradingView(exam: exam));
                         },
                       ),
                     );

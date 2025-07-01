@@ -1,13 +1,15 @@
 // lib/app/modules/teacher/controllers/homework_controller.dart
 import 'package:get/get.dart';
-import '../../../data/repositories/teacher_repository.dart';
-import '../../../data/repositories/group_subject_repository.dart';
+
 import '../../../data/models/group_subject_model.dart';
+import '../../../data/repositories/group_subject_repository.dart';
+import '../../../data/repositories/teacher_repository.dart';
 import '../../../utils/validators/url_validator.dart';
 
 class HomeworkController extends GetxController {
   final TeacherRepository _teacherRepository = Get.find<TeacherRepository>();
-  final GroupSubjectRepository _groupSubjectRepository = GroupSubjectRepository();
+  final GroupSubjectRepository _groupSubjectRepository =
+      GroupSubjectRepository();
 
   // Loading states
   final isLoading = false.obs;
@@ -22,6 +24,10 @@ class HomeworkController extends GetxController {
   // Error handling
   final errorMessage = ''.obs;
 
+  // Add these lines after existing observables
+  final selectedFilter = 'near_deadline'.obs;
+  final filteredHomeworkList = <dynamic>[].obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -30,10 +36,64 @@ class HomeworkController extends GetxController {
 
   /// Initialize all required data
   Future<void> _initializeData() async {
-    await Future.wait([
-      loadHomework(),
-      loadGroupSubjects(),
-    ]);
+    await Future.wait([loadHomework(), loadGroupSubjects()]);
+  }
+
+  // Add this method
+  String getFilterDisplayText() {
+    switch (selectedFilter.value) {
+      case 'near_deadline':
+        return 'Yaqin muddatlar';
+      case 'old_deadline':
+        return 'O\'tgan muddatlar';
+      case 'graded':
+        return 'Baholangan';
+      case 'not_graded':
+        return 'Baholanmagan';
+      default:
+        return '';
+    }
+  }
+
+  void filterHomework() {
+    final now = DateTime.now();
+    switch (selectedFilter.value) {
+      case 'near_deadline':
+        filteredHomeworkList.value = homeworkList.where((h) {
+          final dueDate = DateTime.parse(h['due_date']);
+          return dueDate.isAfter(now);
+        }).toList()..sort((a, b) => DateTime.parse(a['due_date']).compareTo(DateTime.parse(b['due_date'])));
+        break;
+      case 'old_deadline':
+        filteredHomeworkList.value = homeworkList.where((h) {
+          final dueDate = DateTime.parse(h['due_date']);
+          return dueDate.isBefore(now);
+        }).toList()..sort((a, b) => DateTime.parse(b['due_date']).compareTo(DateTime.parse(a['due_date'])));
+        break;
+      case 'graded':
+        filteredHomeworkList.value = homeworkList.where((h) =>
+        h['graded_count'] != null && h['graded_count'] > 0).toList();
+        break;
+      case 'not_graded':
+        filteredHomeworkList.value = homeworkList.where((h) =>
+        h['graded_count'] == null || h['graded_count'] == 0).toList();
+        break;
+    }
+  }
+
+
+  // Update loadHomework method
+  Future<void> loadHomework() async {
+    try {
+      isLoading.value = true;
+      final homework = await _teacherRepository.getHomeworkList();
+      homeworkList.value = homework;
+      filterHomework(); // Add this line
+    } catch (e) {
+      Get.snackbar('Xato', 'Uy vazifalarni yuklashda xatolik: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   /// Load teacher's group subjects (classes they teach)
@@ -51,9 +111,10 @@ class HomeworkController extends GetxController {
       // Auto-select first group subject if none selected and list is not empty
       if (selectedGroupSubject.value == null && subjects.isNotEmpty) {
         selectedGroupSubject.value = subjects.first;
-        print('🎯 Auto-selected first group subject: ${subjects.first.displayName}');
+        print(
+          '🎯 Auto-selected first group subject: ${subjects.first.displayName}',
+        );
       }
-
     } catch (e) {
       print('❌ Error loading group subjects: $e');
       errorMessage.value = 'Failed to load classes: $e';
@@ -76,31 +137,6 @@ class HomeworkController extends GetxController {
   /// Get display name for group subject
   String getGroupSubjectDisplayName(GroupSubject groupSubject) {
     return _groupSubjectRepository.getGroupSubjectDisplayName(groupSubject);
-  }
-
-  /// Load homework list
-  Future<void> loadHomework() async {
-    try {
-      isLoading.value = true;
-      errorMessage.value = '';
-
-      print('🔄 HomeworkController: Loading homework...');
-      final homework = await _teacherRepository.getHomeworkList();
-
-      homeworkList.value = homework;
-      print('✅ Loaded ${homework.length} homework items');
-
-    } catch (e) {
-      print('❌ Error loading homework: $e');
-      errorMessage.value = 'Failed to load homework: $e';
-      Get.snackbar(
-        'Xato',
-        'Uy vazifalarini yuklashda xatolik: ${_getErrorMessage(e)}',
-        snackPosition: SnackPosition.TOP,
-      );
-    } finally {
-      isLoading.value = false;
-    }
   }
 
   /// Create new homework with validation
@@ -151,7 +187,6 @@ class HomeworkController extends GetxController {
 
       // Reload homework list
       await loadHomework();
-
     } catch (e) {
       print('❌ Error creating homework: $e');
       Get.snackbar(
@@ -214,7 +249,6 @@ class HomeworkController extends GetxController {
 
       // Reload homework list
       await loadHomework();
-
     } catch (e) {
       print('❌ Error updating homework: $e');
       Get.snackbar(
@@ -244,7 +278,6 @@ class HomeworkController extends GetxController {
 
       // Reload homework list
       await loadHomework();
-
     } catch (e) {
       print('❌ Error deleting homework: $e');
       Get.snackbar(
@@ -260,10 +293,7 @@ class HomeworkController extends GetxController {
   /// Refresh all data
   Future<void> refreshHomework() async {
     print('🔄 Refreshing homework data...');
-    await Future.wait([
-      loadHomework(),
-      loadGroupSubjects(),
-    ]);
+    await Future.wait([loadHomework(), loadGroupSubjects()]);
   }
 
   /// Get homework by ID from current list
@@ -277,7 +307,9 @@ class HomeworkController extends GetxController {
 
   /// Filter homework by group subject
   List<dynamic> getHomeworkByGroupSubject(int groupSubjectId) {
-    return homeworkList.where((hw) => hw['group_subject_id'] == groupSubjectId).toList();
+    return homeworkList
+        .where((hw) => hw['group_subject_id'] == groupSubjectId)
+        .toList();
   }
 
   /// Get upcoming homework (due in next 7 days)
@@ -346,7 +378,8 @@ class HomeworkController extends GetxController {
   String _getErrorMessage(dynamic error) {
     final errorStr = error.toString();
 
-    if (errorStr.contains('Network error') || errorStr.contains('SocketException')) {
+    if (errorStr.contains('Network error') ||
+        errorStr.contains('SocketException')) {
       return 'Internet aloqasini tekshiring';
     }
 

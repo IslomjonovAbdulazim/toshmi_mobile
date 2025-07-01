@@ -286,6 +286,20 @@ class TeacherRepository extends BaseRepository {
     }
   }
 
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await put(ApiConstants.changePassword, {
+        'old_password': oldPassword,
+        'new_password': newPassword,
+      });
+    } catch (e) {
+      throw Exception('Failed to change password: $e');
+    }
+  }
+
   @override
   void clearCache() {
     // Clear teacher-specific cached data

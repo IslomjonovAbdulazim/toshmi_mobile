@@ -2,11 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../controllers/profile_controller.dart';
 import '../../controllers/teacher_home_controller.dart';
 import '../attendance/attendance_view.dart';
 import '../exams/exam_list_view.dart';
 import '../grading/grading_view.dart';
 import '../homework/homework_list_view.dart';
+import '../profile/profile_view.dart';
 import '../shared/widgets/quick_action_card.dart';
 import '../shared/widgets/stats_card.dart';
 
@@ -24,6 +26,19 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            onPressed: () {
+              // Register ProfileController if not already registered
+              if (!Get.isRegistered<ProfileController>()) {
+                Get.lazyPut<ProfileController>(() => ProfileController());
+              }
+              Get.to(() => const ProfileView());
+            },
+            icon: const Icon(Icons.person_outline),
+            tooltip: 'Profil',
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () => controller.refreshDashboard(),

@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class GradeInputCell extends StatefulWidget {
-  final Map<String, dynamic> student;
+  final int? initialPoints;
+  final String initialComment;
   final int maxPoints;
-  final Function(int studentId, int? points, String comment)? onChanged;
-  final bool isReadOnly;
+  final Function(int? points, String comment) onChanged;
 
   const GradeInputCell({
     super.key,
-    required this.student,
+    this.initialPoints,
+    this.initialComment = '',
     required this.maxPoints,
-    this.onChanged,
-    this.isReadOnly = false,
+    required this.onChanged,
   });
 
   @override
@@ -23,16 +23,16 @@ class GradeInputCell extends StatefulWidget {
 class _GradeInputCellState extends State<GradeInputCell> {
   late TextEditingController _pointsController;
   late TextEditingController _commentController;
+  bool _hasError = false;
 
   @override
   void initState() {
     super.initState();
-    final grade = widget.student['grade'] as Map<String, dynamic>? ?? {};
     _pointsController = TextEditingController(
-      text: grade['points']?.toString() ?? '',
+      text: widget.initialPoints?.toString() ?? '',
     );
     _commentController = TextEditingController(
-      text: grade['comment'] ?? '',
+      text: widget.initialComment,
     );
   }
 
@@ -43,73 +43,59 @@ class _GradeInputCellState extends State<GradeInputCell> {
     super.dispose();
   }
 
+  void _validateAndUpdate() {
+    final pointsText = _pointsController.text.trim();
+    int? points;
+    bool hasError = false;
+
+    if (pointsText.isNotEmpty) {
+      points = int.tryParse(pointsText);
+      if (points == null || points < 0 || points > widget.maxPoints) {
+        hasError = true;
+      }
+    }
+
+    setState(() {
+      _hasError = hasError;
+    });
+
+    if (!hasError) {
+      widget.onChanged(points, _commentController.text.trim());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final grade = widget.student['grade'] as Map<String, dynamic>? ?? {};
-    final hasGrade = grade['points'] != null;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: hasGrade
-            ? theme.colorScheme.primaryContainer.withOpacity(0.1)
-            : theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: hasGrade
-              ? theme.colorScheme.primary.withOpacity(0.3)
-              : theme.colorScheme.outline.withOpacity(0.3),
+          color: _hasError
+              ? theme.colorScheme.error
+              : theme.colorScheme.outline.withOpacity(0.2),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Points input
           Row(
             children: [
               Expanded(
-                child: Text(
-                  widget.student['name'] ?? 'Unknown',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-              ),
-              if (hasGrade)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'Graded',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
                 child: TextFormField(
                   controller: _pointsController,
-                  enabled: !widget.isReadOnly,
                   keyboardType: TextInputType.number,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
                   ],
                   decoration: InputDecoration(
-                    labelText: 'Points',
-                    hintText: '0',
-                    suffixText: '/${widget.maxPoints}',
+                    labelText: 'Ball',
+                    hintText: '0-${widget.maxPoints}',
+                    errorText: _hasError ? 'Noto\'g\'ri ball' : null,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -117,56 +103,39 @@ class _GradeInputCellState extends State<GradeInputCell> {
                       horizontal: 12,
                       vertical: 8,
                     ),
-                    isDense: true,
                   ),
-                  onChanged: (value) => _onGradeChanged(),
+                  onChanged: (_) => _validateAndUpdate(),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 3,
-                child: TextFormField(
-                  controller: _commentController,
-                  enabled: !widget.isReadOnly,
-                  decoration: InputDecoration(
-                    labelText: 'Comment',
-                    hintText: 'Optional feedback',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    isDense: true,
-                  ),
-                  onChanged: (value) => _onGradeChanged(),
+              const SizedBox(width: 8),
+              Text(
+                '/${widget.maxPoints}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
           ),
-          if (_pointsController.text.isNotEmpty &&
-              (int.tryParse(_pointsController.text) ?? 0) > widget.maxPoints)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                'Points cannot exceed ${widget.maxPoints}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
-                ),
+          const SizedBox(height: 8),
+          // Comment input
+          TextFormField(
+            controller: _commentController,
+            maxLines: 2,
+            decoration: InputDecoration(
+              labelText: 'Izoh (ixtiyoriy)',
+              hintText: 'Izoh kiriting...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
               ),
             ),
+            onChanged: (_) => _validateAndUpdate(),
+          ),
         ],
       ),
-    );
-  }
-
-  void _onGradeChanged() {
-    final points = int.tryParse(_pointsController.text);
-    widget.onChanged?.call(
-      widget.student['student_id'],
-      points,
-      _commentController.text,
     );
   }
 }

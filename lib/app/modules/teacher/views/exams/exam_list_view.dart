@@ -6,6 +6,7 @@ import '../shared/widgets/teacher_app_bar.dart';
 import '../shared/widgets/empty_state.dart';
 import 'widgets/exam_card.dart';
 import 'exam_form_view.dart';
+import '../grading/exam_grading_view.dart';
 
 class ExamListView extends GetView<ExamController> {
   const ExamListView({super.key});
@@ -16,45 +17,100 @@ class ExamListView extends GetView<ExamController> {
 
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
-      appBar: const TeacherAppBar(
-        title: 'Exams',
+      appBar: TeacherAppBar(
+        title: 'Imtihonlar',
         showBackButton: true,
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              controller.selectedFilter.value = value;
+              controller.filterExams();
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'near_deadline', child: Text('Yaqin sanalar')),
+              const PopupMenuItem(value: 'old_deadline', child: Text('O\'tgan sanalar')),
+              const PopupMenuItem(value: 'graded', child: Text('Baholangan')),
+              const PopupMenuItem(value: 'not_graded', child: Text('Baholanmagan')),
+            ],
+          ),
+        ],
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
+      body: RefreshIndicator(
+        onRefresh: controller.refreshExams,
+        child: Obx(() {
+          if (controller.isLoading.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        if (controller.examsList.isEmpty) {
-          return const EmptyState(
-            title: 'No Exams Yet',
-            message: 'Create your first exam to get started.',
-            icon: Icons.quiz_outlined,
-            actionText: 'Create Exam',
-          );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: controller.examsList.length,
-          itemBuilder: (context, index) {
-            final exam = controller.examsList[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: ExamCard(
-                exam: exam,
-                onEdit: () => _editExam(exam),
-                onDelete: () => _deleteExam(exam),
-                onGrade: () => _gradeExam(exam),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Filter indicator
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.filter_list,
+                      size: 16,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      controller.getFilterDisplayText(),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${controller.filteredExamsList.length} ta',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            );
-          },
-        );
-      }),
+
+              // List
+              if (controller.filteredExamsList.isEmpty)
+                const Expanded(
+                  child: EmptyState(
+                    title: 'Hozircha imtihon yo\'q',
+                    message: 'Birinchi imtihoningizni yaratish uchun pastdagi tugmani bosing.',
+                    icon: Icons.quiz_outlined,
+                    actionText: 'Imtihon yaratish',
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 200),
+                    itemCount: controller.filteredExamsList.length,
+                    itemBuilder: (context, index) {
+                      final exam = controller.filteredExamsList[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: ExamCard(
+                          exam: exam,
+                          onEdit: () => _editExam(exam),
+                          onDelete: () => _deleteExam(exam),
+                          onGrade: () => _gradeExam(exam),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          );
+        }),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _createExam,
         icon: const Icon(Icons.add),
-        label: const Text('New Exam'),
+        label: const Text('Yangi imtihon'),
       ),
     );
   }
@@ -70,12 +126,12 @@ class ExamListView extends GetView<ExamController> {
   void _deleteExam(Map<String, dynamic> exam) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Delete Exam'),
-        content: Text('Are you sure you want to delete "${exam['title']}"?'),
+        title: const Text('Imtihonni o\'chirish'),
+        content: Text('Haqiqatan ham "${exam['title']}" imtihonini o\'chirmoqchimisiz?'),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Cancel'),
+            child: const Text('Bekor qilish'),
           ),
           FilledButton(
             onPressed: () {
@@ -85,7 +141,7 @@ class ExamListView extends GetView<ExamController> {
             style: FilledButton.styleFrom(
               backgroundColor: Get.theme.colorScheme.error,
             ),
-            child: const Text('Delete'),
+            child: const Text('O\'chirish'),
           ),
         ],
       ),
@@ -93,7 +149,6 @@ class ExamListView extends GetView<ExamController> {
   }
 
   void _gradeExam(Map<String, dynamic> exam) {
-    // Navigate to grading view
-    Get.snackbar('Info', 'Grade exam feature coming soon');
+    Get.to(() => ExamGradingView(exam: exam));
   }
 }
