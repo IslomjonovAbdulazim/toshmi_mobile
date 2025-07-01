@@ -2,22 +2,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:get/get.dart';
 import '../../../../../utils/validators/url_validator.dart';
 
 class ExternalLinksWidget extends StatelessWidget {
   final List<String> links;
   final bool isEditable;
   final Function(List<String>)? onLinksChanged;
-  final String title;
-  final String emptyMessage;
+  final String? title;
+  final String? emptyMessage;
 
   const ExternalLinksWidget({
     super.key,
     required this.links,
     this.isEditable = false,
     this.onLinksChanged,
-    this.title = 'Tashqi havolalar',
-    this.emptyMessage = 'Tashqi havolalar qo\'shilmagan',
+    this.title,
+    this.emptyMessage,
   });
 
   @override
@@ -27,7 +28,6 @@ class ExternalLinksWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
         Row(
           children: [
             Icon(
@@ -37,7 +37,7 @@ class ExternalLinksWidget extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              title,
+              title ?? 'external_links'.tr,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: theme.colorScheme.primary,
@@ -64,7 +64,6 @@ class ExternalLinksWidget extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // Links content
         if (links.isEmpty)
           _buildEmptyState(context)
         else
@@ -95,7 +94,7 @@ class ExternalLinksWidget extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            emptyMessage,
+            emptyMessage ?? 'no_external_links'.tr,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -186,7 +185,7 @@ class ExternalLinksWidget extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Educational resource',
+                    'educational_resource'.tr,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.w500,
@@ -200,34 +199,31 @@ class ExternalLinksWidget extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Copy link button
             IconButton(
               onPressed: () => _copyLink(context, link),
               icon: const Icon(Icons.copy, size: 18),
-              tooltip: 'Havolani nusxalash',
+              tooltip: 'copy_link'.tr,
               style: IconButton.styleFrom(
                 backgroundColor: theme.colorScheme.surfaceVariant.withOpacity(0.5),
               ),
             ),
 
-            // Open link button
             if (isValid)
               IconButton(
                 onPressed: () => _launchUrl(context, link),
                 icon: const Icon(Icons.open_in_new, size: 18),
-                tooltip: 'Havolani ochish',
+                tooltip: 'open_link'.tr,
                 style: IconButton.styleFrom(
                   backgroundColor: theme.colorScheme.primaryContainer.withOpacity(0.5),
                   foregroundColor: theme.colorScheme.primary,
                 ),
               ),
 
-            // Remove link button (if editable)
             if (isEditable)
               IconButton(
                 onPressed: () => _removeLink(index),
                 icon: const Icon(Icons.delete_outline, size: 18),
-                tooltip: 'Havolani o\'chirish',
+                tooltip: 'remove_link'.tr,
                 style: IconButton.styleFrom(
                   backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.5),
                   foregroundColor: theme.colorScheme.error,
@@ -275,7 +271,7 @@ class ExternalLinksWidget extends StatelessWidget {
     Clipboard.setData(ClipboardData(text: link));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Havola nusxalandi'),
+        content: Text('link_copied'.tr),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -291,10 +287,10 @@ class ExternalLinksWidget extends StatelessWidget {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
-        _showErrorSnackBar(context, 'Bu havolani ochib bo\'lmadi');
+        _showErrorSnackBar(context, 'cannot_open_link'.tr);
       }
     } catch (e) {
-      _showErrorSnackBar(context, 'Havolani ochishda xatolik: $e');
+      _showErrorSnackBar(context, '${'error_opening_link'.tr}: $e');
     }
   }
 
@@ -320,7 +316,6 @@ class ExternalLinksWidget extends StatelessWidget {
   }
 }
 
-/// Compact version for use in cards
 class CompactExternalLinksWidget extends StatelessWidget {
   final List<String> links;
   final int maxVisible;
@@ -354,7 +349,7 @@ class CompactExternalLinksWidget extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              'Havolalar (${links.length})',
+              '${'links'.tr} (${links.length})',
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w500,
@@ -372,8 +367,8 @@ class CompactExternalLinksWidget extends StatelessWidget {
           const SizedBox(height: 4),
           GestureDetector(
             onTap: onViewAll,
-            child:             Text(
-              '+${links.length - maxVisible} yana havolalar',
+            child: Text(
+              '+${links.length - maxVisible} ${'more_links'.tr}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w500,
@@ -443,7 +438,7 @@ class CompactExternalLinksWidget extends StatelessWidget {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
     } catch (e) {
-      debugPrint('Error launching URL: $e');
+      // Silent fail for compact widget
     }
   }
 }

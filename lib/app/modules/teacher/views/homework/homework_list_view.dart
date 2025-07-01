@@ -18,7 +18,7 @@ class HomeworkListView extends GetView<HomeworkController> {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: TeacherAppBar(
-        title: 'Uy vazifalari',
+        title: 'homework_title'.tr,
         showBackButton: true,
         actions: [
           PopupMenuButton<String>(
@@ -27,10 +27,10 @@ class HomeworkListView extends GetView<HomeworkController> {
               controller.filterHomework();
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'near_deadline', child: Text('Yaqin muddatlar')),
-              const PopupMenuItem(value: 'old_deadline', child: Text('O\'tgan muddatlar')),
-              const PopupMenuItem(value: 'graded', child: Text('Baholangan')),
-              const PopupMenuItem(value: 'not_graded', child: Text('Baholanmagan')),
+              PopupMenuItem(value: 'near_deadline', child: Text('near_deadline'.tr)),
+              PopupMenuItem(value: 'old_deadline', child: Text('old_deadline'.tr)),
+              PopupMenuItem(value: 'graded', child: Text('graded'.tr)),
+              PopupMenuItem(value: 'not_graded', child: Text('not_graded'.tr)),
             ],
           ),
         ],
@@ -45,7 +45,6 @@ class HomeworkListView extends GetView<HomeworkController> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Filter indicator
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Row(
@@ -65,7 +64,7 @@ class HomeworkListView extends GetView<HomeworkController> {
                     ),
                     const Spacer(),
                     Text(
-                      '${controller.filteredHomeworkList.length} ta',
+                      '${controller.filteredHomeworkList.length} ${'total_items'.tr}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -74,14 +73,13 @@ class HomeworkListView extends GetView<HomeworkController> {
                 ),
               ),
 
-              // List
               if (controller.filteredHomeworkList.isEmpty)
-                const Expanded(
+                Expanded(
                   child: EmptyState(
-                    title: 'Hali uy vazifalari yo\'q',
-                    message: 'Birinchi uy vazifangizni yaratish uchun pastdagi tugmani bosing.',
+                    title: 'no_homework_yet'.tr,
+                    message: 'create_first_homework'.tr,
                     icon: Icons.assignment_outlined,
-                    actionText: 'Uy vazifasi yaratish',
+                    actionText: 'create_homework'.tr,
                   ),
                 )
               else
@@ -110,7 +108,7 @@ class HomeworkListView extends GetView<HomeworkController> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _createHomework,
         icon: const Icon(Icons.add),
-        label: const Text('Yangi uy vazifasi'),
+        label: Text('new_homework'.tr),
       ),
     );
   }
@@ -126,12 +124,12 @@ class HomeworkListView extends GetView<HomeworkController> {
   void _deleteHomework(Map<String, dynamic> homework) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Uy vazifasini o\'chirish'),
-        content: Text('Haqiqatan ham "${homework['title']}" uy vazifasini o\'chirmoqchimisiz?'),
+        title: Text('delete_homework'.tr),
+        content: Text('${'delete_homework_confirmation'.tr}\n"${homework['title']}"'),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Bekor qilish'),
+            child: Text('cancel'.tr),
           ),
           FilledButton(
             onPressed: () {
@@ -141,7 +139,7 @@ class HomeworkListView extends GetView<HomeworkController> {
             style: FilledButton.styleFrom(
               backgroundColor: Get.theme.colorScheme.error,
             ),
-            child: const Text('O\'chirish'),
+            child: Text('delete'.tr),
           ),
         ],
       ),

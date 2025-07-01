@@ -8,23 +8,17 @@ import '../../../utils/validators/url_validator.dart';
 
 class HomeworkController extends GetxController {
   final TeacherRepository _teacherRepository = Get.find<TeacherRepository>();
-  final GroupSubjectRepository _groupSubjectRepository =
-      GroupSubjectRepository();
+  final GroupSubjectRepository _groupSubjectRepository = GroupSubjectRepository();
 
-  // Loading states
   final isLoading = false.obs;
   final isLoadingGroupSubjects = false.obs;
   final isSaving = false.obs;
 
-  // Data observables
   final homeworkList = <dynamic>[].obs;
   final groupSubjects = <GroupSubject>[].obs;
   final selectedGroupSubject = Rx<GroupSubject?>(null);
 
-  // Error handling
   final errorMessage = ''.obs;
-
-  // Add these lines after existing observables
   final selectedFilter = 'near_deadline'.obs;
   final filteredHomeworkList = <dynamic>[].obs;
 
@@ -34,22 +28,20 @@ class HomeworkController extends GetxController {
     _initializeData();
   }
 
-  /// Initialize all required data
   Future<void> _initializeData() async {
     await Future.wait([loadHomework(), loadGroupSubjects()]);
   }
 
-  // Add this method
   String getFilterDisplayText() {
     switch (selectedFilter.value) {
       case 'near_deadline':
-        return 'Yaqin muddatlar';
+        return 'near_deadline'.tr;
       case 'old_deadline':
-        return 'O\'tgan muddatlar';
+        return 'old_deadline'.tr;
       case 'graded':
-        return 'Baholangan';
+        return 'graded'.tr;
       case 'not_graded':
-        return 'Baholanmagan';
+        return 'not_graded'.tr;
       default:
         return '';
     }
@@ -81,46 +73,35 @@ class HomeworkController extends GetxController {
     }
   }
 
-
-  // Update loadHomework method
   Future<void> loadHomework() async {
     try {
       isLoading.value = true;
       final homework = await _teacherRepository.getHomeworkList();
       homeworkList.value = homework;
-      filterHomework(); // Add this line
+      filterHomework();
     } catch (e) {
-      Get.snackbar('Xato', 'Uy vazifalarni yuklashda xatolik: $e');
+      Get.snackbar('error'.tr, '${'error_loading_homework'.tr}: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Load teacher's group subjects (classes they teach)
   Future<void> loadGroupSubjects() async {
     try {
       isLoadingGroupSubjects.value = true;
       errorMessage.value = '';
 
-      print('🔄 HomeworkController: Loading group subjects...');
       final subjects = await _groupSubjectRepository.getTeacherGroupSubjects();
-
       groupSubjects.value = subjects;
-      print('✅ Loaded ${subjects.length} group subjects');
 
-      // Auto-select first group subject if none selected and list is not empty
       if (selectedGroupSubject.value == null && subjects.isNotEmpty) {
         selectedGroupSubject.value = subjects.first;
-        print(
-          '🎯 Auto-selected first group subject: ${subjects.first.displayName}',
-        );
       }
     } catch (e) {
-      print('❌ Error loading group subjects: $e');
       errorMessage.value = 'Failed to load classes: $e';
       Get.snackbar(
-        'Xato',
-        'Sinflarni yuklashda xatolik: ${_getErrorMessage(e)}',
+        'error'.tr,
+        '${'error_loading_classes'.tr}: ${_getErrorMessage(e)}',
         snackPosition: SnackPosition.TOP,
       );
     } finally {
@@ -128,18 +109,14 @@ class HomeworkController extends GetxController {
     }
   }
 
-  /// Select a group subject for homework creation
   void selectGroupSubject(GroupSubject groupSubject) {
     selectedGroupSubject.value = groupSubject;
-    print('🎯 Selected group subject: ${groupSubject.displayName}');
   }
 
-  /// Get display name for group subject
   String getGroupSubjectDisplayName(GroupSubject groupSubject) {
     return _groupSubjectRepository.getGroupSubjectDisplayName(groupSubject);
   }
 
-  /// Create new homework with validation
   Future<void> createHomework({
     required int groupSubjectId,
     required String title,
@@ -151,7 +128,6 @@ class HomeworkController extends GetxController {
     try {
       isSaving.value = true;
 
-      // Validate inputs
       final validationError = _validateHomeworkInput(
         title: title,
         dueDate: dueDate,
@@ -160,15 +136,9 @@ class HomeworkController extends GetxController {
       );
 
       if (validationError != null) {
-        Get.snackbar('Tekshirish xatosi', validationError);
+        Get.snackbar('validation_error'.tr, validationError);
         return;
       }
-
-      print('🔄 Creating homework: $title');
-      print('📝 Description: "${description}"');
-      print('📅 Due date: $dueDate');
-      print('⭐ Max points: $maxPoints');
-      print('🔗 External links: $externalLinks');
 
       await _teacherRepository.createHomework(
         groupSubjectId: groupSubjectId,
@@ -180,18 +150,16 @@ class HomeworkController extends GetxController {
       );
 
       Get.snackbar(
-        'Muvaffaqiyat',
-        'Uy vazifasi "$title" muvaffaqiyatli yaratildi',
+        'success'.tr,
+        '${'homework_created_successfully'.tr} "$title"',
         snackPosition: SnackPosition.TOP,
       );
 
-      // Reload homework list
       await loadHomework();
     } catch (e) {
-      print('❌ Error creating homework: $e');
       Get.snackbar(
-        'Xato',
-        'Uy vazifasi yaratishda xatolik: ${_getErrorMessage(e)}',
+        'error'.tr,
+        '${'error_creating_homework'.tr}: ${_getErrorMessage(e)}',
         snackPosition: SnackPosition.TOP,
       );
     } finally {
@@ -199,7 +167,6 @@ class HomeworkController extends GetxController {
     }
   }
 
-  /// Update existing homework with validation
   Future<void> updateHomework({
     required int homeworkId,
     required int groupSubjectId,
@@ -212,7 +179,6 @@ class HomeworkController extends GetxController {
     try {
       isSaving.value = true;
 
-      // Validate inputs
       final validationError = _validateHomeworkInput(
         title: title,
         dueDate: dueDate,
@@ -221,15 +187,9 @@ class HomeworkController extends GetxController {
       );
 
       if (validationError != null) {
-        Get.snackbar('Tekshirish xatosi', validationError);
+        Get.snackbar('validation_error'.tr, validationError);
         return;
       }
-
-      print('🔄 Updating homework: $title (ID: $homeworkId)');
-      print('📝 Description: "${description}"');
-      print('📅 Due date: $dueDate');
-      print('⭐ Max points: $maxPoints');
-      print('🔗 External links: $externalLinks');
 
       await _teacherRepository.updateHomework(
         homeworkId: homeworkId,
@@ -242,18 +202,16 @@ class HomeworkController extends GetxController {
       );
 
       Get.snackbar(
-        'Muvaffaqiyat',
-        'Uy vazifasi "$title" muvaffaqiyatli yangilandi',
+        'success'.tr,
+        '${'homework_updated_successfully'.tr} "$title"',
         snackPosition: SnackPosition.TOP,
       );
 
-      // Reload homework list
       await loadHomework();
     } catch (e) {
-      print('❌ Error updating homework: $e');
       Get.snackbar(
-        'Xato',
-        'Uy vazifasini yangilashda xatolik: ${_getErrorMessage(e)}',
+        'error'.tr,
+        '${'error_updating_homework'.tr}: ${_getErrorMessage(e)}',
         snackPosition: SnackPosition.TOP,
       );
     } finally {
@@ -261,28 +219,23 @@ class HomeworkController extends GetxController {
     }
   }
 
-  /// Delete homework with confirmation
   Future<void> deleteHomework(int homeworkId) async {
     try {
       isLoading.value = true;
 
-      print('🔄 Deleting homework: $homeworkId');
-
       await _teacherRepository.deleteHomework(homeworkId);
 
       Get.snackbar(
-        'Muvaffaqiyat',
-        'Uy vazifasi muvaffaqiyatli o\'chirildi',
+        'success'.tr,
+        'homework_deleted_successfully'.tr,
         snackPosition: SnackPosition.TOP,
       );
 
-      // Reload homework list
       await loadHomework();
     } catch (e) {
-      print('❌ Error deleting homework: $e');
       Get.snackbar(
-        'Xato',
-        'Uy vazifasini o\'chirishda xatolik: ${_getErrorMessage(e)}',
+        'error'.tr,
+        '${'error_deleting_homework'.tr}: ${_getErrorMessage(e)}',
         snackPosition: SnackPosition.TOP,
       );
     } finally {
@@ -290,13 +243,10 @@ class HomeworkController extends GetxController {
     }
   }
 
-  /// Refresh all data
   Future<void> refreshHomework() async {
-    print('🔄 Refreshing homework data...');
     await Future.wait([loadHomework(), loadGroupSubjects()]);
   }
 
-  /// Get homework by ID from current list
   Map<String, dynamic>? getHomeworkById(int homeworkId) {
     try {
       return homeworkList.firstWhere((hw) => hw['id'] == homeworkId);
@@ -305,14 +255,12 @@ class HomeworkController extends GetxController {
     }
   }
 
-  /// Filter homework by group subject
   List<dynamic> getHomeworkByGroupSubject(int groupSubjectId) {
     return homeworkList
         .where((hw) => hw['group_subject_id'] == groupSubjectId)
         .toList();
   }
 
-  /// Get upcoming homework (due in next 7 days)
   List<dynamic> getUpcomingHomework() {
     final now = DateTime.now();
     final nextWeek = now.add(const Duration(days: 7));
@@ -323,7 +271,6 @@ class HomeworkController extends GetxController {
     }).toList();
   }
 
-  /// Get overdue homework
   List<dynamic> getOverdueHomework() {
     final now = DateTime.now();
 
@@ -333,69 +280,61 @@ class HomeworkController extends GetxController {
     }).toList();
   }
 
-  /// Validate homework input data
   String? _validateHomeworkInput({
     required String title,
     required DateTime dueDate,
     required int maxPoints,
     required List<String> externalLinks,
   }) {
-    // Title validation
     if (title.trim().isEmpty) {
-      return 'Sarlavha bo\'sh bo\'lishi mumkin emas';
+      return 'title_cannot_be_empty'.tr;
     }
 
     if (title.trim().length < 3) {
-      return 'Sarlavha kamida 3 ta belgidan iborat bo\'lishi kerak';
+      return 'title_min_length'.tr;
     }
 
-    // Due date validation
     if (dueDate.isBefore(DateTime.now())) {
-      return 'Topshirish sanasi o\'tmishda bo\'lishi mumkin emas';
+      return 'due_date_cannot_be_past'.tr;
     }
 
-    // Max points validation
     if (maxPoints <= 0) {
-      return 'Maksimal ball 0 dan katta bo\'lishi kerak';
+      return 'max_points_must_be_positive'.tr;
     }
 
     if (maxPoints > 1000) {
-      return 'Maksimal ball 1000 dan oshmasligi kerak';
+      return 'max_points_limit'.tr;
     }
 
-    // External links validation
     if (externalLinks.isNotEmpty) {
       final invalidLinks = UrlValidator.validateMultipleUrls(externalLinks);
       if (invalidLinks.isNotEmpty) {
-        return 'Noto\'g\'ri havolalar topildi: ${invalidLinks.take(2).join(', ')}${invalidLinks.length > 2 ? '...' : ''}';
+        return '${'invalid_links_found'.tr}: ${invalidLinks.take(2).join(', ')}${invalidLinks.length > 2 ? '...' : ''}';
       }
     }
 
-    return null; // All validations passed
+    return null;
   }
 
-  /// Extract user-friendly error message
   String _getErrorMessage(dynamic error) {
     final errorStr = error.toString();
 
-    if (errorStr.contains('Network error') ||
-        errorStr.contains('SocketException')) {
-      return 'Internet aloqasini tekshiring';
+    if (errorStr.contains('Network error') || errorStr.contains('SocketException')) {
+      return 'check_internet_connection'.tr;
     }
 
     if (errorStr.contains('Unauthorized')) {
-      return 'Qaytadan tizimga kiring';
+      return 'please_login_again'.tr;
     }
 
     if (errorStr.contains('Access denied') || errorStr.contains('403')) {
-      return 'Bu amal uchun ruxsatingiz yo\'q';
+      return 'no_permission'.tr;
     }
 
     if (errorStr.contains('Not found') || errorStr.contains('404')) {
-      return 'So\'ralgan element topilmadi';
+      return 'item_not_found'.tr;
     }
 
-    // Extract the main error message after the colon
     if (errorStr.contains(':')) {
       final parts = errorStr.split(':');
       return parts.last.trim();
@@ -404,7 +343,6 @@ class HomeworkController extends GetxController {
     return errorStr;
   }
 
-  /// Clear all data (useful for logout)
   void clearData() {
     homeworkList.clear();
     groupSubjects.clear();

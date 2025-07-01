@@ -31,16 +31,13 @@ class HomeworkFormView extends GetView<HomeworkController> {
 
     final selectedTime = TimeOfDay.fromDateTime(selectedDate.value).obs;
 
-    // External links management
     final externalLinks = <String>[].obs;
     final linkController = TextEditingController();
 
-    // Initialize with existing links if editing
     if (isEditing && homework!['external_links'] != null) {
       externalLinks.addAll(List<String>.from(homework!['external_links']));
     }
 
-    // Initialize selected group subject if editing
     if (isEditing && homework!['group_subject_id'] != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final groupSubject = controller.groupSubjects.firstWhereOrNull(
@@ -55,7 +52,7 @@ class HomeworkFormView extends GetView<HomeworkController> {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: TeacherAppBar(
-        title: isEditing ? 'Uy vazifasini tahrirlash' : 'Yangi uy vazifasi',
+        title: isEditing ? 'edit_homework'.tr : 'new_homework'.tr,
         actions: [
           TextButton(
             onPressed: () => _saveHomework(
@@ -66,7 +63,7 @@ class HomeworkFormView extends GetView<HomeworkController> {
               selectedTime.value,
               externalLinks.toList(),
             ),
-            child: const Text('Saqlash'),
+            child: Text('save'.tr),
           ),
         ],
       ),
@@ -75,27 +72,24 @@ class HomeworkFormView extends GetView<HomeworkController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title Field
             _buildTextField(
               controller: titleController,
-              label: 'Sarlavha',
-              hint: 'Uy vazifasi sarlavhasini kiriting',
+              label: 'title'.tr,
+              hint: 'enter_title'.tr,
               icon: Icons.title,
-              validator: (value) => value?.trim().isEmpty == true ? 'Sarlavha kiritish majburiy' : null,
+              validator: (value) => value?.trim().isEmpty == true ? 'title_required'.tr : null,
             ),
             const SizedBox(height: 16),
 
-            // Description Field
             _buildTextField(
               controller: descriptionController,
-              label: 'Tavsif',
-              hint: 'Uy vazifasi tavsifini kiriting (ixtiyoriy)',
+              label: 'description'.tr,
+              hint: 'enter_description'.tr,
               icon: Icons.description,
               maxLines: 4,
             ),
             const SizedBox(height: 16),
 
-            // Group Subject and Max Points Row
             Row(
               children: [
                 Expanded(
@@ -106,14 +100,14 @@ class HomeworkFormView extends GetView<HomeworkController> {
                 Expanded(
                   child: _buildTextField(
                     controller: maxPointsController,
-                    label: 'Maksimal ball',
+                    label: 'max_points'.tr,
                     hint: '100',
                     icon: Icons.star,
                     keyboardType: TextInputType.number,
                     validator: (value) {
                       final points = int.tryParse(value ?? '');
                       if (points == null || points <= 0) {
-                        return 'To\'g\'ri ball kiriting';
+                        return 'enter_correct_points'.tr;
                       }
                       return null;
                     },
@@ -123,9 +117,8 @@ class HomeworkFormView extends GetView<HomeworkController> {
             ),
             const SizedBox(height: 24),
 
-            // Due Date & Time Section
             Text(
-              'Topshirish sanasi va vaqti',
+              'due_date_time'.tr,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -137,7 +130,7 @@ class HomeworkFormView extends GetView<HomeworkController> {
                   child: Obx(() => _buildDateTimeCard(
                     context,
                     icon: Icons.calendar_today,
-                    title: 'Sana',
+                    title: 'date'.tr,
                     value: _formatDate(selectedDate.value),
                     onTap: () => _selectDate(context, selectedDate),
                   )),
@@ -147,7 +140,7 @@ class HomeworkFormView extends GetView<HomeworkController> {
                   child: Obx(() => _buildDateTimeCard(
                     context,
                     icon: Icons.access_time,
-                    title: 'Vaqt',
+                    title: 'time'.tr,
                     value: selectedTime.value.format(context),
                     onTap: () => _selectTime(context, selectedTime),
                   )),
@@ -156,7 +149,6 @@ class HomeworkFormView extends GetView<HomeworkController> {
             ),
             const SizedBox(height: 24),
 
-            // External Links Section
             _buildExternalLinksSection(
               theme,
               linkController,
@@ -204,16 +196,16 @@ class HomeworkFormView extends GetView<HomeworkController> {
             border: Border.all(color: Colors.grey),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Text(
-            'Sinflar yuklanmoqda...',
-            style: TextStyle(color: Colors.grey),
+          child: Text(
+            'classes_loading'.tr,
+            style: const TextStyle(color: Colors.grey),
           ),
         );
       }
 
       return DropdownButtonFormField<GroupSubject>(
         decoration: InputDecoration(
-          labelText: 'Sinf',
+          labelText: 'class'.tr,
           prefixIcon: const Icon(Icons.class_),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -235,8 +227,8 @@ class HomeworkFormView extends GetView<HomeworkController> {
             controller.selectGroupSubject(value);
           }
         },
-        hint: const Text('Sinfni tanlang'),
-        validator: (value) => value == null ? 'Iltimos sinfni tanlang' : null,
+        hint: Text('select_class'.tr),
+        validator: (value) => value == null ? 'please_select_class'.tr : null,
       );
     });
   }
@@ -250,28 +242,27 @@ class HomeworkFormView extends GetView<HomeworkController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Tashqi havolalar',
+          'external_links'.tr,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          'O\'quvchilar uchun foydali havolalar qo\'shing (videolar, hujjatlar, manbalar)',
+          'external_links_description'.tr,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 12),
 
-        // Add Link Field
         Row(
           children: [
             Expanded(
               child: TextFormField(
                 controller: linkController,
                 decoration: InputDecoration(
-                  labelText: 'Havola URL',
+                  labelText: 'link_url'.tr,
                   hintText: 'https://example.com',
                   prefixIcon: const Icon(Icons.link),
                   border: OutlineInputBorder(
@@ -296,7 +287,6 @@ class HomeworkFormView extends GetView<HomeworkController> {
         ),
         const SizedBox(height: 16),
 
-        // Links List
         Obx(() {
           if (externalLinks.isEmpty) {
             return Container(
@@ -317,7 +307,7 @@ class HomeworkFormView extends GetView<HomeworkController> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Hali tashqi havolalar qo\'shilmagan',
+                    'no_external_links_added'.tr,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -373,7 +363,7 @@ class HomeworkFormView extends GetView<HomeworkController> {
         subtitle: _isValidUrl(link)
             ? null
             : Text(
-          'Noto\'g\'ri URL formati',
+          'invalid_url_format'.tr,
           style: TextStyle(color: theme.colorScheme.error),
         ),
         trailing: IconButton(
@@ -440,14 +430,10 @@ class HomeworkFormView extends GetView<HomeworkController> {
 
   String _sanitizeUrl(String url) {
     final trimmedUrl = url.trim();
-
     if (trimmedUrl.isEmpty) return '';
-
-    // If it doesn't start with protocol, add https://
     if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
       return 'https://$trimmedUrl';
     }
-
     return trimmedUrl;
   }
 
@@ -458,23 +444,23 @@ class HomeworkFormView extends GetView<HomeworkController> {
     final link = _sanitizeUrl(linkController.text);
 
     if (link.isEmpty) {
-      Get.snackbar('Xato', 'Iltimos havola kiriting');
+      Get.snackbar('error'.tr, 'please_enter_link'.tr);
       return;
     }
 
     if (!_isValidUrl(link)) {
-      Get.snackbar('Xato', 'Iltimos to\'g\'ri URL kiriting (http:// yoki https:// bilan boshlanuvchi)');
+      Get.snackbar('error'.tr, 'please_enter_valid_url'.tr);
       return;
     }
 
     if (externalLinks.contains(link)) {
-      Get.snackbar('Xato', 'Bu havola allaqachon qo\'shilgan');
+      Get.snackbar('error'.tr, 'link_already_added'.tr);
       return;
     }
 
     externalLinks.add(link);
     linkController.clear();
-    Get.snackbar('Muvaffaqiyat', 'Havola muvaffaqiyatli qo\'shildi', duration: const Duration(seconds: 2));
+    Get.snackbar('success'.tr, 'link_added_successfully'.tr, duration: const Duration(seconds: 2));
   }
 
   Future<void> _selectDate(BuildContext context, Rx<DateTime> selectedDate) async {
@@ -483,9 +469,9 @@ class HomeworkFormView extends GetView<HomeworkController> {
       initialDate: selectedDate.value,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      helpText: 'Topshirish sanasini tanlang',
-      confirmText: 'Tanlash',
-      cancelText: 'Bekor qilish',
+      helpText: 'select_due_date'.tr,
+      confirmText: 'select'.tr,
+      cancelText: 'cancel'.tr,
     );
     if (date != null) {
       selectedDate.value = date;
@@ -496,9 +482,9 @@ class HomeworkFormView extends GetView<HomeworkController> {
     final time = await showTimePicker(
       context: context,
       initialTime: selectedTime.value,
-      helpText: 'Topshirish vaqtini tanlang',
-      confirmText: 'Tanlash',
-      cancelText: 'Bekor qilish',
+      helpText: 'select_due_time'.tr,
+      confirmText: 'select'.tr,
+      cancelText: 'cancel'.tr,
     );
     if (time != null) {
       selectedTime.value = time;
@@ -513,33 +499,23 @@ class HomeworkFormView extends GetView<HomeworkController> {
       TimeOfDay selectedTime,
       List<String> externalLinks,
       ) {
-    // Get values and trim
     final title = titleController.text.trim();
     final description = descriptionController.text.trim();
     final maxPointsText = maxPointsController.text.trim();
 
-    // Debug prints
-    print('🔄 Saving homework...');
-    print('📝 Title: "$title"');
-    print('📝 Description: "$description"');
-    print('📝 Max Points Text: "$maxPointsText"');
-    print('🔗 External Links: $externalLinks');
-
-    // Validation
     if (title.isEmpty) {
-      Get.snackbar('Xato', 'Iltimos sarlavha kiriting');
+      Get.snackbar('error'.tr, 'please_enter_title'.tr);
       return;
     }
 
     if (controller.selectedGroupSubject.value == null) {
-      Get.snackbar('Xato', 'Iltimos sinfni tanlang');
+      Get.snackbar('error'.tr, 'please_select_class'.tr);
       return;
     }
 
-    // Check for invalid URLs
     final invalidLinks = externalLinks.where((link) => !_isValidUrl(link)).toList();
     if (invalidLinks.isNotEmpty) {
-      Get.snackbar('Xato', 'Saqlashdan oldin noto\'g\'ri havolalarni tuzating');
+      Get.snackbar('error'.tr, 'fix_invalid_links'.tr);
       return;
     }
 
@@ -553,13 +529,7 @@ class HomeworkFormView extends GetView<HomeworkController> {
 
     final maxPoints = int.tryParse(maxPointsText) ?? 100;
 
-    print('✅ Validation passed. Calling controller...');
-    print('📅 Due DateTime: $dueDateTime');
-    print('⭐ Max Points (parsed): $maxPoints');
-
     if (homework != null) {
-      // Edit existing homework
-      print('🔄 Editing existing homework with ID: ${homework!['id']}');
       controller.updateHomework(
         homeworkId: homework!['id'],
         groupSubjectId: controller.selectedGroupSubject.value!.id,
@@ -570,8 +540,6 @@ class HomeworkFormView extends GetView<HomeworkController> {
         externalLinks: externalLinks,
       );
     } else {
-      // Create new homework
-      print('🔄 Creating new homework');
       controller.createHomework(
         groupSubjectId: controller.selectedGroupSubject.value!.id,
         title: title,
