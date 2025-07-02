@@ -17,7 +17,7 @@ class _StudentScheduleViewState extends State<StudentScheduleView> {
   final schedule = <dynamic>[].obs;
   final selectedDay = (DateTime.now().weekday - 1).obs; // 0=Monday
 
-  final days = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'];
+  final days = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
 
   @override
   void initState() {
@@ -73,50 +73,43 @@ class _StudentScheduleViewState extends State<StudentScheduleView> {
 
   Widget _buildDaySelector() {
     return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Obx(() => ListView.builder(
+      height: 50,
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: 7,
+        itemCount: 6,
         itemBuilder: (context, index) {
-          final isSelected = selectedDay.value == index;
-          final isToday = DateTime.now().weekday - 1 == index;
+          return Obx(() {
+            final isSelected = selectedDay.value == index;
+            final today = DateTime.now().weekday - 1; // 0=Monday
+            final isToday = today == index && today < 6; // Exclude Sunday
 
-          return GestureDetector(
-            onTap: () => selectedDay.value = index,
-            child: Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.blue : (isToday ? Colors.blue.withOpacity(0.1) : null),
-                borderRadius: BorderRadius.circular(20),
-                border: isToday && !isSelected ? Border.all(color: Colors.blue) : null,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
+            return GestureDetector(
+              onTap: () => selectedDay.value = index,
+              child: Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.blue : (isToday ? Colors.blue.withOpacity(0.1) : null),
+                  borderRadius: BorderRadius.circular(25),
+                  border: isToday && !isSelected ? Border.all(color: Colors.blue) : null,
+                ),
+                child: Center(
+                  child: Text(
                     days[index].substring(0, 3),
                     style: TextStyle(
-                      color: isSelected ? Colors.white : (isToday ? Colors.blue : Colors.black),
+                      color: isSelected ? Colors.white : (isToday ? Colors.blue : Theme.of(context).colorScheme.onSurface),
                       fontWeight: FontWeight.w600,
-                      fontSize: 12,
+                      fontSize: 14,
                     ),
                   ),
-                  Text(
-                    '${DateTime.now().add(Duration(days: index - DateTime.now().weekday + 1)).day}',
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : (isToday ? Colors.blue : Colors.grey[600]),
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          );
+            );
+          });
         },
-      )),
+      ),
     );
   }
 
@@ -132,6 +125,8 @@ class _StudentScheduleViewState extends State<StudentScheduleView> {
     final startTime = lesson['start_time'] as String;
     final endTime = lesson['end_time'] as String;
     final isCurrentLesson = _isCurrentLesson(startTime, endTime);
+    final s = startTime.split(":").take(2).join(":");
+    final e = endTime.split(":").take(2).join(":");
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -210,7 +205,7 @@ class _StudentScheduleViewState extends State<StudentScheduleView> {
                         Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
                         const SizedBox(width: 4),
                         Text(
-                          '$startTime - $endTime',
+                          '$s - $e',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontWeight: FontWeight.w500,

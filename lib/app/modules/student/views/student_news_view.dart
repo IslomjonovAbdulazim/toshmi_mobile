@@ -1,6 +1,10 @@
 // lib/app/modules/student/views/student_news_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:toshmi_mobile/app/services/auth_service.dart';
+
+import '../../../data/repositories/news_repository.dart';
 import '../../../utils/widgets/common/custom_app_bar.dart';
 
 class StudentNewsView extends StatefulWidget {
@@ -11,11 +15,12 @@ class StudentNewsView extends StatefulWidget {
 }
 
 class _StudentNewsViewState extends State<StudentNewsView> {
+  final NewsRepository newsRepository = NewsRepository();
   final isLoading = false.obs;
   final news = <Map<String, dynamic>>[].obs;
 
   @override
-  void initInit() {
+  void initState() {
     super.initState();
     loadNews();
   }
@@ -23,37 +28,8 @@ class _StudentNewsViewState extends State<StudentNewsView> {
   Future<void> loadNews() async {
     try {
       isLoading.value = true;
-      // TODO: Replace with actual news repository call
-      // final data = await newsRepository.getNews();
-
-      // Mock data for now
-      await Future.delayed(const Duration(seconds: 1));
-      news.value = [
-        {
-          'id': 1,
-          'title': 'Yangi o\'quv yili boshlanishi',
-          'content': 'Hurmatli o\'quvchilar! Yangi o\'quv yili 1-sentabrdan boshlanadi. Barcha o\'quvchilar soat 8:00 da maktabda bo\'lishlari kerak.',
-          'author': 'Maktab ma\'muriyati',
-          'created_at': '2024-08-25T10:00:00',
-          'is_important': true,
-        },
-        {
-          'id': 2,
-          'title': 'Sport musobaqalari',
-          'content': 'Maktabimizda futbol musobaqalari o\'tkaziladi. Ishtirok etmoqchi bo\'lganlar sport o\'qituvchisiga murojaat qilsinlar.',
-          'author': 'Sport o\'qituvchisi',
-          'created_at': '2024-08-24T14:30:00',
-          'is_important': false,
-        },
-        {
-          'id': 3,
-          'title': 'Kitobxona yangi kitoblar',
-          'content': 'Maktab kitobxonasida yangi kitoblar keldi. O\'quvchilar ulardan foydalanishlari mumkin.',
-          'author': 'Kutubxonachi',
-          'created_at': '2024-08-23T11:15:00',
-          'is_important': false,
-        },
-      ];
+      final data = await newsRepository.getNews();
+      news.value = data.cast<Map<String, dynamic>>();
     } catch (e) {
       Get.snackbar('Xato', 'Yangiliklarni yuklashda xato: $e');
     } finally {
@@ -64,10 +40,7 @@ class _StudentNewsViewState extends State<StudentNewsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: 'Yangiliklar',
-        showBackButton: true,
-      ),
+      appBar: CustomAppBar(title: 'Yangiliklar', showBackButton: true),
       body: Obx(() {
         if (isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -90,77 +63,159 @@ class _StudentNewsViewState extends State<StudentNewsView> {
   }
 
   Widget _buildNewsCard(Map<String, dynamic> newsItem) {
-    final isImportant = newsItem['is_important'] ?? false;
+    final imageIds = newsItem['image_ids'] as List? ?? [];
+    final externalLinks = newsItem['external_links'] as List? ?? [];
+    final firstImageId = imageIds.isNotEmpty ? imageIds.first : null;
+    final showImage = firstImageId != null;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: isImportant ? 4 : 2,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: isImportant ? Border.all(color: Colors.orange, width: 2) : null,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  if (isImportant) ...[
-                    Icon(Icons.priority_high, color: Colors.orange, size: 20),
-                    const SizedBox(width: 8),
-                  ],
-                  Expanded(
-                    child: Text(
-                      newsItem['title'] ?? '',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+      elevation: 2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image section - only show if image exists
+          if (showImage)
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
+              child: Image.network(
+                newsRepository.getFileUrl(firstImageId),
+                width: double.infinity,
+                headers: {
+                  'Authorization': 'Bearer ${AuthService().token}',
+                },
+                height: 200,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  // Return empty container to hide space on error
+                  return Text("${newsRepository.getFileUrl(firstImageId)}\n $error");
+                },
+              ),
+            ),
+
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  newsItem['title'] ?? '',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  newsItem['content'] ?? '',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: Colors.white,
+                    height: 1.3,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+
+                // External links section
+                if (externalLinks.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline,
                       ),
                     ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.link,
+                              size: 16,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Foydali havolalar:',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        ...externalLinks
+                            .map(
+                              (link) => Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: GestureDetector(
+                                  onTap: () => _launchURL(link.toString()),
+                                  child: Text(
+                                    link.toString(),
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      decoration: TextDecoration.underline,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ],
+                    ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                newsItem['content'] ?? '',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.grey[700],
-                  height: 1.5,
+
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(Icons.person, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Admin',
+                      // Since we only have author_id, showing generic text
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Text(
+                      _formatDate(newsItem['created_at']),
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Icon(Icons.person, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    newsItem['author'] ?? '',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const Spacer(),
-                  Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    _formatDate(newsItem['created_at']),
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
+  }
+
+  void _launchURL(String url) async {
+    // URL launching implementation
+    Get.snackbar('Havola', 'Havola ochilmoqda: $url');
   }
 
   Widget _buildEmptyState() {
@@ -175,10 +230,7 @@ class _StudentNewsViewState extends State<StudentNewsView> {
             style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
-          TextButton(
-            onPressed: loadNews,
-            child: const Text('Qayta yuklash'),
-          ),
+          TextButton(onPressed: loadNews, child: const Text('Qayta yuklash')),
         ],
       ),
     );
