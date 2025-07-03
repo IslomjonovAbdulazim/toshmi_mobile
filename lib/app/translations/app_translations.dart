@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:toshmi_mobile/app/translations/parent.dart';
+import 'package:toshmi_mobile/app/translations/widgets.dart';
 
 import 'teacher.dart';
 import 'auth.dart';
@@ -9,12 +11,23 @@ class AppTranslations extends Translations {
   final Map<String, String> ru = {};
   final Map<String, String> en = {};
   AppTranslations() {
+    // uz
     uz.addAll(teacherUz);
-    ru.addAll(teacherRu);
-    en.addAll(teacherUs);
     uz.addAll(authUz);
+    uz.addAll(parentUz);
+    uz.addAll(widgetsUz);
+
+    // ru
     ru.addAll(authRu);
+    ru.addAll(teacherRu);
+    ru.addAll(parentRu);
+    ru.addAll(widgetsRu);
+
+    // en
+    en.addAll(teacherUs);
     en.addAll(authEn);
+    en.addAll(parentEn);
+    en.addAll(widgetsEn);
   }
 
   @override

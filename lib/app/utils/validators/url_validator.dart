@@ -19,43 +19,43 @@ class UrlValidator {
   }
 
   /// Check if a string is a valid URL with stricter validation
-  static bool isValidUrlStrict(String url) {
-    if (url.trim().isEmpty) return false;
-    return _strictUrlPattern.hasMatch(url.trim());
-  }
+  // static bool isValidUrlStrict(String url) {
+  //   if (url.trim().isEmpty) return false;
+  //   return _strictUrlPattern.hasMatch(url.trim());
+  // }
 
   /// Validate URL and return error message if invalid
-  static String? validateUrl(String? url) {
-    if (url == null || url.trim().isEmpty) {
-      return 'URL bo\'sh bo\'lishi mumkin emas';
-    }
-
-    final trimmedUrl = url.trim();
-
-    if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
-      return 'URL http:// yoki https:// bilan boshlanishi kerak';
-    }
-
-    if (!isValidUrl(trimmedUrl)) {
-      return 'Iltimos to\'g\'ri URL kiriting';
-    }
-
-    return null; // Valid URL
-  }
+  // static String? validateUrl(String? url) {
+  //   if (url == null || url.trim().isEmpty) {
+  //     return 'URL bo\'sh bo\'lishi mumkin emas';
+  //   }
+  //
+  //   final trimmedUrl = url.trim();
+  //
+  //   if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+  //     return 'URL http:// yoki https:// bilan boshlanishi kerak';
+  //   }
+  //
+  //   if (!isValidUrl(trimmedUrl)) {
+  //     return 'Iltimos to\'g\'ri URL kiriting';
+  //   }
+  //
+  //   return null; // Valid URL
+  // }
 
   /// Sanitize URL by adding protocol if missing
-  static String sanitizeUrl(String url) {
-    final trimmedUrl = url.trim();
-
-    if (trimmedUrl.isEmpty) return '';
-
-    // If it doesn't start with protocol, add https://
-    if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
-      return 'https://$trimmedUrl';
-    }
-
-    return trimmedUrl;
-  }
+  // static String sanitizeUrl(String url) {
+  //   final trimmedUrl = url.trim();
+  //
+  //   if (trimmedUrl.isEmpty) return '';
+  //
+  //   // If it doesn't start with protocol, add https://
+  //   if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+  //     return 'https://$trimmedUrl';
+  //   }
+  //
+  //   return trimmedUrl;
+  // }
 
   /// Check if URL is from a trusted educational domain
   static bool isEducationalDomain(String url) {

@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class CustomErrorWidget extends StatelessWidget {
-  final String message;
+  final String? message;
   final VoidCallback? onRetry;
   final String? retryText;
   final IconData icon;
 
   const CustomErrorWidget({
     super.key,
-    this.message = 'Xatolik yuz berdi',
+    this.message,
     this.onRetry,
-    this.retryText = 'Qayta urinish',
+    this.retryText,
     this.icon = Icons.error_outline,
   });
 
@@ -29,7 +30,7 @@ class CustomErrorWidget extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Xatolik',
+              'error'.tr,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 color: Theme.of(context).colorScheme.error,
               ),
@@ -37,7 +38,7 @@ class CustomErrorWidget extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              message,
+              message ?? 'error_occurred'.tr,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -47,7 +48,7 @@ class CustomErrorWidget extends StatelessWidget {
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: onRetry,
-                child: Text(retryText!),
+                child: Text(retryText ?? 'retry'.tr),
               ),
             ],
           ],
