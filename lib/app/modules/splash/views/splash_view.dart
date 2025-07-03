@@ -20,52 +20,41 @@ class SplashView extends GetView<SplashController> {
             ],
           ),
         ),
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo
-              Icon(
+              const Icon(
                 Icons.school_rounded,
                 size: 80,
                 color: Colors.white,
               ),
-
-              SizedBox(height: 24),
-
-              // App Name
+              const SizedBox(height: 24),
               Text(
-                'Toshmi',
-                style: TextStyle(
+                'app_name'.tr,
+                style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
-
-              SizedBox(height: 8),
-
+              const SizedBox(height: 8),
               Text(
-                'Maktab Boshqaruv Tizimi',
-                style: TextStyle(
+                'app_subtitle'.tr,
+                style: const TextStyle(
                   fontSize: 16,
                   color: Colors.white70,
                 ),
               ),
-
-              SizedBox(height: 48),
-
-              // Loading indicator
-              CircularProgressIndicator(
+              const SizedBox(height: 48),
+              const CircularProgressIndicator(
                 color: Colors.white,
                 strokeWidth: 3,
               ),
-
-              SizedBox(height: 16),
-
+              const SizedBox(height: 16),
               Text(
-                'Yuklanmoqda...',
-                style: TextStyle(
+                'loading'.tr,
+                style: const TextStyle(
                   fontSize: 14,
                   color: Colors.white70,
                 ),

@@ -1,4 +1,3 @@
-// lib/app/modules/splash/controllers/splash_controller.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/base/base_controller.dart';
@@ -13,60 +12,33 @@ class SplashController extends BaseController with GetSingleTickerProviderStateM
   @override
   void onInit() {
     super.onInit();
-    print('🚀 SplashController initialized');
     _initializeAnimations();
-    _startSplashSequence();
+    _checkAuthAndNavigate();
   }
 
   void _initializeAnimations() {
     animationController = AnimationController(
-      duration: const Duration(seconds: 3),
+      duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-  }
-
-  Future<void> _startSplashSequence() async {
-    try {
-      print('⏱️ Starting splash sequence...');
-
-      // Start loading animation
-      animationController.repeat();
-
-      // Wait for splash duration
-      await Future.delayed(const Duration(seconds: 3));
-
-      // Check authentication and navigate
-      await _checkAuthAndNavigate();
-    } catch (e) {
-      print('❌ Splash sequence error: $e');
-      // On any error, go to login
-      Get.offAllNamed(Routes.login);
-    }
+    animationController.repeat();
   }
 
   Future<void> _checkAuthAndNavigate() async {
     try {
-      print('🔍 Checking authentication state...');
-
-      // Use the new AuthService method for navigation
+      await Future.delayed(const Duration(milliseconds: 500)); // Minimum splash time for UX
       _authService.navigateBasedOnAuthState();
-
     } catch (e) {
-      print('❌ Auth check error: $e');
-      // On error, go to login
       Get.offAllNamed(Routes.login);
     }
   }
 
   @override
   void onClose() {
-    print('🗑️ SplashController disposing...');
     animationController.dispose();
     super.onClose();
   }
 
   @override
-  Future<void> refreshData() async {
-    // No data to refresh on splash
-  }
+  Future<void> refreshData() async {}
 }
