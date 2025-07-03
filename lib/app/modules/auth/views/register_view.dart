@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -7,8 +6,8 @@ import '../../../utils/widgets/common/custom_button.dart';
 import '../../../utils/widgets/common/custom_text_field.dart';
 import '../controllers/auth_controller.dart';
 
-class LoginView extends GetView<AuthController> {
-  const LoginView({super.key});
+class RegisterView extends GetView<AuthController> {
+  const RegisterView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,15 +18,24 @@ class LoginView extends GetView<AuthController> {
     );
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text('register'.tr),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Get.back(),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
-            key: controller.loginFormKey,
+            key: controller.registerFormKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 60),
+                const SizedBox(height: 20),
 
                 Center(
                   child: Container(
@@ -37,7 +45,7 @@ class LoginView extends GetView<AuthController> {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.school_rounded,
+                      Icons.person_add_rounded,
                       size: 64,
                       color: AppColors.primaryBlue,
                     ),
@@ -47,7 +55,7 @@ class LoginView extends GetView<AuthController> {
                 const SizedBox(height: 32),
 
                 Text(
-                  'app_name'.tr,
+                  'register_title'.tr,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.bold,
@@ -58,17 +66,7 @@ class LoginView extends GetView<AuthController> {
                 const SizedBox(height: 8),
 
                 Text(
-                  'app_subtitle'.tr,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Text(
-                  'login_subtitle'.tr,
+                  'register_subtitle'.tr,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -77,7 +75,7 @@ class LoginView extends GetView<AuthController> {
 
                 const SizedBox(height: 48),
 
-                Obx(() => controller.hasLoginError.value
+                Obx(() => controller.hasRegisterError.value
                     ? Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
@@ -97,7 +95,7 @@ class LoginView extends GetView<AuthController> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          controller.loginError.value,
+                          controller.registerError.value,
                           style: TextStyle(
                             color: AppColors.error,
                             fontSize: 14,
@@ -118,10 +116,10 @@ class LoginView extends GetView<AuthController> {
                   ),
                   child: Row(
                     children: controller.roles.map((role) {
-                      final isSelected = controller.selectedRole.value == role['value'];
+                      final isSelected = controller.selectedRegisterRole.value == role['value'];
                       return Expanded(
                         child: GestureDetector(
-                          onTap: () => controller.setRole(role['value']!),
+                          onTap: () => controller.setRegisterRole(role['value']!),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -159,8 +157,30 @@ class LoginView extends GetView<AuthController> {
                 const SizedBox(height: 32),
 
                 CustomTextField(
+                  label: 'first_name'.tr,
+                  controller: controller.firstNameController,
+                  keyboardType: TextInputType.text,
+                  prefixIcon: const Icon(Icons.person),
+                  validator: controller.validateFirstName,
+                  hint: 'first_name_hint'.tr,
+                ),
+
+                const SizedBox(height: 20),
+
+                CustomTextField(
+                  label: 'last_name'.tr,
+                  controller: controller.lastNameController,
+                  keyboardType: TextInputType.text,
+                  prefixIcon: const Icon(Icons.person),
+                  validator: controller.validateLastName,
+                  hint: 'last_name_hint'.tr,
+                ),
+
+                const SizedBox(height: 20),
+
+                CustomTextField(
                   label: 'phone_number'.tr,
-                  controller: controller.phoneController,
+                  controller: controller.registerPhoneController,
                   keyboardType: TextInputType.phone,
                   prefixIcon: const Icon(Icons.phone),
                   inputFormatters: [phoneFormatter],
@@ -172,53 +192,49 @@ class LoginView extends GetView<AuthController> {
 
                 Obx(() => CustomTextField(
                   label: 'password'.tr,
-                  controller: controller.passwordController,
-                  obscureText: !controller.isPasswordVisible.value,
+                  controller: controller.registerPasswordController,
+                  obscureText: !controller.isRegisterPasswordVisible.value,
                   prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      controller.isPasswordVisible.value
+                      controller.isRegisterPasswordVisible.value
                           ? Icons.visibility_off
                           : Icons.visibility,
                     ),
-                    onPressed: controller.togglePasswordVisibility,
+                    onPressed: controller.toggleRegisterPasswordVisibility,
                   ),
                   validator: controller.validatePassword,
+                )),
+
+                const SizedBox(height: 20),
+
+                Obx(() => CustomTextField(
+                  label: 'confirm_password'.tr,
+                  controller: controller.confirmPasswordController,
+                  obscureText: !controller.isConfirmPasswordVisible.value,
+                  prefixIcon: const Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      controller.isConfirmPasswordVisible.value
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    onPressed: controller.toggleConfirmPasswordVisibility,
+                  ),
+                  validator: controller.validateConfirmPassword,
                 )),
 
                 const SizedBox(height: 32),
 
                 Obx(() => CustomButton(
-                  text: 'login'.tr,
-                  onPressed: controller.isLoginLoading.value ? null : controller.login,
-                  isLoading: controller.isLoginLoading.value,
+                  text: 'register'.tr,
+                  onPressed: controller.isRegisterLoading.value ? null : controller.register,
+                  isLoading: controller.isRegisterLoading.value,
                   height: 56,
                   backgroundColor: AppColors.primaryBlue,
                 )),
-                SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'no_account'.tr,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => controller.goToRegister(),
-                      child: Text(
-                        'register'.tr,
-                        style: TextStyle(
-                          color: AppColors.primaryBlue,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -232,13 +248,13 @@ class LoginView extends GetView<AuthController> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.help_outline,
+                            Icons.info_outline,
                             size: 20,
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'need_help'.tr,
+                            'register_info'.tr,
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w600,
@@ -248,7 +264,7 @@ class LoginView extends GetView<AuthController> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'help_text'.tr,
+                        'register_info_text'.tr,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -258,13 +274,16 @@ class LoginView extends GetView<AuthController> {
                   ),
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
 
-                Text(
-                  'version'.tr,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: Text(
+                    'back_to_login'.tr,
+                    style: TextStyle(
+                      color: AppColors.primaryBlue,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
