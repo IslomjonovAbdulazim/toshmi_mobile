@@ -1,9 +1,8 @@
-// lib/app/modules/student/views/student_news_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:toshmi_mobile/app/services/auth_service.dart';
-
 import '../../../data/repositories/news_repository.dart';
 import '../../../utils/widgets/common/custom_app_bar.dart';
 
@@ -31,7 +30,7 @@ class _StudentNewsViewState extends State<StudentNewsView> {
       final data = await newsRepository.getNews();
       news.value = data.cast<Map<String, dynamic>>();
     } catch (e) {
-      Get.snackbar('Xato', 'Yangiliklarni yuklashda xato: $e');
+      // Handle error silently
     } finally {
       isLoading.value = false;
     }
@@ -40,7 +39,7 @@ class _StudentNewsViewState extends State<StudentNewsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: 'Yangiliklar', showBackButton: true),
+      appBar: CustomAppBar(title: 'news'.tr, showBackButton: true),
       body: Obx(() {
         if (isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -74,7 +73,6 @@ class _StudentNewsViewState extends State<StudentNewsView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image section - only show if image exists
           if (showImage)
             ClipRRect(
               borderRadius: const BorderRadius.vertical(
@@ -89,7 +87,6 @@ class _StudentNewsViewState extends State<StudentNewsView> {
                 height: 200,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  // Return empty container to hide space on error
                   return Text("${newsRepository.getFileUrl(firstImageId)}\n $error");
                 },
               ),
@@ -119,7 +116,6 @@ class _StudentNewsViewState extends State<StudentNewsView> {
                   ),
                 ),
 
-                // External links section
                 if (externalLinks.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Container(
@@ -147,7 +143,7 @@ class _StudentNewsViewState extends State<StudentNewsView> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'Foydali havolalar:',
+                              'useful_links'.tr,
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -160,22 +156,22 @@ class _StudentNewsViewState extends State<StudentNewsView> {
                         ...externalLinks
                             .map(
                               (link) => Padding(
-                                padding: const EdgeInsets.only(bottom: 4),
-                                child: GestureDetector(
-                                  onTap: () => _launchURL(link.toString()),
-                                  child: Text(
-                                    link.toString(),
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                      decoration: TextDecoration.underline,
-                                      fontSize: 14,
-                                    ),
-                                  ),
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: GestureDetector(
+                              onTap: () => _launchURL(link.toString()),
+                              child: Text(
+                                link.toString(),
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  decoration: TextDecoration.underline,
+                                  fontSize: 14,
                                 ),
                               ),
-                            )
+                            ),
+                          ),
+                        )
                             .toList(),
                       ],
                     ),
@@ -188,8 +184,7 @@ class _StudentNewsViewState extends State<StudentNewsView> {
                     Icon(Icons.person, size: 16, color: Colors.grey[600]),
                     const SizedBox(width: 4),
                     Text(
-                      'Admin',
-                      // Since we only have author_id, showing generic text
+                      'admin'.tr,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey[600],
@@ -213,9 +208,17 @@ class _StudentNewsViewState extends State<StudentNewsView> {
     );
   }
 
-  void _launchURL(String url) async {
-    // URL launching implementation
-    Get.snackbar('Havola', 'Havola ochilmoqda: $url');
+  Future<void> _launchURL(String url) async {
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        Get.snackbar('error'.tr, 'Could not launch $url');
+      }
+    } catch (e) {
+      Get.snackbar('error'.tr, 'link_opening'.tr);
+    }
   }
 
   Widget _buildEmptyState() {
@@ -226,11 +229,11 @@ class _StudentNewsViewState extends State<StudentNewsView> {
           Icon(Icons.newspaper, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'Hozircha yangiliklar yo\'q',
+            'no_news_yet'.tr,
             style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
-          TextButton(onPressed: loadNews, child: const Text('Qayta yuklash')),
+          TextButton(onPressed: loadNews, child: Text('retry'.tr)),
         ],
       ),
     );
@@ -243,9 +246,9 @@ class _StudentNewsViewState extends State<StudentNewsView> {
       final now = DateTime.now();
       final diff = now.difference(date).inDays;
 
-      if (diff == 0) return 'Bugun';
-      if (diff == 1) return 'Kecha';
-      if (diff < 7) return '$diff kun oldin';
+      if (diff == 0) return 'today'.tr;
+      if (diff == 1) return 'yesterday'.tr;
+      if (diff < 7) return '$diff ${'days_ago'.tr}';
       return '${date.day}/${date.month}/${date.year}';
     } catch (e) {
       return '';

@@ -1,4 +1,3 @@
-// lib/app/modules/student/views/student_attendance_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/repositories/student_repository.dart';
@@ -32,7 +31,7 @@ class _StudentAttendanceViewState extends State<StudentAttendanceView> {
       attendance.value = attendanceData;
       summary.value = summaryData;
     } catch (e) {
-      Get.snackbar('Xato', 'Davomatni yuklashda xato: $e');
+      // Handle error silently
     } finally {
       isLoading.value = false;
     }
@@ -42,7 +41,7 @@ class _StudentAttendanceViewState extends State<StudentAttendanceView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Davomat',
+        title: 'attendance'.tr,
         showBackButton: true,
       ),
       body: Obx(() {
@@ -52,11 +51,14 @@ class _StudentAttendanceViewState extends State<StudentAttendanceView> {
 
         return RefreshIndicator(
           onRefresh: loadAttendance,
-          child: Column(
-            children: [
-              _buildSummaryCards(),
-              Expanded(child: _buildAttendanceList()),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildSummaryCards(),
+                _buildAttendanceList(),
+                SizedBox(height: 100),
+              ],
+            ),
           ),
         );
       }),
@@ -72,17 +74,17 @@ class _StudentAttendanceViewState extends State<StudentAttendanceView> {
         children: [
           Row(
             children: [
-              Expanded(child: _buildSummaryCard('Jami', '${summary['total'] ?? 0}', Colors.blue)),
+              Expanded(child: _buildSummaryCard('total'.tr, '${summary['total'] ?? 0}', Colors.blue)),
               const SizedBox(width: 8),
-              Expanded(child: _buildSummaryCard('Kelgan', '${summary['present'] ?? 0}', Colors.green)),
+              Expanded(child: _buildSummaryCard('present'.tr, '${summary['present'] ?? 0}', Colors.green)),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: _buildSummaryCard('Kelmagan', '${summary['absent'] ?? 0}', Colors.red)),
+              Expanded(child: _buildSummaryCard('absent'.tr, '${summary['absent'] ?? 0}', Colors.red)),
               const SizedBox(width: 8),
-              Expanded(child: _buildSummaryCard('Foiz', '${summary['present_percentage']?.toStringAsFixed(1) ?? 0}%', Colors.purple)),
+              Expanded(child: _buildSummaryCard('percentage'.tr, '${summary['present_percentage']?.toStringAsFixed(1) ?? 0}%', Colors.purple)),
             ],
           ),
         ],
@@ -120,7 +122,6 @@ class _StudentAttendanceViewState extends State<StudentAttendanceView> {
       return _buildEmptyState();
     }
 
-    // Group by month
     final grouped = <String, List<dynamic>>{};
     for (final record in attendance) {
       final date = DateTime.parse(record['date']);
@@ -130,6 +131,8 @@ class _StudentAttendanceViewState extends State<StudentAttendanceView> {
     }
 
     return ListView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(8),
       itemCount: grouped.keys.length,
       itemBuilder: (context, index) {
@@ -144,8 +147,8 @@ class _StudentAttendanceViewState extends State<StudentAttendanceView> {
     final parts = monthKey.split('-');
     final year = parts[0];
     final month = int.parse(parts[1]);
-    final monthNames = ['', 'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun',
-      'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'];
+    final monthNames = ['', 'january'.tr, 'february'.tr, 'march'.tr, 'april'.tr, 'may'.tr, 'june'.tr,
+      'july'.tr, 'august'.tr, 'september'.tr, 'october'.tr, 'november'.tr, 'december'.tr];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,22 +181,22 @@ class _StudentAttendanceViewState extends State<StudentAttendanceView> {
       case 'present':
         statusColor = Colors.green;
         statusIcon = Icons.check_circle;
-        statusText = 'Kelgan';
+        statusText = 'present'.tr;
         break;
       case 'absent':
         statusColor = Colors.red;
         statusIcon = Icons.cancel;
-        statusText = 'Kelmagan';
+        statusText = 'absent'.tr;
         break;
       case 'late':
         statusColor = Colors.orange;
         statusIcon = Icons.schedule;
-        statusText = 'Kechikkan';
+        statusText = 'late'.tr;
         break;
       case 'excused':
         statusColor = Colors.blue;
         statusIcon = Icons.info;
-        statusText = 'Sababli';
+        statusText = 'excused'.tr;
         break;
       default:
         statusColor = Colors.grey;
@@ -234,7 +237,7 @@ class _StudentAttendanceViewState extends State<StudentAttendanceView> {
           Icon(Icons.event_available, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'Davomat ma\'lumotlari yo\'q',
+            'attendance_empty'.tr,
             style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
         ],
@@ -243,7 +246,7 @@ class _StudentAttendanceViewState extends State<StudentAttendanceView> {
   }
 
   String _formatDate(DateTime date) {
-    final weekdays = ['', 'Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan', 'Yak'];
+    final weekdays = ['', 'monday'.tr, 'tuesday'.tr, 'wednesday'.tr, 'thursday'.tr, 'friday'.tr, 'saturday'.tr, 'sunday'.tr];
     return '${date.day}/${date.month} (${weekdays[date.weekday]})';
   }
 }

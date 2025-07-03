@@ -1,4 +1,3 @@
-// lib/app/modules/student/views/student_grades_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/repositories/student_repository.dart';
@@ -29,7 +28,7 @@ class _StudentGradesViewState extends State<StudentGradesView> {
       final data = await repository.getGrades();
       gradesData.value = data;
     } catch (e) {
-      Get.snackbar('Xato', 'Baholarni yuklashda xato: $e');
+      // Handle error silently
     } finally {
       isLoading.value = false;
     }
@@ -39,7 +38,7 @@ class _StudentGradesViewState extends State<StudentGradesView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Baholar',
+        title: 'grades'.tr,
         showBackButton: true,
       ),
       body: Column(
@@ -92,7 +91,7 @@ class _StudentGradesViewState extends State<StudentGradesView> {
                   ] : null,
                 ),
                 child: Text(
-                  'Vazifalar',
+                  'homework'.tr,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: selectedTab.value == 0 ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -121,7 +120,7 @@ class _StudentGradesViewState extends State<StudentGradesView> {
                   ] : null,
                 ),
                 child: Text(
-                  'Imtihonlar',
+                  'exams'.tr,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: selectedTab.value == 1 ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -141,7 +140,7 @@ class _StudentGradesViewState extends State<StudentGradesView> {
     final grades = gradesData['homework_grades'] as List? ?? [];
 
     if (grades.isEmpty) {
-      return _buildEmptyState('Vazifa baholari yo\'q');
+      return _buildEmptyState('homework_grades_empty'.tr);
     }
 
     return ListView.builder(
@@ -155,7 +154,7 @@ class _StudentGradesViewState extends State<StudentGradesView> {
     final grades = gradesData['exam_grades'] as List? ?? [];
 
     if (grades.isEmpty) {
-      return _buildEmptyState('Imtihon baholari yo\'q');
+      return _buildEmptyState('exam_grades_empty'.tr);
     }
 
     return ListView.builder(
@@ -256,7 +255,7 @@ class _StudentGradesViewState extends State<StudentGradesView> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  isHomework ? 'Vazifa' : 'Imtihon',
+                  isHomework ? 'homework'.tr : 'exams'.tr,
                   style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
               ],
@@ -280,7 +279,7 @@ class _StudentGradesViewState extends State<StudentGradesView> {
                             size: 16, color: Colors.grey[600]),
                         const SizedBox(width: 6),
                         Text(
-                          'O\'qituvchi izohi:',
+                          'teacher_comment'.tr,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,

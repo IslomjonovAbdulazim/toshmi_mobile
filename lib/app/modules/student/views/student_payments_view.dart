@@ -1,4 +1,3 @@
-// lib/app/modules/student/views/student_payments_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/repositories/student_repository.dart';
@@ -32,7 +31,7 @@ class _StudentPaymentsViewState extends State<StudentPaymentsView> {
       payments.value = paymentsData;
       summary.value = summaryData;
     } catch (e) {
-      Get.snackbar('Xato', 'To\'lovlarni yuklashda xato: $e');
+      // Handle error silently
     } finally {
       isLoading.value = false;
     }
@@ -42,7 +41,7 @@ class _StudentPaymentsViewState extends State<StudentPaymentsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'To\'lovlar',
+        title: 'payments'.tr,
         showBackButton: true,
       ),
       body: Obx(() {
@@ -74,7 +73,7 @@ class _StudentPaymentsViewState extends State<StudentPaymentsView> {
             children: [
               Expanded(
                 child: _buildSummaryCard(
-                  'Jami to\'langan',
+                  'total_paid'.tr,
                   _formatAmount(summary['total_paid'] ?? 0),
                   Colors.green,
                 ),
@@ -82,7 +81,7 @@ class _StudentPaymentsViewState extends State<StudentPaymentsView> {
               const SizedBox(width: 8),
               Expanded(
                 child: _buildSummaryCard(
-                  'To\'lovlar soni',
+                  'payment_count'.tr,
                   '${summary['payment_count'] ?? 0}',
                   Colors.blue,
                 ),
@@ -94,7 +93,7 @@ class _StudentPaymentsViewState extends State<StudentPaymentsView> {
             children: [
               Expanded(
                 child: _buildSummaryCard(
-                  'O\'rtacha',
+                  'average_payment'.tr,
                   _formatAmount(summary['average_payment'] ?? 0),
                   Colors.orange,
                 ),
@@ -102,7 +101,7 @@ class _StudentPaymentsViewState extends State<StudentPaymentsView> {
               const SizedBox(width: 8),
               Expanded(
                 child: _buildSummaryCard(
-                  'Oxirgi to\'lov',
+                  'last_payment'.tr,
                   _getLastPaymentDate(),
                   Colors.purple,
                 ),
@@ -175,7 +174,7 @@ class _StudentPaymentsViewState extends State<StudentPaymentsView> {
                     _formatAmount(amount),
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 20,
+                      fontSize: 16,
                       color: Colors.green,
                     ),
                   ),
@@ -191,7 +190,7 @@ class _StudentPaymentsViewState extends State<StudentPaymentsView> {
                     style: TextStyle(
                       color: _getMethodColor(method),
                       fontWeight: FontWeight.w600,
-                      fontSize: 12,
+                      fontSize: 10,
                     ),
                   ),
                 ),
@@ -202,7 +201,7 @@ class _StudentPaymentsViewState extends State<StudentPaymentsView> {
               Text(
                 payment['description'],
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -213,14 +212,14 @@ class _StudentPaymentsViewState extends State<StudentPaymentsView> {
                 const SizedBox(width: 4),
                 Text(
                   _formatDate(paymentDate),
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: TextStyle(color: Colors.grey[550], fontSize: 12),
                 ),
                 const Spacer(),
                 Icon(Icons.payment, size: 16, color: Colors.grey[600]),
                 const SizedBox(width: 4),
                 Text(
                   _getMethodText(method),
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 10),
                 ),
               ],
             ),
@@ -238,7 +237,7 @@ class _StudentPaymentsViewState extends State<StudentPaymentsView> {
           Icon(Icons.payment, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'To\'lov tarixi yo\'q',
+            'payment_history_empty'.tr,
             style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
         ],
@@ -247,7 +246,26 @@ class _StudentPaymentsViewState extends State<StudentPaymentsView> {
   }
 
   String _formatAmount(int amount) {
-    return '${(amount / 1000).toStringAsFixed(0)} ming so\'m';
+    if (amount >= 1000000) {
+      // 1 million or more
+      final millions = amount / 1000000;
+      if (millions == millions.toInt()) {
+        return '${millions.toInt()} million ${'som'.tr}';
+      } else {
+        return '${millions.toStringAsFixed(1)} million ${'som'.tr}';
+      }
+    } else if (amount >= 1000) {
+      // 1 thousand to 999,999
+      final thousands = amount / 1000;
+      if (thousands == thousands.toInt()) {
+        return '${thousands.toInt()} ming ${'som'.tr}';
+      } else {
+        return '${thousands.toStringAsFixed(1)} ming ${'som'.tr}';
+      }
+    } else {
+      // Less than 1000
+      return '$amount ${'som'.tr}';
+    }
   }
 
   String _getLastPaymentDate() {
@@ -278,11 +296,11 @@ class _StudentPaymentsViewState extends State<StudentPaymentsView> {
   String _getMethodText(String method) {
     switch (method.toLowerCase()) {
       case 'cash':
-        return 'Naqd';
+        return 'cash'.tr;
       case 'card':
-        return 'Karta';
+        return 'card'.tr;
       case 'transfer':
-        return 'O\'tkazma';
+        return 'transfer'.tr;
       default:
         return method;
     }
@@ -292,9 +310,9 @@ class _StudentPaymentsViewState extends State<StudentPaymentsView> {
     final now = DateTime.now();
     final diff = now.difference(date).inDays;
 
-    if (diff == 0) return 'Bugun';
-    if (diff == 1) return 'Kecha';
-    if (diff < 30) return '$diff kun oldin';
+    if (diff == 0) return 'today'.tr;
+    if (diff == 1) return 'yesterday'.tr;
+    if (diff < 30) return '$diff ${'days_ago'.tr}';
     return '${date.day}/${date.month}/${date.year}';
   }
 }

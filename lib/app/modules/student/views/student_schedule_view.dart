@@ -1,4 +1,3 @@
-// lib/app/modules/student/views/student_schedule_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/repositories/student_repository.dart';
@@ -17,7 +16,10 @@ class _StudentScheduleViewState extends State<StudentScheduleView> {
   final schedule = <dynamic>[].obs;
   final selectedDay = (DateTime.now().weekday - 1).obs; // 0=Monday
 
-  final days = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
+  List<String> get days => [
+    'monday'.tr, 'tuesday'.tr, 'wednesday'.tr,
+    'thursday'.tr, 'friday'.tr, 'saturday'.tr
+  ];
 
   @override
   void initState() {
@@ -31,7 +33,7 @@ class _StudentScheduleViewState extends State<StudentScheduleView> {
       final data = await repository.getSchedule();
       schedule.value = data;
     } catch (e) {
-      Get.snackbar('Xato', 'Dars jadvalini yuklashda xato: $e');
+      // Handle error silently
     } finally {
       isLoading.value = false;
     }
@@ -46,12 +48,14 @@ class _StudentScheduleViewState extends State<StudentScheduleView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Dars jadvali',
+        title: 'lesson_schedule'.tr,
         showBackButton: true,
       ),
       body: Column(
         children: [
+          SizedBox(height: 5),
           _buildDaySelector(),
+          SizedBox(height: 5),
           Expanded(
             child: Obx(() {
               if (isLoading.value) {
@@ -101,7 +105,7 @@ class _StudentScheduleViewState extends State<StudentScheduleView> {
                     style: TextStyle(
                       color: isSelected ? Colors.white : (isToday ? Colors.blue : Theme.of(context).colorScheme.onSurface),
                       fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                      fontSize: 12,
                     ),
                   ),
                 ),
@@ -156,7 +160,7 @@ class _StudentScheduleViewState extends State<StudentScheduleView> {
                     Row(
                       children: [
                         Text(
-                          '${index + 1}-dars',
+                          '${index + 1}-${'lesson_number'.tr}',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -171,9 +175,9 @@ class _StudentScheduleViewState extends State<StudentScheduleView> {
                               color: Colors.green,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Text(
-                              'Hozir',
-                              style: TextStyle(
+                            child: Text(
+                              'current_lesson'.tr,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -238,7 +242,7 @@ class _StudentScheduleViewState extends State<StudentScheduleView> {
           Icon(Icons.event_busy, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            '${days[selectedDay.value]} kuni darslar yo\'q',
+            '${days[selectedDay.value]} ${'no_lessons_today'.tr}',
             style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
         ],

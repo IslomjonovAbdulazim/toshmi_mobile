@@ -1,6 +1,6 @@
-// lib/app/modules/student/views/student_exams_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../data/repositories/student_repository.dart';
 import '../../../utils/widgets/common/custom_app_bar.dart';
 
@@ -29,7 +29,7 @@ class _StudentExamsViewState extends State<StudentExamsView> {
       final data = await repository.getExams();
       exams.value = data;
     } catch (e) {
-      Get.snackbar('Xato', 'Imtihonlarni yuklashda xato: $e');
+      // Handle error silently
     } finally {
       isLoading.value = false;
     }
@@ -53,7 +53,6 @@ class _StudentExamsViewState extends State<StudentExamsView> {
       }).toList();
     }
 
-    // Sort by exam_date - newest first
     filtered.sort((a, b) {
       final dateA = DateTime.parse(a['exam_date']);
       final dateB = DateTime.parse(b['exam_date']);
@@ -67,7 +66,7 @@ class _StudentExamsViewState extends State<StudentExamsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Imtihonlar',
+        title: 'exams'.tr,
         showBackButton: true,
       ),
       body: Column(
@@ -109,9 +108,9 @@ class _StudentExamsViewState extends State<StudentExamsView> {
       ),
       child: Obx(() => Row(
         children: [
-          _buildFilterChip('Barchasi', 'all'),
-          _buildFilterChip('Baholanmagan', 'not_graded'),
-          _buildFilterChip('Baholangan', 'graded'),
+          _buildFilterChip('all'.tr, 'all'),
+          _buildFilterChip('not_graded'.tr, 'not_graded'),
+          _buildFilterChip('graded'.tr, 'graded'),
         ],
       )),
     );
@@ -215,9 +214,9 @@ class _StudentExamsViewState extends State<StudentExamsView> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.grey.withOpacity(0.3)),
                     ),
-                    child: const Text(
-                      'Baholanmagan',
-                      style: TextStyle(
+                    child: Text(
+                      'not_graded'.tr,
+                      style: const TextStyle(
                         color: Colors.grey,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -232,9 +231,9 @@ class _StudentExamsViewState extends State<StudentExamsView> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.orange.withOpacity(0.3)),
                     ),
-                    child: const Text(
-                      'Kelayotgan',
-                      style: TextStyle(
+                    child: Text(
+                      'upcoming'.tr,
+                      style: const TextStyle(
                         color: Colors.orange,
                         fontWeight: FontWeight.bold,
                       ),
@@ -275,7 +274,7 @@ class _StudentExamsViewState extends State<StudentExamsView> {
                         Icon(Icons.link, size: 16, color: Colors.orange[700]),
                         const SizedBox(width: 6),
                         Text(
-                          'Tayyorgarlik materiallar:',
+                          'preparation_materials'.tr,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -314,7 +313,7 @@ class _StudentExamsViewState extends State<StudentExamsView> {
                 ),
                 const Spacer(),
                 Text(
-                  '${exam['max_points']} ball',
+                  '${exam['max_points']} ${'points'.tr}',
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
                     color: Colors.grey[700],
@@ -328,9 +327,17 @@ class _StudentExamsViewState extends State<StudentExamsView> {
     );
   }
 
-  void _launchURL(String url) async {
-    // You can implement URL launching here
-    Get.snackbar('Havola', 'Havola ochilmoqda: $url');
+  Future<void> _launchURL(String url) async {
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        Get.snackbar('error'.tr, 'Could not launch $url');
+      }
+    } catch (e) {
+      Get.snackbar('error'.tr, 'link_opening'.tr);
+    }
   }
 
   Widget _buildEmptyState() {
@@ -341,7 +348,7 @@ class _StudentExamsViewState extends State<StudentExamsView> {
           Icon(Icons.quiz, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'Imtihonlar topilmadi',
+            'exams_not_found'.tr,
             style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
         ],
@@ -353,11 +360,11 @@ class _StudentExamsViewState extends State<StudentExamsView> {
     final now = DateTime.now();
     final diff = dateTime.difference(now).inDays;
 
-    if (diff == 0) return 'Bugun ${_formatTime(dateTime)}';
-    if (diff == 1) return 'Ertaga ${_formatTime(dateTime)}';
-    if (diff == -1) return 'Kecha ${_formatTime(dateTime)}';
-    if (diff < 0) return '${-diff} kun oldin';
-    if (diff < 7) return '${diff} kun keyin';
+    if (diff == 0) return '${'today'.tr} ${_formatTime(dateTime)}';
+    if (diff == 1) return '${'tomorrow'.tr} ${_formatTime(dateTime)}';
+    if (diff == -1) return '${'yesterday'.tr} ${_formatTime(dateTime)}';
+    if (diff < 0) return '${-diff} ${'days_ago'.tr}';
+    if (diff < 7) return '$diff ${'days_later'.tr}';
     return '${dateTime.day}/${dateTime.month} ${_formatTime(dateTime)}';
   }
 

@@ -1,6 +1,6 @@
-// lib/app/modules/student/views/student_homework_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../data/repositories/student_repository.dart';
 import '../../../utils/widgets/common/custom_app_bar.dart';
 
@@ -29,7 +29,7 @@ class _StudentHomeworkViewState extends State<StudentHomeworkView> {
       final data = await repository.getHomework();
       homework.value = data;
     } catch (e) {
-      Get.snackbar('Xato', 'Vazifalarni yuklashda xato: $e');
+      // Handle error silently
     } finally {
       isLoading.value = false;
     }
@@ -53,7 +53,6 @@ class _StudentHomeworkViewState extends State<StudentHomeworkView> {
       }).toList();
     }
 
-    // Sort by due_date - newest first
     filtered.sort((a, b) {
       final dateA = DateTime.parse(a['due_date']);
       final dateB = DateTime.parse(b['due_date']);
@@ -67,7 +66,7 @@ class _StudentHomeworkViewState extends State<StudentHomeworkView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Vazifalar',
+        title: 'homework'.tr,
         showBackButton: true,
       ),
       body: Column(
@@ -108,9 +107,9 @@ class _StudentHomeworkViewState extends State<StudentHomeworkView> {
       ),
       child: Obx(() => Row(
         children: [
-          _buildFilterChip('Barchasi', 'all'),
-          _buildFilterChip('Baholanmagan', 'not_graded'),
-          _buildFilterChip('Baholangan', 'graded'),
+          _buildFilterChip('all'.tr, 'all'),
+          _buildFilterChip('not_graded'.tr, 'not_graded'),
+          _buildFilterChip('graded'.tr, 'graded'),
         ],
       )),
     );
@@ -147,7 +146,7 @@ class _StudentHomeworkViewState extends State<StudentHomeworkView> {
             style: TextStyle(
               color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
-              fontSize: 15,
+              fontSize: 12,
             ),
           ),
         ),
@@ -204,9 +203,9 @@ class _StudentHomeworkViewState extends State<StudentHomeworkView> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.red.withOpacity(0.3)),
                     ),
-                    child: const Text(
-                      'Kechikkan',
-                      style: TextStyle(
+                    child: Text(
+                      'overdue'.tr,
+                      style: const TextStyle(
                         color: Colors.red,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -221,9 +220,9 @@ class _StudentHomeworkViewState extends State<StudentHomeworkView> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.grey.withOpacity(0.3)),
                     ),
-                    child: const Text(
-                      'Baholanmagan',
-                      style: TextStyle(
+                    child: Text(
+                      'not_graded'.tr,
+                      style: const TextStyle(
                         color: Colors.grey,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -265,7 +264,7 @@ class _StudentHomeworkViewState extends State<StudentHomeworkView> {
                         Icon(Icons.link, size: 16, color: Theme.of(context).colorScheme.primary),
                         const SizedBox(width: 6),
                         Text(
-                          'Foydali havolalar:',
+                          'useful_links'.tr,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -304,7 +303,7 @@ class _StudentHomeworkViewState extends State<StudentHomeworkView> {
                 ),
                 const Spacer(),
                 Text(
-                  '${hw['max_points']} ball',
+                  '${hw['max_points']} ${'points'.tr}',
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
                     color: Colors.grey[700],
@@ -318,9 +317,17 @@ class _StudentHomeworkViewState extends State<StudentHomeworkView> {
     );
   }
 
-  void _launchURL(String url) async {
-    // You can implement URL launching here
-    Get.snackbar('Havola', 'Havola ochilmoqda: $url');
+  Future<void> _launchURL(String url) async {
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        Get.snackbar('error'.tr, 'Could not launch $url');
+      }
+    } catch (e) {
+      Get.snackbar('error'.tr, 'link_opening'.tr);
+    }
   }
 
   Widget _buildEmptyState() {
@@ -331,7 +338,7 @@ class _StudentHomeworkViewState extends State<StudentHomeworkView> {
           Icon(Icons.assignment, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'Vazifalar topilmadi',
+            'homework_not_found'.tr,
             style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
         ],
@@ -343,10 +350,10 @@ class _StudentHomeworkViewState extends State<StudentHomeworkView> {
     final now = DateTime.now();
     final diff = date.difference(now).inDays;
 
-    if (diff == 0) return 'Bugun';
-    if (diff == 1) return 'Ertaga';
-    if (diff < 0) return '${-diff} kun oldin';
-    if (diff < 7) return '${diff} kun keyin';
+    if (diff == 0) return 'today'.tr;
+    if (diff == 1) return 'tomorrow'.tr;
+    if (diff < 0) return '${-diff} ${'days_ago'.tr}';
+    if (diff < 7) return '$diff ${'days_later'.tr}';
     return '${date.day}/${date.month}/${date.year}';
   }
 }

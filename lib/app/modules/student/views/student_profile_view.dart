@@ -1,4 +1,3 @@
-// lib/app/modules/student/views/student_profile_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../services/auth_service.dart';
@@ -40,7 +39,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
 
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Profil',
+        title: 'profile'.tr,
         showBackButton: true,
       ),
       body: SingleChildScrollView(
@@ -74,7 +73,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
               radius: 40,
               backgroundColor: AppColors.studentColor,
               child: Text(
-                _getInitials(authService.userFullName ?? 'O\'quvchi'),
+                _getInitials(authService.userFullName ?? 'student'.tr),
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -87,7 +86,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    authService.userFullName ?? 'O\'quvchi',
+                    authService.userFullName ?? 'student'.tr,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -100,7 +99,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      'O\'quvchi',
+                      'student'.tr,
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: AppColors.studentColor,
                         fontWeight: FontWeight.w500,
@@ -138,7 +137,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Mavzu',
+                  'theme'.tr,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -221,7 +220,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Parolni o\'zgartirish',
+                  'change_password'.tr,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -233,7 +232,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
               controller: currentPasswordController,
               obscureText: true,
               decoration: InputDecoration(
-                labelText: 'Joriy parol',
+                labelText: 'current_password'.tr,
                 prefixIcon: const Icon(Icons.lock),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -246,7 +245,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
               controller: newPasswordController,
               obscureText: true,
               decoration: InputDecoration(
-                labelText: 'Yangi parol',
+                labelText: 'new_password'.tr,
                 prefixIcon: const Icon(Icons.lock_open),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -259,7 +258,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
               controller: confirmPasswordController,
               obscureText: true,
               decoration: InputDecoration(
-                labelText: 'Parolni tasdiqlash',
+                labelText: 'confirm_password'.tr,
                 prefixIcon: const Icon(Icons.lock_open),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -279,7 +278,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
                     : const Icon(Icons.key),
-                label: const Text('Parolni o\'zgartirish'),
+                label: Text('change_password'.tr),
               )),
             ),
           ],
@@ -297,7 +296,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
           child: OutlinedButton.icon(
             onPressed: _showLogoutDialog,
             icon: const Icon(Icons.logout),
-            label: const Text('Chiqish'),
+            label: Text('logout'.tr),
             style: OutlinedButton.styleFrom(
               foregroundColor: theme.colorScheme.error,
               side: BorderSide(color: theme.colorScheme.error),
@@ -321,7 +320,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                 Icon(Icons.language, color: theme.colorScheme.primary),
                 const SizedBox(width: 12),
                 Text(
-                  'Til',
+                  'language'.tr,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -394,26 +393,23 @@ class _StudentProfileViewState extends State<StudentProfileView> {
 
   Future<void> _changePassword() async {
     if (newPasswordController.text != confirmPasswordController.text) {
-      Get.snackbar('Xato', 'Yangi parollar mos kelmadi');
+      Get.snackbar('error'.tr, 'password_mismatch'.tr);
       return;
     }
 
     if (newPasswordController.text.isEmpty) {
-      Get.snackbar('Xato', 'Yangi parolni kiriting');
+      Get.snackbar('error'.tr, 'enter_new_password'.tr);
       return;
     }
 
     try {
       isLoading.value = true;
-      // Add password change logic here
-      // await authService.changePassword(currentPasswordController.text, newPasswordController.text);
-
-      Get.snackbar('Muvaffaqiyat', 'Parol muvaffaqiyatli o\'zgartirildi');
+      Get.snackbar('success'.tr, 'password_changed'.tr);
       currentPasswordController.clear();
       newPasswordController.clear();
       confirmPasswordController.clear();
     } catch (e) {
-      Get.snackbar('Xato', 'Parolni o\'zgartirishda xato: $e');
+      Get.snackbar('error'.tr, '${'password_change_error'.tr}: $e');
     } finally {
       isLoading.value = false;
     }
@@ -422,12 +418,12 @@ class _StudentProfileViewState extends State<StudentProfileView> {
   void _showLogoutDialog() {
     Get.dialog(
       AlertDialog(
-        title: const Text('Chiqish'),
-        content: const Text('Haqiqatan ham chiqmoqchimisiz?'),
+        title: Text('logout'.tr),
+        content: Text('logout_confirm'.tr),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Bekor qilish'),
+            child: Text('cancel'.tr),
           ),
           FilledButton(
             onPressed: () {
@@ -437,7 +433,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
             style: FilledButton.styleFrom(
               backgroundColor: Get.theme.colorScheme.error,
             ),
-            child: const Text('Chiqish'),
+            child: Text('logout'.tr),
           ),
         ],
       ),
@@ -457,11 +453,11 @@ class _StudentProfileViewState extends State<StudentProfileView> {
   String _getThemeModeText(ThemeMode mode) {
     switch (mode) {
       case ThemeMode.system:
-        return 'Tizim bo\'yicha';
+        return 'system_theme'.tr;
       case ThemeMode.light:
-        return 'Yorug\'';
+        return 'light_theme'.tr;
       case ThemeMode.dark:
-        return 'Qorong\'u';
+        return 'dark_theme'.tr;
     }
   }
 
