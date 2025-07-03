@@ -44,24 +44,28 @@ class StatsCard extends StatelessWidget {
               children: [
                 Icon(
                   icon,
-                  size: 24,
+                  size: 20,
                   color: iconColor ?? theme.colorScheme.primary,
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: (iconColor ?? theme.colorScheme.primary)
-                        .withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    title,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: iconColor ?? theme.colorScheme.primary,
-                      fontWeight: FontWeight.w500,
+                SizedBox(width: 5),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: (iconColor ?? theme.colorScheme.primary)
+                          .withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      title,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: iconColor ?? theme.colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),

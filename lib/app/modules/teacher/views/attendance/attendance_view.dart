@@ -74,6 +74,7 @@ class AttendanceView extends GetView<AttendanceController> {
                 _buildStatsSection(theme),
                 const SizedBox(height: 16),
                 _buildAttendanceSection(theme),
+                SizedBox(height: 200),
               ],
             ),
           ),
@@ -198,11 +199,6 @@ class AttendanceView extends GetView<AttendanceController> {
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
-            ),
-            TextButton.icon(
-              onPressed: _exportAttendance,
-              icon: const Icon(Icons.download),
-              label: Text('export'.tr),
             ),
           ],
         ),
@@ -447,9 +443,5 @@ class AttendanceView extends GetView<AttendanceController> {
 
   void _takeAttendance() {
     Get.to(() => const AttendanceFormView());
-  }
-
-  void _exportAttendance() {
-    Get.snackbar('info'.tr, 'export_coming_soon'.tr);
   }
 }

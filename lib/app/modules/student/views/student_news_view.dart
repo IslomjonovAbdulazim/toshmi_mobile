@@ -87,7 +87,7 @@ class _StudentNewsViewState extends State<StudentNewsView> {
                 height: 200,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  return Text("${newsRepository.getFileUrl(firstImageId)}\n $error");
+                  return SizedBox();
                 },
               ),
             ),

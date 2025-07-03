@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../student/views/student_news_view.dart';
 import '../../controllers/profile_controller.dart';
 import '../../controllers/teacher_home_controller.dart';
 import '../attendance/attendance_view.dart';
@@ -25,6 +26,11 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         automaticallyImplyLeading: false,
+        leading: IconButton(
+          onPressed: () => Get.to(() => const StudentNewsView()),
+          icon: const Icon(Icons.newspaper),
+          tooltip: 'news'.tr,
+        ),
         actions: [
           IconButton(
             onPressed: () {

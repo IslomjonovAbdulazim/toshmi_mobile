@@ -1,6 +1,7 @@
 // lib/app/modules/teacher/views/attendance/attendance_form_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../../controllers/attendance_controller.dart';
 import '../shared/widgets/teacher_app_bar.dart';
 
@@ -19,16 +20,13 @@ class AttendanceFormView extends GetView<AttendanceController> {
         title: 'take_attendance'.tr,
         actions: [
           TextButton(
-            onPressed: () => _saveAttendance(
-              selectedDate.value,
-              attendanceMap,
-            ),
+            onPressed: () => _saveAttendance(selectedDate.value, attendanceMap),
             child: Text('save'.tr),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -41,10 +39,13 @@ class AttendanceFormView extends GetView<AttendanceController> {
                 return _buildEmptyState(theme, 'select_class_to_continue'.tr);
               }
 
-              if (controller.groupStudents.isEmpty && !controller.isLoading.value) {
+              if (controller.groupStudents.isEmpty &&
+                  !controller.isLoading.value) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (controller.selectedGroupSubject.value != null) {
-                    controller.loadGroupStudents(controller.selectedGroupSubject.value!.groupId);
+                    controller.loadGroupStudents(
+                      controller.selectedGroupSubject.value!.groupId,
+                    );
                   }
                 });
                 return const Center(child: CircularProgressIndicator());
@@ -56,6 +57,8 @@ class AttendanceFormView extends GetView<AttendanceController> {
 
               return _buildStudentsList(theme, attendanceMap);
             }),
+            SizedBox(height: 200),
+
           ],
         ),
       ),
@@ -76,34 +79,36 @@ class AttendanceFormView extends GetView<AttendanceController> {
               ),
             ),
             const SizedBox(height: 12),
-            Obx(() => InkWell(
-              onTap: () => _selectDate(selectedDate),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: theme.colorScheme.outline),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_today,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      _formatDate(selectedDate.value),
-                      style: theme.textTheme.bodyLarge,
-                    ),
-                    const Spacer(),
-                    Icon(
-                      Icons.arrow_drop_down,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ],
+            Obx(
+              () => InkWell(
+                onTap: () => _selectDate(selectedDate),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: theme.colorScheme.outline),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        _formatDate(selectedDate.value),
+                        style: theme.textTheme.bodyLarge,
+                      ),
+                      const Spacer(),
+                      Icon(
+                        Icons.arrow_drop_down,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            )),
+            ),
           ],
         ),
       ),
@@ -148,14 +153,25 @@ class AttendanceFormView extends GetView<AttendanceController> {
                 items: controller.groupSubjects.map((groupSubject) {
                   return DropdownMenuItem(
                     value: groupSubject.id,
-                    child: Text(controller.getGroupSubjectDisplayName(groupSubject)),
+                    child: SizedBox(
+                      width: Get.size.width * .6,
+                      child: Text(
+                        controller.getGroupSubjectDisplayName(groupSubject),
+                        style: TextStyle(
+                          fontSize: 14,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        maxLines: 1,
+                      ),
+                    ),
                   );
                 }).toList(),
                 onChanged: (value) {
                   final selectedGroupSubject = controller.groupSubjects
                       .firstWhereOrNull((gs) => gs.id == value);
                   if (selectedGroupSubject != null) {
-                    controller.selectedGroupSubject.value = selectedGroupSubject;
+                    controller.selectedGroupSubject.value =
+                        selectedGroupSubject;
                   }
                 },
                 hint: Text('select_class'.tr),
@@ -215,17 +231,12 @@ class AttendanceFormView extends GetView<AttendanceController> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                Row(
-                  children: [
-                    TextButton(
-                      onPressed: () => _markAllPresent(attendanceMap),
-                      child: Text('all_present'.tr),
-                    ),
-                    TextButton(
-                      onPressed: () => _markAllAbsent(attendanceMap),
-                      child: Text('all_absent'.tr),
-                    ),
-                  ],
+                SizedBox(width: 6),
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => _markAllPresent(attendanceMap),
+                    child: Text('all_present'.tr),
+                  ),
                 ),
               ],
             ),
@@ -243,20 +254,35 @@ class AttendanceFormView extends GetView<AttendanceController> {
                 leading: CircleAvatar(
                   backgroundColor: theme.colorScheme.primaryContainer,
                   child: Text(
-                    (student['name'] as String?)?.substring(0, 1).toUpperCase() ?? 'O',
+                    (student['name'] as String?)
+                            ?.substring(0, 1)
+                            .toUpperCase() ??
+                        'O',
                     style: TextStyle(
                       color: theme.colorScheme.onPrimaryContainer,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-                title: Text(student['name'] ?? 'unknown'.tr),
-                subtitle: Text(student['phone'] ?? ''),
-                trailing: Obx(() => _buildStatusSelector(
-                  theme,
-                  attendanceMap[studentId] ?? 'present',
-                      (status) => attendanceMap[studentId] = status,
-                )),
+                title: Text(
+                  (student['name'] ?? 'unknown'.tr),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13),
+                ),
+                subtitle: Text(
+                  student['phone'] ?? '',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11),
+                ),
+                trailing: Obx(
+                  () => _buildStatusSelector(
+                    theme,
+                    attendanceMap[studentId] ?? 'present',
+                    (status) => attendanceMap[studentId] = status,
+                  ),
+                ),
               );
             },
           ),
@@ -266,10 +292,10 @@ class AttendanceFormView extends GetView<AttendanceController> {
   }
 
   Widget _buildStatusSelector(
-      ThemeData theme,
-      String currentStatus,
-      Function(String) onChanged,
-      ) {
+    ThemeData theme,
+    String currentStatus,
+    Function(String) onChanged,
+  ) {
     return DropdownButton<String>(
       value: currentStatus,
       underline: const SizedBox(),
@@ -279,9 +305,13 @@ class AttendanceFormView extends GetView<AttendanceController> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.check_circle, color: theme.colorScheme.primary, size: 16),
-              const SizedBox(width: 4),
-              Text('present'.tr),
+              Icon(
+                Icons.check_circle,
+                color: theme.colorScheme.primary,
+                size: 16,
+              ),
+              // const SizedBox(width: 4),
+              // Text('present'.tr, style: TextStyle(fontSize: 10),),
             ],
           ),
         ),
@@ -291,8 +321,8 @@ class AttendanceFormView extends GetView<AttendanceController> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.cancel, color: theme.colorScheme.error, size: 16),
-              const SizedBox(width: 4),
-              Text('absent'.tr),
+              // const SizedBox(width: 4),
+              // Text('absent'.tr),
             ],
           ),
         ),
@@ -302,8 +332,8 @@ class AttendanceFormView extends GetView<AttendanceController> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.schedule, color: theme.colorScheme.tertiary, size: 16),
-              const SizedBox(width: 4),
-              Text('late'.tr),
+              // const SizedBox(width: 4),
+              // Text('late'.tr),
             ],
           ),
         ),
@@ -312,9 +342,13 @@ class AttendanceFormView extends GetView<AttendanceController> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.event_busy, color: theme.colorScheme.secondary, size: 16),
-              const SizedBox(width: 4),
-              Text('excused'.tr),
+              Icon(
+                Icons.event_busy,
+                color: theme.colorScheme.secondary,
+                size: 16,
+              ),
+              // const SizedBox(width: 4),
+              // Text('excused'.tr),
             ],
           ),
         ),
@@ -356,10 +390,7 @@ class AttendanceFormView extends GetView<AttendanceController> {
     }
   }
 
-  void _saveAttendance(
-      DateTime date,
-      Map<int, String> attendanceMap,
-      ) {
+  void _saveAttendance(DateTime date, Map<int, String> attendanceMap) {
     if (controller.selectedGroupSubject.value == null) {
       Get.snackbar('error'.tr, 'please_select_class'.tr);
       return;
@@ -370,10 +401,9 @@ class AttendanceFormView extends GetView<AttendanceController> {
       return;
     }
 
-    final records = attendanceMap.entries.map((entry) => {
-      'student_id': entry.key,
-      'status': entry.value,
-    }).toList();
+    final records = attendanceMap.entries
+        .map((entry) => {'student_id': entry.key, 'status': entry.value})
+        .toList();
 
     controller.submitBulkAttendance(
       groupSubjectId: controller.selectedGroupSubject.value!.id,
