@@ -56,7 +56,7 @@ class TeacherHomeView extends GetView<TeacherHomeController> {
               _buildStatsSection(theme),
               const SizedBox(height: 16),
               _buildQuickActionsSection(theme),
-              const SizedBox(height: 80),
+              const SizedBox(height: 100),
             ],
           ),
         ),

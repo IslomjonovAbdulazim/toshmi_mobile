@@ -1,6 +1,7 @@
 // lib/app/modules/teacher/views/exams/exam_form_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../../controllers/exam_controller.dart';
 import '../shared/widgets/teacher_app_bar.dart';
 
@@ -25,9 +26,11 @@ class ExamFormView extends GetView<ExamController> {
     );
     final linkController = TextEditingController();
 
-    final selectedDate = (isEditing
-        ? DateTime.parse(exam!['exam_date'])
-        : DateTime.now().add(const Duration(days: 7))).obs;
+    final selectedDate =
+        (isEditing
+            ? DateTime.parse(exam!['exam_date'])
+            : DateTime.now().add(const Duration(days: 7)))
+            .obs;
 
     final selectedTime = TimeOfDay.fromDateTime(selectedDate.value).obs;
 
@@ -99,6 +102,7 @@ class ExamFormView extends GetView<ExamController> {
             _buildDateTimeSection(context, selectedDate, selectedTime),
             const SizedBox(height: 16),
             _buildExternalLinksSection(linkController, context),
+            SizedBox(height: 200),
           ],
         ),
       ),
@@ -121,42 +125,40 @@ class ExamFormView extends GetView<ExamController> {
         labelText: label,
         hintText: hint,
         prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
       ),
     );
   }
 
   Widget _buildGroupSubjectSelector() {
-    return Obx(() => DropdownButtonFormField<int>(
-      decoration: InputDecoration(
-        labelText: 'class_and_subject'.tr,
-        prefixIcon: const Icon(Icons.class_),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+    return Obx(
+          () => DropdownButtonFormField<int>(
+        decoration: InputDecoration(
+          labelText: 'class_and_subject'.tr,
+          prefixIcon: const Icon(Icons.class_),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          filled: true,
         ),
-        filled: true,
+        value: controller.selectedGroupSubject.value?.id,
+        items: controller.groupSubjects.map((groupSubject) {
+          return DropdownMenuItem<int>(
+            value: groupSubject.id,
+            child: Text(controller.getGroupSubjectDisplayName(groupSubject)),
+          );
+        }).toList(),
+        onChanged: (value) {
+          final selected = controller.groupSubjects.firstWhereOrNull(
+                (gs) => gs.id == value,
+          );
+          if (selected != null) {
+            controller.selectGroupSubject(selected);
+          }
+        },
+        hint: Text('select_class_subject'.tr),
+        validator: (value) => value == null ? 'select_class_subject'.tr : null,
       ),
-      value: controller.selectedGroupSubject.value?.id,
-      items: controller.groupSubjects.map((groupSubject) {
-        return DropdownMenuItem<int>(
-          value: groupSubject.id,
-          child: Text(controller.getGroupSubjectDisplayName(groupSubject)),
-        );
-      }).toList(),
-      onChanged: (value) {
-        final selected = controller.groupSubjects.firstWhereOrNull(
-              (gs) => gs.id == value,
-        );
-        if (selected != null) {
-          controller.selectGroupSubject(selected);
-        }
-      },
-      hint: Text('select_class_subject'.tr),
-      validator: (value) => value == null ? 'select_class_subject'.tr : null,
-    ));
+    );
   }
 
   Widget _buildDateTimeSection(
@@ -175,23 +177,27 @@ class ExamFormView extends GetView<ExamController> {
         Row(
           children: [
             Expanded(
-              child: Obx(() => _buildDateTimeCard(
-                context,
-                icon: Icons.calendar_today,
-                title: 'date'.tr,
-                value: _formatDate(selectedDate.value),
-                onTap: () => _selectDate(context, selectedDate),
-              )),
+              child: Obx(
+                    () => _buildDateTimeCard(
+                  context,
+                  icon: Icons.calendar_today,
+                  title: 'date'.tr,
+                  value: _formatDate(selectedDate.value),
+                  onTap: () => _selectDate(context, selectedDate),
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Obx(() => _buildDateTimeCard(
-                context,
-                icon: Icons.access_time,
-                title: 'time'.tr,
-                value: selectedTime.value.format(context),
-                onTap: () => _selectTime(context, selectedTime),
-              )),
+              child: Obx(
+                    () => _buildDateTimeCard(
+                  context,
+                  icon: Icons.access_time,
+                  title: 'time'.tr,
+                  value: selectedTime.value.format(context),
+                  onTap: () => _selectTime(context, selectedTime),
+                ),
+              ),
             ),
           ],
         ),
@@ -218,10 +224,7 @@ class ExamFormView extends GetView<ExamController> {
             children: [
               Icon(icon, color: theme.colorScheme.primary),
               const SizedBox(height: 8),
-              Text(
-                title,
-                style: theme.textTheme.labelSmall,
-              ),
+              Text(title, style: theme.textTheme.labelSmall),
               const SizedBox(height: 4),
               Text(
                 value,
@@ -236,13 +239,27 @@ class ExamFormView extends GetView<ExamController> {
     );
   }
 
-  Widget _buildExternalLinksSection(TextEditingController linkController, BuildContext context) {
+  Widget _buildExternalLinksSection(
+      TextEditingController linkController,
+      BuildContext context,
+      ) {
+    final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'external_links'.tr,
-          style: Theme.of(context).textTheme.titleSmall,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'external_links_description'.tr,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 12),
         Row(
@@ -251,84 +268,167 @@ class ExamFormView extends GetView<ExamController> {
               child: TextFormField(
                 controller: linkController,
                 decoration: InputDecoration(
-                  hintText: 'enter_link'.tr,
+                  labelText: 'link_url'.tr,
+                  hintText: 'https://example.com',
                   prefixIcon: const Icon(Icons.link),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   filled: true,
                 ),
+                keyboardType: TextInputType.url,
               ),
             ),
             const SizedBox(width: 8),
-            FilledButton(
-              onPressed: () {
-                if (linkController.text.trim().isNotEmpty) {
-                  controller.addExternalLink(linkController.text.trim());
-                  linkController.clear();
-                }
-              },
-              child: Text('add'.tr),
+            IconButton.filled(
+              onPressed: () => _addExternalLink(linkController),
+              icon: const Icon(Icons.add),
+              style: IconButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Obx(() => controller.externalLinks.isEmpty
-            ? Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: Theme.of(context).dividerColor,
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Center(
-            child: Text(
-              'no_links_added'.tr,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+        const SizedBox(height: 16),
+        Obx(
+              () => controller.externalLinks.isEmpty
+              ? Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.outline.withOpacity(0.2),
               ),
             ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'no_external_links_added'.tr,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          )
+              : Column(
+            children: controller.externalLinks
+                .asMap()
+                .entries
+                .map(
+                  (entry) => _buildLinkItem(
+                theme,
+                entry.value,
+                entry.key,
+              ),
+            )
+                .toList(),
           ),
-        )
-            : Column(
-          children: controller.externalLinks
-              .asMap()
-              .entries
-              .map((entry) => _buildLinkItem(entry.key, entry.value, context))
-              .toList(),
-        )),
+        ),
       ],
     );
   }
 
-  Widget _buildLinkItem(int index, String link, BuildContext context) {
+  Widget _buildLinkItem(
+      ThemeData theme,
+      String link,
+      int index,
+      ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(8),
+        color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.2),
+        ),
       ),
-      child: Row(
-        children: [
-          const Icon(Icons.link, size: 16),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              link,
-              style: Theme.of(context).textTheme.bodySmall,
-              overflow: TextOverflow.ellipsis,
-            ),
+      child: ListTile(
+        leading: Icon(
+          _isValidUrl(link) ? Icons.link : Icons.link_off,
+          color: _isValidUrl(link)
+              ? theme.colorScheme.primary
+              : theme.colorScheme.error,
+        ),
+        title: Text(
+          link,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: _isValidUrl(link)
+                ? theme.colorScheme.onSurface
+                : theme.colorScheme.error,
           ),
-          IconButton(
-            icon: const Icon(Icons.close, size: 16),
-            onPressed: () => controller.removeExternalLink(index),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: _isValidUrl(link)
+            ? null
+            : Text(
+          'invalid_url_format'.tr,
+          style: TextStyle(color: theme.colorScheme.error),
+        ),
+        trailing: IconButton(
+          onPressed: () => controller.removeExternalLink(index),
+          icon: const Icon(Icons.delete_outline),
+          style: IconButton.styleFrom(
+            foregroundColor: theme.colorScheme.error,
           ),
-        ],
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
+    );
+  }
+
+  bool _isValidUrl(String url) {
+    final urlPattern = RegExp(
+      r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$',
+    );
+    return urlPattern.hasMatch(url.trim());
+  }
+
+  String _sanitizeUrl(String url) {
+    final trimmedUrl = url.trim();
+    if (trimmedUrl.isEmpty) return '';
+    if (!trimmedUrl.startsWith('http://') &&
+        !trimmedUrl.startsWith('https://')) {
+      return 'https://$trimmedUrl';
+    }
+    return trimmedUrl;
+  }
+
+  void _addExternalLink(TextEditingController linkController) {
+    final link = _sanitizeUrl(linkController.text);
+
+    if (link.isEmpty) {
+      Get.snackbar('error'.tr, 'please_enter_link'.tr);
+      return;
+    }
+
+    if (!_isValidUrl(link)) {
+      Get.snackbar('error'.tr, 'please_enter_valid_url'.tr);
+      return;
+    }
+
+    if (controller.externalLinks.contains(link)) {
+      Get.snackbar('error'.tr, 'link_already_added'.tr);
+      return;
+    }
+
+    controller.addExternalLink(link);
+    linkController.clear();
+    Get.snackbar(
+      'success'.tr,
+      'link_added_successfully'.tr,
+      duration: const Duration(seconds: 2),
     );
   }
 
@@ -336,7 +436,10 @@ class ExamFormView extends GetView<ExamController> {
     return '${date.day}.${date.month.toString().padLeft(2, '0')}.${date.year}';
   }
 
-  Future<void> _selectDate(BuildContext context, Rx<DateTime> selectedDate) async {
+  Future<void> _selectDate(
+      BuildContext context,
+      Rx<DateTime> selectedDate,
+      ) async {
     final date = await showDatePicker(
       context: context,
       initialDate: selectedDate.value,
@@ -351,7 +454,10 @@ class ExamFormView extends GetView<ExamController> {
     }
   }
 
-  Future<void> _selectTime(BuildContext context, Rx<TimeOfDay> selectedTime) async {
+  Future<void> _selectTime(
+      BuildContext context,
+      Rx<TimeOfDay> selectedTime,
+      ) async {
     final time = await showTimePicker(
       context: context,
       initialTime: selectedTime.value,

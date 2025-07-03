@@ -90,30 +90,21 @@ class HomeworkFormView extends GetView<HomeworkController> {
             ),
             const SizedBox(height: 16),
 
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _buildGroupSubjectSelector(),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildTextField(
-                    controller: maxPointsController,
-                    label: 'max_points'.tr,
-                    hint: '100',
-                    icon: Icons.star,
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      final points = int.tryParse(value ?? '');
-                      if (points == null || points <= 0) {
-                        return 'enter_correct_points'.tr;
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-              ],
+            _buildGroupSubjectSelector(),
+            SizedBox(height: 16),
+            _buildTextField(
+              controller: maxPointsController,
+              label: 'max_points'.tr,
+              hint: '100',
+              icon: Icons.star,
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                final points = int.tryParse(value ?? '');
+                if (points == null || points <= 0) {
+                  return 'enter_correct_points'.tr;
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 24),
 
@@ -154,7 +145,7 @@ class HomeworkFormView extends GetView<HomeworkController> {
               linkController,
               externalLinks,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 200),
           ],
         ),
       ),

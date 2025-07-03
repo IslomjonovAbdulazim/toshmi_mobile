@@ -195,7 +195,7 @@ class HomeworkCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: FilledButton.icon(
                       onPressed: onGrade,
@@ -206,7 +206,6 @@ class HomeworkCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
                   IconButton(
                     onPressed: onDelete,
                     icon: const Icon(Icons.delete_outline),
