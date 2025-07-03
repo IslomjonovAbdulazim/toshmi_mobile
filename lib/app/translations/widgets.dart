@@ -6,6 +6,10 @@ const Map<String, String> widgetsUz = {
 
   // Loading Widget
   'loading': 'Yuklanmoqda...',
+
+  // Splash
+  'app_name': 'Toshmi',
+  'app_subtitle': 'Maktab Boshqaruv Tizimi',
 };
 
 const Map<String, String> widgetsRu = {
@@ -16,6 +20,10 @@ const Map<String, String> widgetsRu = {
 
   // Loading Widget
   'loading': 'Загрузка...',
+
+  // Splash
+  'app_name': 'Toshmi',
+  'app_subtitle': 'Система Управления Школой',
 };
 
 const Map<String, String> widgetsEn = {
@@ -26,4 +34,8 @@ const Map<String, String> widgetsEn = {
 
   // Loading Widget
   'loading': 'Loading...',
+
+  // Splash
+  'app_name': 'Toshmi',
+  'app_subtitle': 'School Management System',
 };
