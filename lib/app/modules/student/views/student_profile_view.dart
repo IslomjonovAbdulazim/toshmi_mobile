@@ -441,13 +441,18 @@ class _StudentProfileViewState extends State<StudentProfileView> {
   }
 
   String _getInitials(String name) {
-    final words = name.trim().split(' ');
-    if (words.length >= 2) {
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) {
+      return 'S'; // Default fallback
+    }
+
+    final words = trimmedName.split(' ');
+    if (words.length >= 2 && words[0].isNotEmpty && words[1].isNotEmpty) {
       return '${words[0][0]}${words[1][0]}'.toUpperCase();
-    } else if (words.isNotEmpty) {
+    } else if (words.isNotEmpty && words[0].isNotEmpty) {
       return words[0][0].toUpperCase();
     }
-    return 'O';
+    return 'S'; // Default fallback
   }
 
   String _getThemeModeText(ThemeMode mode) {

@@ -411,12 +411,21 @@ class ParentHomeView extends StatelessWidget {
   }
 
   String _getInitials(String name) {
-    final words = name.trim().split(' ');
+    // Handle null or empty name
+    if (name.isEmpty) {
+      return 'O';
+    }
+
+    final words = name.trim().split(' ')
+        .where((word) => word.isNotEmpty)
+        .toList();
+
     if (words.length >= 2) {
       return '${words[0][0]}${words[1][0]}'.toUpperCase();
-    } else if (words.isNotEmpty) {
+    } else if (words.isNotEmpty && words[0].isNotEmpty) {
       return words[0][0].toUpperCase();
     }
+
     return 'O';
   }
 }
