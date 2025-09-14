@@ -5,6 +5,7 @@ import '../../controllers/profile_controller.dart';
 import '../shared/widgets/teacher_app_bar.dart';
 import 'widgets/language_selector.dart';
 import 'widgets/theme_selector.dart';
+import '../../../../utils/widgets/common/avatar_upload_widget.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
@@ -46,17 +47,25 @@ class ProfileView extends GetView<ProfileController> {
         padding: const EdgeInsets.all(20),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: theme.colorScheme.primary,
-              child: Text(
-                _getInitials(controller.currentUserName),
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+            Obx(() {
+              final user = controller.authService.currentUser;
+              final avatarUrl = user?.avatarUrl;
+              final legacyProfileImageId = user?.profileImageId;
+              
+              print('👨‍🏫 Teacher profile - User ID: ${user?.id}, Avatar URL: $avatarUrl, Legacy Profile Image ID: $legacyProfileImageId');
+              
+              return AvatarUploadWidget(
+              avatarUrl: avatarUrl,
+              legacyProfileImageId: legacyProfileImageId,
+              size: 80,
+              onAvatarUploaded: (storageUrl) {
+                // Handle avatar update success
+                print('👨‍🏫 Teacher avatar uploaded - New storage URL: $storageUrl');
+                controller.onAvatarUpdated();
+              },
+              isEditable: true,
+            );
+            }),
             const SizedBox(width: 20),
             Expanded(
               child: Column(

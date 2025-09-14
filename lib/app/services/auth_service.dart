@@ -2,6 +2,7 @@
 import 'package:get/get.dart';
 import '../data/models/user_model.dart';
 import 'storage_service.dart';
+import 'api_service.dart';
 
 class AuthService extends GetxService {
   final StorageService _storage = Get.find<StorageService>();
@@ -16,6 +17,8 @@ class AuthService extends GetxService {
   bool get isLoggedIn => _isLoggedIn.value;
   String? get userRole => _currentUser.value?.role;
   int? get userId => _currentUser.value?.id;
+  String? get userFullName => _currentUser.value?.fullName;
+  String? get userPhone => _currentUser.value?.phone;
 
   @override
   Future<void> onInit() async {
@@ -179,8 +182,6 @@ class AuthService extends GetxService {
   bool get isParent => hasRole('parent');
   bool get isAdmin => hasRole('admin');
 
-  String? get userFullName => _currentUser.value?.fullName;
-  String? get userPhone => _currentUser.value?.phone;
   int? get profileImageId => _currentUser.value?.profileImageId;
 
   bool get isTokenExpired => false; // Implement token expiry check if needed
@@ -201,6 +202,57 @@ class AuthService extends GetxService {
     } else {
       print('❌ Invalid auth state, redirecting to login');
       Get.offAllNamed('/login');
+    }
+  }
+
+  // Refresh user profile from backend
+  Future<void> refreshUserProfile() async {
+    try {
+      print('🔄 Refreshing user profile from backend...');
+      
+      // Make API call to get updated profile
+      final response = await Get.find<ApiService>().get('/auth/profile');
+      
+      if (response.data != null) {
+        print('📥 Profile refresh response: ${response.data}');
+        
+        // Parse updated user data
+        final updatedUser = User.fromJson(response.data);
+        
+        // Update reactive variable
+        _currentUser.value = updatedUser;
+        
+        // Save to storage
+        await _storage.saveUserData(updatedUser.toJson());
+        
+        print('✅ User profile refreshed and updated');
+      }
+    } catch (e) {
+      print('❌ Error refreshing user profile: $e');
+    }
+  }
+
+  // Update user's avatar URL after avatar upload
+  Future<void> updateAvatarUrl(String storageUrl) async {
+    try {
+      if (_currentUser.value == null) {
+        print('❌ Cannot update avatar - no current user');
+        return;
+      }
+
+      print('📸 Updating user avatar URL to: $storageUrl');
+      
+      // First refresh profile from backend to get the actual updated data
+      await refreshUserProfile();
+      
+      print('✅ Avatar URL updated via profile refresh');
+    } catch (e) {
+      print('❌ Error updating avatar URL: $e');
+      
+      // Fallback: update locally if API call fails
+      final updatedUser = _currentUser.value!.copyWith(avatarUrl: storageUrl);
+      _currentUser.value = updatedUser;
+      await _storage.saveUserData(updatedUser.toJson());
     }
   }
 }

@@ -101,9 +101,9 @@ class NewsView extends GetView<NewsController> {
       Container(
         height: Get.height * 0.8,
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: Get.theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,12 +115,13 @@ class NewsView extends GetView<NewsController> {
                     news.title,
                     style: Get.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
+                      color: Get.theme.colorScheme.onSurface,
                     ),
                   ),
                 ),
                 IconButton(
                   onPressed: () => Get.back(),
-                  icon: const Icon(Icons.close),
+                  icon: Icon(Icons.close, color: Get.theme.colorScheme.onSurface),
                 ),
               ],
             ),

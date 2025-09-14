@@ -49,6 +49,15 @@ class ProfileController extends GetxController {
 
   String get currentUserName => _authService.currentUser?.fullName ?? 'user'.tr;
   String get currentUserRole => _authService.userRole ?? '';
+  
+  // Expose auth service for accessing current user
+  AuthService get authService => _authService;
+  
+  // Avatar update callback
+  void onAvatarUpdated() {
+    // Trigger UI rebuild to show updated avatar
+    update();
+  }
 
   Future<void> changePassword() async {
     if (currentPasswordController.text.isEmpty) {

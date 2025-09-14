@@ -43,13 +43,42 @@ class FileService extends GetxService {
     return null;
   }
 
-  // Upload profile picture
+  // Upload profile picture (legacy method for backward compatibility)
   Future<Map<String, dynamic>> uploadProfilePicture(File file) async {
     try {
       final response = await _apiService.uploadFile('/files/profile-picture', file.path);
       return response.data;
     } catch (e) {
       throw Exception('Profil rasmini yuklashda xatolik: $e');
+    }
+  }
+
+  // Upload user avatar (new persistent storage method)
+  Future<Map<String, dynamic>> uploadUserAvatar(File file) async {
+    try {
+      print('📁 Starting avatar upload - File path: ${file.path}');
+      print('📁 File size: ${getFileSize(file)}');
+      
+      // Validate file size (3MB max)
+      if (!isValidFileSize(file, 3)) {
+        print('❌ File too large: ${getFileSize(file)}');
+        throw Exception('Fayl hajmi 3MB dan oshmasligi kerak');
+      }
+
+      // Validate image format
+      if (!isValidImageFormat(file)) {
+        print('❌ Invalid image format: ${file.path.split('.').last}');
+        throw Exception('Faqat JPG, JPEG, PNG formatdagi rasm fayllar qabul qilinadi');
+      }
+
+      print('✅ File validation passed, uploading to /files/user-avatar');
+      final response = await _apiService.uploadFile('/files/user-avatar', file.path);
+      
+      print('📤 Upload response received: ${response.data}');
+      return response.data;
+    } catch (e) {
+      print('❌ Avatar upload failed: $e');
+      throw Exception('Avatar rasmini yuklashda xatolik: $e');
     }
   }
 

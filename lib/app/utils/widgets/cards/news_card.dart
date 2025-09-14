@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:toshmi_mobile/app/utils/extensions/datetime_extensions.dart';
 import 'package:toshmi_mobile/app/utils/extensions/string_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -37,6 +38,7 @@ class NewsCard extends StatelessWidget {
                       news.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
+                        color: Get.theme.colorScheme.onSurface,
                       ),
                     ),
                   ),

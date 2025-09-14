@@ -9,6 +9,7 @@ class User {
   final bool isActive;
   final DateTime createdAt;
   final int? profileImageId;
+  final String? avatarUrl;
 
   User({
     required this.id,
@@ -20,6 +21,7 @@ class User {
     required this.isActive,
     required this.createdAt,
     this.profileImageId,
+    this.avatarUrl,
   });
 
   String get fullName => '$firstName $lastName';
@@ -73,6 +75,7 @@ class User {
           ? DateTime.parse(json['created_at'])
           : DateTime.now(),
       profileImageId: json['profile_image_id'],
+      avatarUrl: json['avatar_url'],
     );
   }
 
@@ -87,6 +90,7 @@ class User {
       'is_active': isActive,
       'created_at': createdAt.toIso8601String(),
       'profile_image_id': profileImageId,
+      'avatar_url': avatarUrl,
       // Also include 'name' field for compatibility
       'name': fullName,
     };
@@ -102,6 +106,7 @@ class User {
     bool? isActive,
     DateTime? createdAt,
     int? profileImageId,
+    String? avatarUrl,
   }) {
     return User(
       id: id ?? this.id,
@@ -113,6 +118,7 @@ class User {
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       profileImageId: profileImageId ?? this.profileImageId,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
     );
   }
 

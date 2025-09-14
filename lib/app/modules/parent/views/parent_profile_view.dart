@@ -4,6 +4,7 @@ import '../../../services/auth_service.dart';
 import '../../../services/theme_service.dart';
 import '../../../services/language_service.dart';
 import '../../../utils/widgets/common/custom_app_bar.dart';
+import '../../../utils/widgets/common/avatar_upload_widget.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class ParentProfileView extends StatefulWidget {
@@ -69,17 +70,25 @@ class _ParentProfileViewState extends State<ParentProfileView> {
         padding: const EdgeInsets.all(20),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: AppColors.parentColor,
-              child: Text(
-                _getInitials(authService.userFullName ?? 'parent'.tr),
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+            Builder(builder: (context) {
+              final user = authService.currentUser;
+              final avatarUrl = user?.avatarUrl;
+              final legacyProfileImageId = user?.profileImageId;
+              
+              print('👨‍👩‍👧 Parent profile - User ID: ${user?.id}, Avatar URL: $avatarUrl, Legacy Profile Image ID: $legacyProfileImageId');
+              
+              return AvatarUploadWidget(
+                avatarUrl: avatarUrl,
+                legacyProfileImageId: legacyProfileImageId,
+                size: 80,
+                onAvatarUploaded: (storageUrl) {
+                  // Handle avatar update success
+                  print('👨‍👩‍👧 Parent avatar uploaded - New storage URL: $storageUrl');
+                  setState(() {});
+                },
+                isEditable: true,
+              );
+            }),
             const SizedBox(width: 20),
             Expanded(
               child: Column(

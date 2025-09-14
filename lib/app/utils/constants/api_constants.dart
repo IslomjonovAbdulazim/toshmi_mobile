@@ -1,6 +1,6 @@
 class ApiConstants {
   // Base URL
-  static const String baseUrl = 'https://islomjonovabdulazim-toshmi-backend-0914.twc1.net';
+  static const String baseUrl = 'https://toshmibackend-production.up.railway.app';
 
   // Auth endpoints
   static const String login = '/auth/login';
@@ -56,10 +56,12 @@ class ApiConstants {
 
   // File endpoints
   static const String filesProfilePicture = '/files/profile-picture';
+  static const String filesUserAvatar = '/files/user-avatar';
   static const String filesHomework = '/files/homework'; // /{homework_id}/upload
   static const String filesExam = '/files/exam'; // /{exam_id}/upload
   static const String filesNews = '/files/news'; // /{news_id}/upload-image
   static const String files = '/files'; // /{file_id}
+  static const String storage = '/storage'; // /storage/user_photos/{filename}
 
   // System endpoints
   static const String health = '/health';

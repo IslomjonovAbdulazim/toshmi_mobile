@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toshmi_mobile/core/theme/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:toshmi_mobile/app/services/auth_service.dart';
 import '../../../data/repositories/news_repository.dart';
@@ -102,7 +103,7 @@ class _StudentNewsViewState extends State<StudentNewsView> {
                   style: GoogleFonts.inter(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
-                    color: Colors.white,
+                    color:Get.theme.primaryColor,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -110,7 +111,7 @@ class _StudentNewsViewState extends State<StudentNewsView> {
                   newsItem['content'] ?? '',
                   style: GoogleFonts.inter(
                     fontSize: 14,
-                    color: Colors.white,
+                    color:Get.theme.primaryColor,
                     height: 1.3,
                     fontWeight: FontWeight.w400,
                   ),
