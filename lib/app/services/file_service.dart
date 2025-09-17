@@ -62,13 +62,13 @@ class FileService extends GetxService {
       // Validate file size (3MB max)
       if (!isValidFileSize(file, 3)) {
         print('❌ File too large: ${getFileSize(file)}');
-        throw Exception('Fayl hajmi 3MB dan oshmasligi kerak');
+        throw Exception('File size should not exceed 3MB');
       }
 
       // Validate image format
       if (!isValidImageFormat(file)) {
         print('❌ Invalid image format: ${file.path.split('.').last}');
-        throw Exception('Faqat JPG, JPEG, PNG formatdagi rasm fayllar qabul qilinadi');
+        throw Exception('Only JPG, JPEG, PNG image formats are accepted');
       }
 
       print('✅ File validation passed, uploading to /files/user-avatar');

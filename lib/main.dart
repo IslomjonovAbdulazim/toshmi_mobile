@@ -6,10 +6,12 @@ import 'package:get_storage/get_storage.dart';
 
 import 'app/data/providers/api_provider.dart';
 import 'app/data/providers/storage_provider.dart';
+import 'app/data/repositories/auth_repository.dart';
 import 'app/routes/app_pages.dart';
 import 'app/services/api_service.dart';
 import 'app/services/auth_service.dart';
 import 'app/services/file_service.dart';
+import 'app/services/heartbeat_service.dart';
 import 'app/services/language_service.dart';
 import 'app/services/notification_service.dart';
 import 'app/services/storage_service.dart';
@@ -38,13 +40,32 @@ Future<void> _initializeServices() async {
     Get.put(LanguageService());
     Get.put(ThemeService());
 
+    // Initialize AuthService first (required by ApiService)
     await Get.putAsync(() => AuthService().init());
 
     Get.put(ApiService());
     Get.put(ApiProvider());
+    
+    // Initialize AuthRepository
+    Get.put(AuthRepository());
 
     Get.put(FileService());
     Get.lazyPut(() => NotificationService());
+    
+    // Initialize HeartbeatService (now AuthRepository is available)
+    Get.put(HeartbeatService());
+    
+    // Start heartbeat if user is already logged in
+    final authService = Get.find<AuthService>();
+    if (authService.isLoggedIn) {
+      try {
+        final heartbeatService = Get.find<HeartbeatService>();
+        heartbeatService.startHeartbeat();
+        print('🚀 [MAIN] Heartbeat started for existing user: ${authService.userFullName}');
+      } catch (e) {
+        print('⚠️ [MAIN] Failed to start heartbeat: $e');
+      }
+    }
   } catch (e) {}
 }
 

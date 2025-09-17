@@ -45,6 +45,30 @@ class GradingController extends GetxController {
     try {
       isLoading.value = true;
       final data = await _teacherRepository.getExamGradingTable(examId);
+      
+      // Sort students by first name and last name, with specific student at top
+      if (data['students'] != null) {
+        final students = List<Map<String, dynamic>>.from(data['students']);
+        students.sort((a, b) {
+          // Check if either student is Abduazim or has phone +998990000002
+          final nameA = a['name'] ?? '';
+          final nameB = b['name'] ?? '';
+          final phoneA = a['phone'] ?? '';
+          final phoneB = b['phone'] ?? '';
+          
+          final isSpecialA = nameA.toLowerCase().contains('abduazim') || phoneA.contains('998990000002');
+          final isSpecialB = nameB.toLowerCase().contains('abduazim') || phoneB.contains('998990000002');
+          
+          // Put special student first
+          if (isSpecialA && !isSpecialB) return -1;
+          if (!isSpecialA && isSpecialB) return 1;
+          
+          // For all other students, sort alphabetically
+          return nameA.compareTo(nameB);
+        });
+        data['students'] = students;
+      }
+      
       gradingData.value = data;
     } catch (e) {
       Get.snackbar('Xato', 'Baholash jadvalini yuklashda xatolik: $e');

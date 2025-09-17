@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../controllers/grading_controller.dart';
+import '../student_exam_media_view.dart';
+import '../../../bindings/student_exam_media_binding.dart';
 import 'grade_input_cell.dart';
 
 class GradingTable extends GetView<GradingController> {
@@ -140,6 +142,12 @@ class GradingTable extends GetView<GradingController> {
                               ],
                             ),
                           ),
+                          IconButton(
+                            onPressed: () => _viewStudentExamMedia(studentId, studentName),
+                            icon: const Icon(Icons.perm_media),
+                            tooltip: 'view_student_media'.tr,
+                            iconSize: 20,
+                          ),
                           if (currentGrade?['points'] != null)
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -189,11 +197,38 @@ class GradingTable extends GetView<GradingController> {
 
   String _getInitials(String name) {
     final words = name.trim().split(' ');
-    if (words.length >= 2) {
-      return '${words[0][0]}${words[1][0]}'.toUpperCase();
-    } else if (words.isNotEmpty) {
-      return words[0][0].toUpperCase();
-    }
+    try {
+      if (words.length >= 2) {
+        return '${words[0][0]}${words[1][0]}'.toUpperCase();
+      } else if (words.isNotEmpty) {
+        return words[0][0].toUpperCase();
+      }
+    } catch(e) {}
     return 'O';
+  }
+
+  void _viewStudentExamMedia(int studentId, String studentName) {
+    final gradingData = controller.gradingData.value;
+    final examId = gradingData['exam']?['id'];
+    
+    if (examId == null) {
+      Get.snackbar('error'.tr, 'exam_id_not_found'.tr);
+      return;
+    }
+
+    // Frontend fix: The grading API returns student_id but images API expects user_id
+    // Since the grading API doesn't return user_id, we need to use student_id as user_id
+    print('🐛 DEBUG: Using student_id ($studentId) as user_id for images API');
+
+    Get.to(
+      () => const StudentExamMediaView(),
+      binding: StudentExamMediaBinding(),
+      arguments: {
+        'exam_id': examId,
+        'student_id': studentId,  // Use student_id directly as user_id
+        'student_name': studentName,
+        'exam_title': gradingData['exam']?['title'] ?? 'Exam',
+      },
+    );
   }
 }

@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../data/repositories/student_repository.dart';
 import '../../../utils/widgets/common/custom_app_bar.dart';
+import 'exam_media_view.dart';
+import '../bindings/exam_media_binding.dart';
 
 class StudentExamsView extends StatefulWidget {
   const StudentExamsView({super.key});
@@ -170,6 +172,11 @@ class _StudentExamsViewState extends State<StudentExamsView> {
     final hasGrade = exam['grade'] != null;
     final isPast = examDate.isBefore(DateTime.now());
     final externalLinks = exam['external_links'] as List? ?? [];
+    
+    // Check if exam is yesterday, today, or later (not expired)
+    final now = DateTime.now();
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    final isNotExpired = examDate.isAfter(yesterday) || examDate.isAtSameMomentAs(yesterday);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -190,6 +197,24 @@ class _StudentExamsViewState extends State<StudentExamsView> {
                     ),
                   ),
                 ),
+                if (isNotExpired) ...[
+                  IconButton(
+                    onPressed: () {
+                      // Navigate to exam media page
+                      Get.to(
+                        () => const ExamMediaView(),
+                        binding: ExamMediaBinding(),
+                        arguments: exam,
+                      );
+                    },
+                    icon: const Icon(Icons.perm_media),
+                    tooltip: 'Media',
+                    iconSize: 20,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 if (hasGrade)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

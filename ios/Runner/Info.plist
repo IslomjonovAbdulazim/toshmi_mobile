@@ -9,6 +9,8 @@
     </array>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Bu ilova suratlar tanlash va saqlash uchun foto kutubxonangizga kirish huquqi talab qiladi</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Bu ilova profil rasmini yangilash uchun kamera yordamida surat olish huquqi talab qiladi</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

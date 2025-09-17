@@ -32,6 +32,9 @@ class ProfileController extends GetxController {
     newPasswordController = TextEditingController();
     confirmPasswordController = TextEditingController();
     currentLocale.value = _languageService.locale;
+    
+    // Refresh user profile when entering profile screen
+    _authService.refreshUserProfile();
   }
 
   @override

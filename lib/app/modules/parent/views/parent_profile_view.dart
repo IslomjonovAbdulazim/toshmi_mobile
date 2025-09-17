@@ -32,6 +32,9 @@ class _ParentProfileViewState extends State<ParentProfileView> {
     super.initState();
     currentThemeMode.value = themeService.theme;
     currentLocale.value = languageService.locale;
+    
+    // Refresh user profile when entering profile screen
+    authService.refreshUserProfile();
   }
 
   @override

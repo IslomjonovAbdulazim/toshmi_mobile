@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../data/models/user_model.dart';
 import 'storage_service.dart';
 import 'api_service.dart';
+import 'heartbeat_service.dart';
 
 class AuthService extends GetxService {
   final StorageService _storage = Get.find<StorageService>();
@@ -82,6 +83,16 @@ class AuthService extends GetxService {
       print('💾 Auth data saved to storage');
       print('🎯 Current auth state - isLoggedIn: ${_isLoggedIn.value}, role: ${userRole}');
 
+      // Start heartbeat service when logged in
+      try {
+        print('🔧 [AUTH] Attempting to start heartbeat for ${user.role}: ${user.fullName}');
+        final heartbeatService = Get.find<HeartbeatService>();
+        heartbeatService.restartHeartbeat();
+        print('🚀 [AUTH] Heartbeat service started for ${user.role}: ${user.fullName}');
+      } catch (e) {
+        print('⚠️ [AUTH] Heartbeat service not available: $e');
+      }
+
       // Navigate to role-based home
       _navigateToRoleBasedHome();
     } catch (e) {
@@ -94,6 +105,17 @@ class AuthService extends GetxService {
   Future<void> logout() async {
     try {
       print('🚪 Logging out user');
+      
+      // Stop heartbeat service when logging out
+      try {
+        print('🔧 [AUTH] Attempting to stop heartbeat for ${_currentUser.value?.role}: ${_currentUser.value?.fullName}');
+        final heartbeatService = Get.find<HeartbeatService>();
+        heartbeatService.stopHeartbeat();
+        print('⏹️ [AUTH] Heartbeat service stopped');
+      } catch (e) {
+        print('⚠️ [AUTH] Heartbeat service not available during logout: $e');
+      }
+      
       await _clearAuthData();
       Get.offAllNamed('/login');
       print('✅ Logout completed');

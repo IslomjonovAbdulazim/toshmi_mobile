@@ -53,32 +53,7 @@ class _AvatarUploadWidgetState extends State<AvatarUploadWidget> {
     try {
       setState(() => isUploading = true);
 
-      // Check permissions
-      if (source == ImageSource.camera) {
-        final hasPermission = await _fileService.requestCameraPermission();
-        if (!hasPermission) {
-          Get.snackbar(
-            'Xatolik',
-            'Kamera ruxsati kerak',
-            backgroundColor: Colors.red.withOpacity(0.1),
-            colorText: Colors.red,
-          );
-          return;
-        }
-      } else {
-        final hasPermission = await _fileService.requestStoragePermission();
-        if (!hasPermission) {
-          Get.snackbar(
-            'Xatolik',
-            'Xotira ruxsati kerak',
-            backgroundColor: Colors.red.withOpacity(0.1),
-            colorText: Colors.red,
-          );
-          return;
-        }
-      }
-
-      // Pick image
+      // Pick image directly - system will handle permissions automatically
       final imageFile = await _fileService.pickImage(source: source);
       if (imageFile == null) return;
 
@@ -101,19 +76,19 @@ class _AvatarUploadWidgetState extends State<AvatarUploadWidget> {
         widget.onAvatarUploaded?.call(response['storage_url']);
 
         Get.snackbar(
-          'Muvaffaqiyat',
-          'Avatar rasmi yangilandi',
-          backgroundColor: Colors.green.withOpacity(0.1),
-          colorText: Colors.green,
+          'success'.tr,
+          'avatar_updated_successfully'.tr,
+          backgroundColor: AppColors.success.withOpacity(0.1),
+          colorText: AppColors.success,
         );
       }
     } catch (e) {
       print('Avatar upload error: $e');
       Get.snackbar(
-        'Xatolik',
+        'error'.tr,
         e.toString().replaceAll('Exception: ', ''),
-        backgroundColor: Colors.red.withOpacity(0.1),
-        colorText: Colors.red,
+        backgroundColor: AppColors.error.withOpacity(0.1),
+        colorText: AppColors.error,
       );
     } finally {
       setState(() => isUploading = false);
@@ -121,12 +96,14 @@ class _AvatarUploadWidgetState extends State<AvatarUploadWidget> {
   }
 
   void _showImageSourceBottomSheet() {
+    final theme = Get.theme;
+    
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -135,30 +112,41 @@ class _AvatarUploadWidgetState extends State<AvatarUploadWidget> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: theme.dividerColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Rasm tanlash',
-              style: TextStyle(
-                fontSize: 18,
+            Text(
+              'choose_image'.tr,
+              style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 20),
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: AppColors.primaryBlue),
-              title: const Text('Kamera'),
+              leading: Icon(
+                Icons.camera_alt, 
+                color: theme.colorScheme.primary,
+              ),
+              title: Text(
+                'camera'.tr,
+                style: theme.textTheme.bodyLarge,
+              ),
               onTap: () {
                 Get.back();
                 _pickAndUploadAvatar(ImageSource.camera);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: AppColors.primaryBlue),
-              title: const Text('Galereya'),
+              leading: Icon(
+                Icons.photo_library, 
+                color: theme.colorScheme.primary,
+              ),
+              title: Text(
+                'gallery'.tr,
+                style: theme.textTheme.bodyLarge,
+              ),
               onTap: () {
                 Get.back();
                 _pickAndUploadAvatar(ImageSource.gallery);

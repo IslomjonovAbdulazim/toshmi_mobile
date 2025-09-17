@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:toshmi_mobile/app/utils/constants/api_constants.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/theme_service.dart';
 import '../../../services/language_service.dart';
@@ -32,6 +33,9 @@ class _StudentProfileViewState extends State<StudentProfileView> {
     super.initState();
     currentThemeMode.value = themeService.theme;
     currentLocale.value = languageService.locale;
+
+    // Refresh user profile when entering profile screen
+    authService.refreshUserProfile();
   }
 
   @override
@@ -39,10 +43,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: CustomAppBar(
-        title: 'profile'.tr,
-        showBackButton: true,
-      ),
+      appBar: CustomAppBar(title: 'profile'.tr, showBackButton: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(0),
         child: Column(
@@ -70,25 +71,32 @@ class _StudentProfileViewState extends State<StudentProfileView> {
         padding: const EdgeInsets.all(20),
         child: Row(
           children: [
-            Builder(builder: (context) {
-              final user = authService.currentUser;
-              final avatarUrl = user?.avatarUrl;
-              final legacyProfileImageId = user?.profileImageId;
-              
-              print('🎓 Student profile - User ID: ${user?.id}, Avatar URL: $avatarUrl, Legacy Profile Image ID: $legacyProfileImageId');
-              
-              return AvatarUploadWidget(
-                avatarUrl: avatarUrl,
-                legacyProfileImageId: legacyProfileImageId,
-                size: 80,
-                onAvatarUploaded: (storageUrl) {
-                  // Handle avatar update success
-                  print('🎓 Student avatar uploaded - New storage URL: $storageUrl');
-                  setState(() {});
-                },
-                isEditable: true,
-              );
-            }),
+            Builder(
+              builder: (context) {
+                final user = authService.currentUser;
+                final avatarUrl =
+                    ApiConstants.baseUrl + (user?.avatarUrl ?? "");
+                final legacyProfileImageId = user?.profileImageId;
+
+                print(
+                  '🎓 Student profile - User ID: ${user?.id}, Avatar URL: $avatarUrl, Legacy Profile Image ID: $legacyProfileImageId',
+                );
+
+                return AvatarUploadWidget(
+                  avatarUrl: avatarUrl.isEmpty ? null : avatarUrl,
+                  legacyProfileImageId: legacyProfileImageId,
+                  size: 80,
+                  onAvatarUploaded: (storageUrl) {
+                    // Handle avatar update success
+                    print(
+                      '🎓 Student avatar uploaded - New storage URL: $storageUrl',
+                    );
+                    setState(() {});
+                  },
+                  isEditable: true,
+                );
+              },
+            ),
             const SizedBox(width: 20),
             Expanded(
               child: Column(
@@ -102,7 +110,10 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                   ),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.studentColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -140,10 +151,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.palette_outlined,
-                  color: theme.colorScheme.primary,
-                ),
+                Icon(Icons.palette_outlined, color: theme.colorScheme.primary),
                 const SizedBox(width: 12),
                 Text(
                   'theme'.tr,
@@ -154,15 +162,17 @@ class _StudentProfileViewState extends State<StudentProfileView> {
               ],
             ),
             const SizedBox(height: 16),
-            Obx(() => Column(
-              children: [
-                _buildThemeOption(ThemeMode.system, theme),
-                const SizedBox(height: 8),
-                _buildThemeOption(ThemeMode.light, theme),
-                const SizedBox(height: 8),
-                _buildThemeOption(ThemeMode.dark, theme),
-              ],
-            )),
+            Obx(
+              () => Column(
+                children: [
+                  _buildThemeOption(ThemeMode.system, theme),
+                  const SizedBox(height: 8),
+                  _buildThemeOption(ThemeMode.light, theme),
+                  const SizedBox(height: 8),
+                  _buildThemeOption(ThemeMode.dark, theme),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -201,15 +211,10 @@ class _StudentProfileViewState extends State<StudentProfileView> {
           ),
         ),
         trailing: isSelected
-            ? Icon(
-          Icons.check_circle,
-          color: theme.colorScheme.primary,
-        )
+            ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
             : null,
         onTap: () => _changeTheme(themeMode),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -223,10 +228,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.lock_outline,
-                  color: theme.colorScheme.primary,
-                ),
+                Icon(Icons.lock_outline, color: theme.colorScheme.primary),
                 const SizedBox(width: 12),
                 Text(
                   'change_password'.tr,
@@ -278,17 +280,19 @@ class _StudentProfileViewState extends State<StudentProfileView> {
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: Obx(() => FilledButton.icon(
-                onPressed: isLoading.value ? null : _changePassword,
-                icon: isLoading.value
-                    ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-                    : const Icon(Icons.key),
-                label: Text('change_password'.tr),
-              )),
+              child: Obx(
+                () => FilledButton.icon(
+                  onPressed: isLoading.value ? null : _changePassword,
+                  icon: isLoading.value
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.key),
+                  label: Text('change_password'.tr),
+                ),
+              ),
             ),
           ],
         ),
@@ -337,15 +341,17 @@ class _StudentProfileViewState extends State<StudentProfileView> {
               ],
             ),
             const SizedBox(height: 16),
-            Obx(() => Column(
-              children: [
-                _buildLanguageOption(const Locale('uz', 'UZ'), theme),
-                const SizedBox(height: 8),
-                _buildLanguageOption(const Locale('ru', 'RU'), theme),
-                const SizedBox(height: 8),
-                _buildLanguageOption(const Locale('en', 'US'), theme),
-              ],
-            )),
+            Obx(
+              () => Column(
+                children: [
+                  _buildLanguageOption(const Locale('uz', 'UZ'), theme),
+                  const SizedBox(height: 8),
+                  _buildLanguageOption(const Locale('ru', 'RU'), theme),
+                  const SizedBox(height: 8),
+                  _buildLanguageOption(const Locale('en', 'US'), theme),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -430,10 +436,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
         title: Text('logout'.tr),
         content: Text('logout_confirm'.tr),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('cancel'.tr),
-          ),
+          TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
           FilledButton(
             onPressed: () {
               Get.back();
